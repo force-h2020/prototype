@@ -1,183 +1,136 @@
 import numpy as np
 
-class Reaction_knowledge_access:
 
-    class __Reaction_knowledge:
+class FactoryBaseClass:
 
-        def __init__(self):
-            pass
+    @classmethod
+    def factory(cls, *args):
+        if not hasattr(cls, 'instance'):
+            cls.instance = cls(*args)
 
-        def get_educts4product(self, P):
-            A = { "name": "eductA", "manufacturer": "", "pdi": 0 }
-            B = { "name": "eductB", "manufacturer": "", "pdi": 0 }
-            return (A, B)
-
-        def get_side_products(self, R):
-            A = R["reactants"][0]
-            B = R["reactants"][1]
-            P = R["products"][0]
-            S = { "name": "sideproduct", "manufacturer": "", "pdi": 0 }
-            return S
-
-        def good_practice4reaction(self, R):
-            A = R["reactants"][0]
-            B = R["reactants"][1]
-            P = R["products"][0]
-            info = ""
-            return info
-
-        def estimate_reaction_time(self, R):
-            A = R["reactants"][0]
-            B = R["reactants"][1]
-            P = R["products"][0]
-            e_time = 20
-            return e_time
-
-    instance = None
-
-    def __init__(self):
-        # init of Reaction_knowledge to be done
-        if not Reaction_knowledge_access.instance:
-            Reaction_knowledge_access.instance = \
-                Reaction_knowledge_access.__Reaction_knowledge()
-        else:
-            pass
-
-    def __getattr__(self, name):
-        return getattr(self.instance, name)
+        return cls.instance
 
 
-class Material_db_access:
+class Reaction_knowledge(FactoryBaseClass):
 
-    class __Material_db:
+    def get_educts4product(self, P):
+        A = {"name": "eductA", "manufacturer": "", "pdi": 0}
+        B = {"name": "eductB", "manufacturer": "", "pdi": 0}
+        return (A, B)
 
-        def __init__(self):
-            pass
+    def get_side_products(self, R):
+        A = R["reactants"][0]
+        B = R["reactants"][1]
+        P = R["products"][0]
+        S = {"name": "sideproduct", "manufacturer": "", "pdi": 0}
+        return S
 
-        def get_component_dat(self, X):
-            m = 1
-            return m
+    def good_practice4reaction(self, R):
+        A = R["reactants"][0]
+        B = R["reactants"][1]
+        P = R["products"][0]
+        info = ""
+        return info
 
-        def get_pure_component_density(self, X):
-            print(X)
-            p = 1
-            return p
-
-        def get_arrhenius_params(self, R):
-            v = 0.1
-            grad_H = np.zeros(3, float)
-            return (v, grad_H)
-
-    instance = None
-
-    def __init__(self):
-        # init of Material_db to be done
-        if not Material_db_access.instance:
-            Material_db_access.instance = Material_db_access.__Material_db()
-        else:
-            pass
-
-    def __getattr__(self, name):
-        return getattr(self.instance, name)
+    def estimate_reaction_time(self, R):
+        A = R["reactants"][0]
+        B = R["reactants"][1]
+        P = R["products"][0]
+        e_time = 20
+        return e_time
 
 
-class Process_db_access:
+class Material_db(FactoryBaseClass):
 
-    class __Process_db:
+    def get_component_dat(self, X):
+        m = 1
+        return m
 
-        def __init__(self, R):
-            self.R = R
-            self.V_r = 1
-            self.W = 1
-            self.cost_A = 1
-            self.cost_B = 1
-            self.m_db_access = Material_db_access()
+    def get_pure_component_density(self, X):
+        p = 1
+        return p
 
-        def get_prod_cost(self, X_proc):
-            cost = self.V_r*X_proc[1]*(X_proc[0] - 20)**2*self.W
-            grad_x_cost = np.zeros(5, float)
-            return (cost, grad_x_cost)
+    def get_arrhenius_params(self, R):
+        v = 0.1
+        grad_H = np.zeros(3, float)
+        return (v, grad_H)
 
-        def get_mat_cost(self, X_0_mat):
-            cost_A_tilde = 1
-            cost_B = 1
-            p_B = self.m_db_access.get_pure_component_density(self.R["reactants"][1])
-            theta_m = X_0_mat[1]/p_B
-            cost = self.V_r*((1 - theta_m)*cost_A_tilde + theta_m*cost_B)
-            grad_x_cost = np.zeros(5, float)
-            return (cost, grad_x_cost)
+    @classmethod
+    def from_database(cls, identifier):
 
-        def get_contamination_range(self, A):
-            c_min = 0
-            c_max = 1
-            return (c_min, c_max)
+        # query the database and return the Material
+        return cls()
 
-        def get_temp_range(self):
-            T_min = 0
-            T_max = 1000
-            return (T_min, T_max)
 
-        def get_reactor_vol(self):
-            return self.V_r
-
-    instance = None
+class Process_db(FactoryBaseClass):
 
     def __init__(self, R):
-        # init of Process_db to be done
-        if not Process_db_access.instance:
-            Process_db_access.instance = Process_db_access.__Process_db(R)
-        else:
-            pass
+        self.R = R
+        self.V_r = 1
+        self.W = 1
+        self.cost_A = 1
+        self.cost_B = 1
+        self.m_db_access = Material_db.factory()
 
-    def __getattr__(self, name):
-        return getattr(self.instance, name)
+    def get_prod_cost(self, X_proc):
+        cost = self.V_r*X_proc[1]*(X_proc[0] - 20)**2*self.W
+        grad_x_cost = np.zeros(5, float)
+        return (cost, grad_x_cost)
+
+    def get_mat_cost(self, X_0_mat):
+        cost_A_tilde = 1
+        cost_B = 1
+        p_B = self.m_db_access.get_pure_component_density(self.R["reactants"][1])
+        theta_m = X_0_mat[1]/p_B
+        cost = self.V_r*((1 - theta_m)*cost_A_tilde + theta_m*cost_B)
+        grad_x_cost = np.zeros(5, float)
+        return (cost, grad_x_cost)
+
+    def get_contamination_range(self, A):
+        c_min = 0
+        c_max = 1
+        return (c_min, c_max)
+
+    def get_temp_range(self):
+        T_min = 0
+        T_max = 1000
+        return (T_min, T_max)
+
+    def get_reactor_vol(self):
+        return self.V_r
 
 
-class Initializer:
-
-    class __Init:
-
-        def __init__(self):
-            self.m_db_access = Material_db_access()
-            self.react_knowledge = Reaction_knowledge_access()
-
-        def get_init_data_kin_model(self, R):
-            A = R["reactants"][0]
-            p_db_access = Process_db_access(R)
-            X = np.zeros(7)
-            T_min, T_max = p_db_access.get_temp_range()
-            X[5] = 0.5*(T_max - T_min)
-            C_min, C_max = p_db_access.get_contamination_range(A)
-            X[4] = 0.5*(C_max - C_min)
-            X[2] = 0
-            X[3] = 0
-            info = self.react_knowledge.good_practice4reaction(R)
-            X[0] = 0.5*(1 - X[4])
-            X[1] = 0.5*(1 - X[4])
-            tau = self.react_knowledge.estimate_reaction_time(R)
-            X[6] = tau
-            return X
-
-        def get_material_relation_data(self, R):
-            S = self.react_knowledge.get_side_products(R)
-            R_S = { "reactants": R["reactants"], "products": [S] }
-            vp, grad_Hp = self.m_db_access.get_arrhenius_params(R)
-            vs, grad_Hs = self.m_db_access.get_arrhenius_params(R_S)
-            M_v = np.array([vp, vs])
-            M_grad_H = np.array([grad_Hp, grad_Hs])
-            return (M_v, M_grad_H)
-
-    instance = None
+class Initializer(FactoryBaseClass):
 
     def __init__(self):
-        # init of Process_db to be done
-        if not Initializer.instance:
-            Initializer.instance = Initializer.__Init()
-        else:
-            pass
+        self.m_db_access = Material_db.factory()
+        self.react_knowledge = Reaction_knowledge.factory()
 
-    def __getattr__(self, name):
-        return getattr(self.instance, name)
+    def get_init_data_kin_model(self, R):
+        A = R["reactants"][0]
+        p_db_access = Process_db_access(R)
+        X = np.zeros(7)
+        T_min, T_max = p_db_access.get_temp_range()
+        X[5] = 0.5*(T_max - T_min)
+        C_min, C_max = p_db_access.get_contamination_range(A)
+        X[4] = 0.5*(C_max - C_min)
+        X[2] = 0
+        X[3] = 0
+        info = self.react_knowledge.good_practice4reaction(R)
+        X[0] = 0.5*(1 - X[4])
+        X[1] = 0.5*(1 - X[4])
+        tau = self.react_knowledge.estimate_reaction_time(R)
+        X[6] = tau
+        return X
+
+    def get_material_relation_data(self, R):
+        S = self.react_knowledge.get_side_products(R)
+        R_S = { "reactants": R["reactants"], "products": [S] }
+        vp, grad_Hp = self.m_db_access.get_arrhenius_params(R)
+        vs, grad_Hs = self.m_db_access.get_arrhenius_params(R_S)
+        M_v = np.array([vp, vs])
+        M_grad_H = np.array([grad_Hp, grad_Hs])
+        return (M_v, M_grad_H)
 
 
 class Reaction_kinetics:
@@ -198,7 +151,7 @@ class Reaction_kinetics:
 
 
 class KPI:
-    #default constructor
+    # default constructor
     def __init__(self, R):
         self.R = R
         self.ini = Initializer()
@@ -216,12 +169,12 @@ class KPI:
 
 class Objectives:
     # default constructur
-    def __init__(self, R, C):
+    def __init__(self, R, C, process_db, material_db):
         self.R = R
         self.C = C
-        self.p_db_access = Process_db_access(self.R)
+        self.p_db_access = process_db
         self.kpi = KPI(self.R)
-        self.m_db_access = Material_db_access()
+        self.m_db_access = material_db
 
     def obj_calc(self, Y):
         p_A = self.m_db_access.get_pure_component_density(self.R["reactants"][0])
@@ -250,11 +203,11 @@ class Objectives:
 
 class Constraints:
     # default constructor
-    def __init__(self, R, C):
+    def __init__(self, R, C, reaction_knowledge, process_db):
         self.R = R
         self.C = C
-        self.react_knowledge = Reaction_knowledge_access()
-        self.p_db_access = Process_db_access(self.R)
+        self.react_knowledge = reaction_knowledge
+        self.p_db_access = process_db
 
     def get_linear_constraints(self, N):
         C_range = self.get_contamination_range(self.R["reactants"][0])
@@ -283,8 +236,16 @@ class MCOwrapper:
         # mco setup: trasform to impl. data structures.
         self.R = R
         self.C = C
-        self.obj = Objectives(self.R, self.C)
-        self.constraints = Constraints(self.R, self.C)
+        reaction_knowledge = Reaction_knowledge.factory()
+        process_db = Process_db.factory(self.R)
+        material_db = Material_db.factory()
+
+        self.obj = Objectives(
+            self.R, self.C, process_db, material_db
+        )
+        self.constraints = Constraints(
+            self.R, self.C, reaction_knowledge, process_db
+        )
         bounds = self.constraints.get_linear_constraints(5)
 
     def solve(self):
@@ -294,7 +255,7 @@ class MCOwrapper:
 # MCO description
 # interface of a material
 P = { "name": "product", "manufacturer": "", "pdi": 0 }
-react_knowledge = Reaction_knowledge_access()
+react_knowledge = Reaction_knowledge.factory()
 A, B = react_knowledge.get_educts4product(P)
 C = { "name": "contamination", "manufacturer": "", "pdi": 0 }
 # interface of a reaction
