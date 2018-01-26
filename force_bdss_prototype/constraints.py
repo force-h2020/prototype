@@ -16,6 +16,9 @@ class Constraints:
         tau_range = (0, self.get_max_reaction_time())
         return (C_range, T_range, tau_range)
 
+    def get_va_range(self):
+        return (0, self.p_db_access.get_reactor_vol())
+
     def get_contamination_range(self, educt):
         C_min, C_max = self.p_db_access.get_contamination_range(educt)
         return (C_min, C_max)

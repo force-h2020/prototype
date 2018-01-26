@@ -4,8 +4,20 @@ from .material_db_access import Material_db_access
 from .KPI import KPI
 
 class Objectives:
+    """ Objectives class
+
+
+    """
     # default constructur
     def __init__(self, R, C):
+        """ Constructor requires ...
+
+        Parmeters
+        ---------
+        R : type
+            Description of R
+
+        """
         self.R = R
         self.C = C
         self.p_db_access = Process_db_access(self.R)
@@ -35,3 +47,13 @@ class Objectives:
             # chain role: convert to grad_x to grad_y
             grad_y_O[i] = grad_x_O[i]
         return(O, grad_y_O)
+
+    def x_to_y(self, X):
+        V_r = self.p_db_access.get_reactor_vol()
+        p_B = self.m_db_access.get_pure_component_density(self.R["reactants"][1])
+        y = np.zeros(4)
+        y[0] = V_r - X[1]*V_r/p_B
+        y[1] = V_r/y[0]*X[4]
+        y[2] = X[5]
+        y[3] = X[6]
+        return y
