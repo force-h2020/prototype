@@ -11,10 +11,11 @@ class Constraints:
         self.p_db_access = Process_db_access(self.R)
 
     def get_linear_constraints(self, N):
+        va_range = self.get_va_range()
         C_range = self.get_contamination_range(self.R["reactants"][0])
         T_range = self.get_temp_range()
         tau_range = (0, self.get_max_reaction_time())
-        return (C_range, T_range, tau_range)
+        return (va_range, C_range, T_range, tau_range)
 
     def get_va_range(self):
         return (0, self.p_db_access.get_reactor_vol())

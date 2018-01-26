@@ -12,7 +12,6 @@ class Material_db_access:
             return m
 
         def get_pure_component_density(self, X):
-            print(X)
             p = 1
             return p
 

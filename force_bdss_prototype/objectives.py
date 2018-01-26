@@ -42,10 +42,10 @@ class Objectives:
         (O[1], grad_x_O2) = self.p_db_access.get_mat_cost(X[:5])
         (O[2], grad_x_O3) = self.p_db_access.get_prod_cost(X[5:])
         grad_x_O = np.array([grad_x_O1, grad_x_O2, grad_x_O3])
-        grad_y_O = np.zeros((3, 5))
+        grad_y_O = np.zeros((3, 4))
         for i in range(3):
             # chain role: convert to grad_x to grad_y
-            grad_y_O[i] = grad_x_O[i]
+            grad_y_O[i] = grad_x_O[i][:4]
         return(O, grad_y_O)
 
     def x_to_y(self, X):
