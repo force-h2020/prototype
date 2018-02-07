@@ -28,7 +28,8 @@ class Reaction_knowledge_access:
             A = R["reactants"][0]
             B = R["reactants"][1]
             P = R["products"][0]
-            e_time = 20
+            # estimated reaction time in s
+            e_time = 3600
             return e_time
 
     instance = None

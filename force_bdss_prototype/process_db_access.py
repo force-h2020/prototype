@@ -14,27 +14,22 @@ class Process_db_access:
             self.m_db_access = Material_db_access()
 
         def get_prod_cost(self, X_proc):
-            cost = self.V_r*X_proc[1]*(X_proc[0] - 20)**2*self.W
-            grad_x_cost = np.zeros(5, float)
-            return (cost, grad_x_cost)
-
-        def get_mat_cost(self, X_0_mat):
-            cost_A_tilde = 1
-            cost_B = 1
-            p_B = self.m_db_access.get_pure_component_density(self.R["reactants"][1])
-            theta_m = X_0_mat[1]/p_B
-            cost = self.V_r*((1 - theta_m)*cost_A_tilde + theta_m*cost_B)
-            grad_x_cost = np.zeros(5, float)
+            cost = X_proc[1]*(X_proc[0] - 20)**2*self.W
+            grad_x_cost = np.zeros(7, float)
+            grad_x_cost[5] = X_proc[1]*(2*X_proc[0] - 2*20)*self.W
+            grad_x_cost[6] = (X_proc[0] - 20)**2*self.W
             return (cost, grad_x_cost)
 
         def get_contamination_range(self, A):
-            c_min = 0
-            c_max = 1
+            # [C] in mol/l
+            c_min = 0.001
+            c_max = 0.1
             return (c_min, c_max)
 
         def get_temp_range(self):
-            T_min = 0
-            T_max = 1000
+            # T in Celsius
+            T_min = 20
+            T_max = 320
             return (T_min, T_max)
 
         def get_reactor_vol(self):
