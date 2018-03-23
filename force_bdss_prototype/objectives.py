@@ -30,11 +30,11 @@ class Objectives:
         p_C = self.m_db_access.get_pure_component_density(self.C)
         V_r = self.p_db_access.get_reactor_vol()
         X = np.zeros(7, float)
-        X[0] = p_A*(1 - Y[1]/p_C)*Y[1]/V_r
-        X[1] = p_B*(V_r - Y[0])/V_r
+        X[0] = p_A * (1 - Y[1] / p_C) * Y[0] / V_r
+        X[1] = p_B * (V_r - Y[0]) / V_r
         X[2] = 0
         X[3] = 0
-        X[4] = Y[1]*Y[0]/V_r
+        X[4] = Y[1] * Y[0] / V_r
         X[5] = Y[2]
         X[6] = Y[3]
         O = np.zeros(3, float)
@@ -60,12 +60,27 @@ class Objectives:
         grad_y_O[2] = grad_y_O3
         return(O, grad_y_O)
 
+    def y_to_x(self, Y):
+        p_A = self.m_db_access.get_pure_component_density(self.R["reactants"][0])
+        p_B = self.m_db_access.get_pure_component_density(self.R["reactants"][1])
+        p_C = self.m_db_access.get_pure_component_density(self.C)
+        V_r = self.p_db_access.get_reactor_vol()
+        X = np.zeros(7, float)
+        X[0] = p_A*(1 - Y[1]/p_C)*Y[0]/V_r
+        X[1] = p_B*(V_r - Y[0])/V_r
+        X[2] = 0
+        X[3] = 0
+        X[4] = Y[1]*Y[0]/V_r
+        X[5] = Y[2]
+        X[6] = Y[3]
+        return X
+
     def x_to_y(self, X):
         V_r = self.p_db_access.get_reactor_vol()
         p_B = self.m_db_access.get_pure_component_density(self.R["reactants"][1])
         y = np.zeros(4)
-        y[0] = V_r - X[1]*V_r/p_B
-        y[1] = V_r/y[0]*X[4]
+        y[0] = V_r - X[1] * V_r / p_B
+        y[1] = V_r / y[0] * X[4]
         y[2] = X[5]
         y[3] = X[6]
         return y

@@ -6,18 +6,18 @@ class Process_db_access:
     class __Process_db:
 
         def __init__(self, R):
-            self.R = R
-            self.V_r = 1
-            self.W = 1
-            self.cost_A = 1
-            self.cost_B = 1
             self.m_db_access = Material_db_access()
+            self.R = R
+            self.V_r = 1.
+            self.W = 1.
+            self.cost_A = 1.
+            self.cost_B = 1.
 
         def get_prod_cost(self, X_proc):
-            cost = X_proc[1]*(X_proc[0] - 20)**2*self.W
+            cost = X_proc[1] * (X_proc[0] - 290)**2 * self.W
             grad_x_cost = np.zeros(7, float)
-            grad_x_cost[5] = X_proc[1]*(2*X_proc[0] - 2*20)*self.W
-            grad_x_cost[6] = (X_proc[0] - 20)**2*self.W
+            grad_x_cost[5] = X_proc[1] * (2 * X_proc[0] - 2 * 290) * self.W
+            grad_x_cost[6] = (X_proc[0] - 290)**2 * self.W
             return (cost, grad_x_cost)
 
         def get_contamination_range(self, A):
@@ -27,9 +27,9 @@ class Process_db_access:
             return (c_min, c_max)
 
         def get_temp_range(self):
-            # T in Celsius
-            T_min = 20
-            T_max = 320
+            # T in Kelvin
+            T_min = 270
+            T_max = 400
             return (T_min, T_max)
 
         def get_reactor_vol(self):

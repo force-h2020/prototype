@@ -1,3 +1,5 @@
+import numpy as np
+
 class Reaction_knowledge_access:
 
     class __Reaction_knowledge:
@@ -8,14 +10,14 @@ class Reaction_knowledge_access:
         def get_educts4product(self, P):
             A = { "name": "eductA", "manufacturer": "", "pdi": 0 }
             B = { "name": "eductB", "manufacturer": "", "pdi": 0 }
-            return (A, B)
+            return np.array([A, B])
 
         def get_side_products(self, R):
             A = R["reactants"][0]
             B = R["reactants"][1]
             P = R["products"][0]
             S = { "name": "sideproduct", "manufacturer": "", "pdi": 0 }
-            return S
+            return np.array([S])
 
         def good_practice4reaction(self, R):
             A = R["reactants"][0]
@@ -29,7 +31,7 @@ class Reaction_knowledge_access:
             B = R["reactants"][1]
             P = R["products"][0]
             # estimated reaction time in s
-            e_time = 3600
+            e_time = 3600.
             return e_time
 
     instance = None

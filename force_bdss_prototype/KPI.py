@@ -13,7 +13,7 @@ class KPI:
     # returns impurity concentration I and its x-Gradient
     def kpi_calc(self, X):
         X_mat, grad_x_X_mat = self.react_kinetics.run(X, self.M)
-        I = X_mat[3] + X_mat[4] + X_mat[0] + X_mat[1]
+        I = float(X_mat[3] + X_mat[4] + X_mat[0] + X_mat[1])
         dIda = np.sum(grad_x_X_mat[0:2, 0] + grad_x_X_mat[3:5, 0])
         dIdb = np.sum(grad_x_X_mat[0:2, 1] + grad_x_X_mat[3:5, 1])
         dIdp = np.sum(grad_x_X_mat[0:2, 2] + grad_x_X_mat[3:5, 2])

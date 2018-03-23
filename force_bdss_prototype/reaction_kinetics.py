@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.special import factorial
 from .initializer import Initializer
 
 def analytical_solution(A0, B0, P0, S0, C0, k_ps, t):
@@ -77,6 +78,12 @@ def grad_x(A0, B0, P0, S0, C0, k_ps, t):
     grad_x_X_mat[4, :] = np.array([0, 0, 0, 0, 1, 0, 0])
     return grad_x_X_mat
 
+def calc_k(T, M):
+    M_v, M_delta_H = M
+    R = 8.3144598e-3
+    k_ps = M_v * np.exp(-M_delta_H / (R * T))
+    return k_ps
+
 class Reaction_kinetics:
 
     def __init__(self):
@@ -89,15 +96,10 @@ class Reaction_kinetics:
 
     def run(self, X0, M):
         # solver of kinetic module
-        M_v, M_delta_H = M
-        vp = M_v[0]
-        vs = M_v[1]
-        delta_Hp = M_delta_H[0]
-        delta_Hs = M_delta_H[1]
-        R = 8.3144598
-        k_ps = M_v * np.exp(M_delta_H/(R*X0[5]))
+        R = 8.3144598e-3
+        k_ps = calc_k(X0[5], M)
         X_mat = analytical_solution(*X0[:5], k_ps, X0[6])
         grad_x_X_mat = grad_x(*X0[:5], k_ps, X0[6])
-        dkdT = 1 / (R * X0[5])**2 * np.sum(k_ps * M_delta_H)
+        dkdT = 1 / (R * X0[5])**2 * np.sum(k_ps * M[0])
         grad_x_X_mat[:, 5] = dkdT * grad_x_X_mat[:, 5]
         return (X_mat, grad_x_X_mat)

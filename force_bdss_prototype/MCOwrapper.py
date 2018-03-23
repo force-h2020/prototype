@@ -14,7 +14,7 @@ class MCOwrapper:
         self.obj = Objectives(self.R, self.C)
         self.constraints = Constraints(self.R, self.C)
         self.ini = Initializer()
-        constr = self.constraints.get_linear_constraints(5)
+        constr = self.constraints.get_linear_constraints(4)
         obj_f = lambda y: self.obj.obj_calc(y)[0]
         obj_jac = lambda y: self.obj.obj_calc(y)[1]
         X0 = self.ini.get_init_data_kin_model(self.R)
@@ -22,4 +22,4 @@ class MCOwrapper:
         self.mcosolver = MCOsolver(y0, constr, obj_f, obj_jac)
 
     def solve(self):
-        self.mcosolver.solve()
+        return self.mcosolver.solve()

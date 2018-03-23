@@ -7,6 +7,6 @@ class Pareto_process_db:
 
     def write_csv(self, fil=None):
         if fil:
-            np.savetxt(fil, self.data, delimiter=",", fmt="%.10f")
+            np.savetxt(fil, self.data, delimiter=";", fmt="%.10f")
         else:
             np.savetxt("pareto_data.csv", self.data, delimiter=",", fmt="%.10f")
