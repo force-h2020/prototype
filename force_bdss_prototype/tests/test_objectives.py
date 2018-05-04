@@ -30,10 +30,10 @@ class ObjectiveTestCase(unittest.TestCase):
 
     def test_x_to_y_return_type(self):
         objectives = Objectives(R, C)
-        x = np.ones(7)
+        x = 0.5 * np.ones(7)
         self.assertEqual(type(objectives.x_to_y(x)), nptype)
 
     def test_x_to_y_return_shape(self):
         objectives = Objectives(R, C)
-        x = np.ones(7)
+        x = 0.5 * np.ones(7)
         self.assertEqual(objectives.x_to_y(x).shape, (4,))

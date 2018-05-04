@@ -14,16 +14,15 @@ class MCOsolver:
         self.obj_f = obj_f
         self.obj_jac = obj_jac
 
-    def solve(self, N=4):
+    def solve(self, N=7):
         new_obj = lambda y: np.dot(self.w, self.obj_f(y))
         new_obj_jac = lambda y: np.dot(self.w, self.obj_jac(y))
         for self.w[0] in np.linspace(0, 1, N):
             for self.w[1] in np.linspace(0, 1 - self.w[0],
                                          N - int((N - 1)*self.w[0])):
                 self.w[2] = 1 - self.w[0] - self.w[1]
+                #if not np.any(self.w == 0):
                 self.store_curr_res(self.KKTsolver(new_obj, new_obj_jac))
-        self.pp_db = Pareto_process_db(self.res[:self.i])
-        self.pp_db.write_csv()
         return self.res[:self.i]
 
     def KKTsolver(self, new_obj, new_obj_jac):

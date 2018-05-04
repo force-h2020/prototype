@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 
 from ..reaction_kinetics import Reaction_kinetics, analytical_solution, \
-                                dalpha, grad_x, calc_k
+                                grad_x, calc_k
 
 A = { "name": "eductA", "manufacturer": "", "pdi": 0 }
 B = { "name": "eductB", "manufacturer": "", "pdi": 0 }
@@ -36,14 +36,6 @@ class Reaction_kineticsTestCase(unittest.TestCase):
     def test_analytic_solutionreturn_shape(self):
         params = [0.4, 0.5, 0., 0., 0.1, np.array([1, 2]), 20]
         self.assertEqual(analytical_solution(*params).shape, (5,))
-
-    def test_dalpha_return_type(self):
-        da = dalpha(0.4, 0.5, 3., 20.)
-        self.assertEqual(type(da), nptype)
-
-    def test_dalpha_return_shape(self):
-        da = dalpha(0.4, 0.5, 3., 20.)
-        self.assertEqual(da.shape, (4,))
 
     def test_grad_x_return_type(self):
         params = [0.4, 0.5, 0., 0., 0.1, np.array([1, 2]), 20]

@@ -21,7 +21,7 @@ class Material_db_access:
                 # delta H in kJ/mol
                 delta_H = 1.5
             else:
-                delta_H = 6.
+                delta_H = 12.
             v = 0.02
             return (v, delta_H)
 
@@ -29,7 +29,7 @@ class Material_db_access:
             const_A = 1
             const_C = 1
             cost_B = 1
-            tot_cost_A = V_a * (1 - C_e / p_C) * const_A + const_C * p_C / C_e
+            tot_cost_A = V_a * ((1 - C_e / p_C) * const_A + const_C * p_C / C_e)
             tot_cost_B = (V_r - V_a) * cost_B
             cost = tot_cost_A + tot_cost_B
             dva = ((1 - C_e / p_C) * const_A + const_C * p_C / C_e) - cost_B
