@@ -189,8 +189,20 @@ class Reaction_kinetics:
         # solver of kinetic module
         R = 8.3144598e-3
         k_ps = _calc_k(X0[5], M)
-        X_mat = _analytical_solution(*X0[:5], k_ps, X0[6])
-        grad_x_X_mat = _grad_x(*X0[:5], k_ps, X0[6])
+        X_mat = _analytical_solution(X0[0],
+                                     X0[1],
+                                     X0[2],
+                                     X0[3],
+                                     X0[4],
+                                     k_ps,
+                                     X0[6])
+        grad_x_X_mat = _grad_x(X0[0],
+                               X0[1],
+                               X0[2],
+                               X0[3],
+                               X0[4],
+                               k_ps,
+                               X0[6])
         dkdT = 1 / (R * X0[5])**2 * np.sum(k_ps * M[0])
         grad_x_X_mat[:, 5] = dkdT * grad_x_X_mat[:, 5]
         return (X_mat, grad_x_X_mat)
