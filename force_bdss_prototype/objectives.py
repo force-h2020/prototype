@@ -41,7 +41,7 @@ class Objectives:
         O = np.zeros(3, float)
         (O[0], grad_x_O1) = self.kpi.kpi_calc(X)
         (O[1], grad_x_O2) = self.p_db_access.get_prod_cost(X[5:])
-        (O[2], grad_y_O3) = self.m_db_access.get_mat_cost(*y[:2], V_r, p_C)
+        (O[2], grad_y_O3) = self.m_db_access.get_mat_cost(y[0], y[1], V_r, p_C)
         grad_x_O = np.array([grad_x_O1, grad_x_O2])
         dadVa = p_A * (1 - y[1] / p_C) / V_r
         dadCe = - p_A * y[0] / (p_C * V_r)
