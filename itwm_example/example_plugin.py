@@ -1,39 +1,14 @@
 from force_bdss.api import BaseExtensionPlugin, plugin_id
+from itwm_example.fixed_value_data_source.fixed_value_data_source_factory \
+    import \
+    FixedValueDataSourceFactory
 
 
 class ExamplePlugin(BaseExtensionPlugin):
-    """This is an example of the plugin system for the BDSS.
-    This class provides access points for the various entities
-    that the plugin system supports:
-
-    - data sources: entities that perform calculations or
-      retrieve data from external sources
-    - MCO: multi criteria optimizer support. Note that the MCO
-      must obey an execution model as in Dakota, that is,
-      this plugin spawns the MCO, which spawns subprocesses
-      performing the single-point evaluation.
-    - Notification listeners: entities that handle notifications
-      from the MCO as it computes data and can perform actions
-      accordingly. The MCO plugin must trigger the appropriate
-      events, otherwise no notification will be triggered.
-      You can use notification listeners to submit data to a
-      database as they are computed.
-    - UI Hooks: provides hook methods that are called in some
-      specific moments of the FORCE UI.
-    """
-    #: Define this id using the plugin_id function.
-    #: The first parameter is your organization unique identifier.
-    #: The second is a unique string of your liking. Make sure that
-    #: is not reused by any of your other plugins. You are fully
-    #: responsible for the uniqueness of this second string.
     id = plugin_id("itwm", "example")
 
-    #: You define these methods to return a list of "factory"
-    #: classes. You are free to implement only the methods that
-    #: you need. If you are not exporting any data sources, for
-    #: example the following method is not needed.
     def _data_source_factories_default(self):
-        return []
+        return [FixedValueDataSourceFactory(self)]
 
     def _mco_factories_default(self):
         return []
