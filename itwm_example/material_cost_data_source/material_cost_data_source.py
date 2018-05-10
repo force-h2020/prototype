@@ -20,7 +20,7 @@ class MaterialCostDataSource(BaseDataSource):
         grad_cost = [
             ((1 - C_e / rho_C) * model.const_A
              + model.const_C * rho_C / C_e) - model.cost_B,
-            - V_a * model.const_A / rho_C - model.const_C * rho_C / C_e**2
+            - V_a * model.const_A / rho_C - model.const_C * rho_C / C_e**2,
             0.0,
             0.0
         ]
