@@ -1,7 +1,37 @@
-from setuptools import setup
+import os
+from setuptools import setup, find_packages
+
+VERSION = "0.1.0.dev0"
+
+
+# Read description
+with open('README.rst', 'r') as readme:
+    README_TEXT = readme.read()
+
+
+def write_version_py():
+    filename = os.path.join(
+        os.path.dirname(__file__),
+        'itwm_example',
+        'version.py')
+    ver = "__version__ = '{}'\n"
+    with open(filename, 'w') as fh:
+        fh.write(ver.format(VERSION))
+
+
+write_version_py()
 
 setup(
-    name="force_bdss_prototype",
-    version="0.0.1",
-    packages=["force_bdss_prototype"]
+    name="itwm_example",
+    version=VERSION,
+    entry_points={
+        "force.bdss.extensions": [
+            "itwm_example = "
+            "itwm_example.example_plugin:ExamplePlugin",
+        ]
+    },
+    packages=find_packages(),
+    install_requires=[
+        "force_bdss >= 0.2.0.dev0",
+    ]
 )
