@@ -2,6 +2,7 @@ import numpy as np
 from scipy.special import factorial
 from .initializer import Initializer
 
+
 def _analytical_solution(A0, B0, P0, S0, C0, k_ps, t):
     a = _alpha(A0, B0, np.sum(k_ps), t)
     A = A0 - a
@@ -11,11 +12,13 @@ def _analytical_solution(A0, B0, P0, S0, C0, k_ps, t):
     C = C0
     return np.array([A, B, P, S, C])
 
+
 def _sum1(A0, B0, k, t, n=5):
     exponent = np.arange(1, n + 1, 1)
     denominator = factorial(exponent)
     result = ((B0 - A0) ** (exponent - 1)) * (k * t) ** exponent
     return np.sum(result / denominator)
+
 
 def _sum2(A0, B0, k, t, n=5):
     exponent = np.arange(2, n + 1, 1)
@@ -23,11 +26,13 @@ def _sum2(A0, B0, k, t, n=5):
     result = ((B0 - A0) ** (exponent - 2)) * (k * t) ** exponent
     return np.sum(result / denominator)
 
+
 def _sum3(A0, B0, k, t, n=5):
     exponent = np.arange(1, n + 1, 1)
     denominator = factorial(exponent) / exponent
     result = ((B0 - A0) ** (exponent - 1)) * (k * t) ** (exponent - 1)
     return np.sum(result / denominator)
+
 
 def _alpha(A0, B0, k, t):
     epsilon = np.abs((A0 - B0) * k * t)
@@ -41,6 +46,7 @@ def _alpha(A0, B0, k, t):
         result += (A0 * B0 * sum1ba) / (1. + (A0 * sum1ba))
         result /= 2
     return result
+
 
 def _dalda(A0, B0, k, t):
     epsilon = np.abs((A0 - B0) * k * t)
@@ -61,6 +67,7 @@ def _dalda(A0, B0, k, t):
         result += (p3 - p4) / (1 + A0 * sum1ba)**2
         result /= 2
     return result
+
 
 def _daldb(A0, B0, k, t):
     epsilon = np.abs((A0 - B0) * k * t)
@@ -83,6 +90,7 @@ def _daldb(A0, B0, k, t):
         result /= 2
     return result
 
+
 def _daldk(A0, B0, k, t):
     epsilon = np.abs((A0 - B0) * k * t)
     if epsilon > 8e-2:
@@ -102,6 +110,7 @@ def _daldk(A0, B0, k, t):
         result /= 2
     return result
 
+
 def _daldt(A0, B0, k, t):
     epsilon = np.abs((A0 - B0) * k * t)
     if epsilon > 8e-2:
@@ -120,6 +129,7 @@ def _daldt(A0, B0, k, t):
         result += (p3 - p4) / (1 + A0 * sum1ba)**2
         result /= 2
     return result
+
 
 def _grad_x(A0, B0, P0, S0, C0, k_ps, t):
     grad_x_X_mat = np.empty((5, 7))
@@ -156,6 +166,7 @@ def _grad_x(A0, B0, P0, S0, C0, k_ps, t):
     grad_x_X_mat[3, :] = np.array([dsda, dsdb, 0, dsds, 0, dsdk, dsdt])
     grad_x_X_mat[4, :] = np.array([0, 0, 0, 0, 1, 0, 0])
     return grad_x_X_mat
+
 
 def _calc_k(T, M):
     M_v, M_delta_H = M
