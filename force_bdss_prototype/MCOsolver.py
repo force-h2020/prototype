@@ -1,9 +1,8 @@
 import numpy as np
 import scipy.optimize as sp_opt
-from .pareto_process_db import Pareto_process_db
+
 
 class MCOsolver:
-
     w = np.array([0.4, 0.4, 0.2])
     res = np.zeros((100, 4))
     i = 0

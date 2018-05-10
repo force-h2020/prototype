@@ -3,6 +3,7 @@ from .process_db_access import Process_db_access
 from .material_db_access import Material_db_access
 from .KPI import KPI
 
+
 class Objectives:
     """ Objectives class
 

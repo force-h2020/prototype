@@ -2,6 +2,7 @@ import numpy as np
 from .initializer import Initializer
 from .reaction_kinetics import Reaction_kinetics
 
+
 class KPI:
     #default constructor
     def __init__(self, R):

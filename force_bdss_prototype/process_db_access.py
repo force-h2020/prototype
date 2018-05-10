@@ -1,6 +1,7 @@
 import numpy as np
 from .material_db_access import Material_db_access
 
+
 class Process_db_access:
 
     class __Process_db:

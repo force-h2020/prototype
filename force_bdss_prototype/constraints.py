@@ -1,6 +1,6 @@
-import numpy as np
 from .reaction_knowledge_access import Reaction_knowledge_access
 from .process_db_access import Process_db_access
+
 
 class Constraints:
     # default constructor
