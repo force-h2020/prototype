@@ -176,15 +176,6 @@ def _calc_k(T, M):
 
 
 class Reaction_kinetics:
-
-    def __init__(self):
-        self.ini = Initializer()
-
-    def run_default(self, R):
-        X = self.ini.get_init_data_kin_model(R)
-        M = self.ini.get_material_relation_data(R)
-        return self.run(X, M)
-
     def run(self, X0, M):
         # solver of kinetic module
         R = 8.3144598e-3
