@@ -1,16 +1,18 @@
-from traits.api import String
-
-from force_bdss.api import factory_id, BaseDataSourceFactory
+from force_bdss.api import BaseDataSourceFactory
 
 from .production_cost_data_source_model import ProductionCostDataSourceModel
 from .production_cost_data_source import ProductionCostDataSource
 
 
 class ProductionCostDataSourceFactory(BaseDataSourceFactory):
-    id = String(factory_id("itwm", "production_cost_data_source"))
+    def get_identifier(self):
+        return "production_cost_data_source"
 
-    name = String("Production cost (heat)")
+    def get_name(self):
+        return "Production cost (heat)"
 
-    model_class = ProductionCostDataSourceModel
+    def get_model_class(self):
+        return ProductionCostDataSourceModel
 
-    data_source_class = ProductionCostDataSource
+    def get_data_source_class(self):
+        return ProductionCostDataSource

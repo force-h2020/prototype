@@ -1,6 +1,4 @@
-from traits.api import String
-
-from force_bdss.api import factory_id, BaseDataSourceFactory
+from force_bdss.api import BaseDataSourceFactory
 from itwm_example.material_cost_data_source.material_cost_data_source import \
     MaterialCostDataSource
 from itwm_example.material_cost_data_source.material_cost_data_source_model \
@@ -9,10 +7,14 @@ from itwm_example.material_cost_data_source.material_cost_data_source_model \
 
 
 class MaterialCostDataSourceFactory(BaseDataSourceFactory):
-    id = String(factory_id("itwm", "material_cost_data_source"))
+    def get_identifier(self):
+        return "material_cost_data_source"
 
-    name = String("Material cost")
+    def get_name(self):
+        return "Material cost"
 
-    model_class = MaterialCostDataSourceModel
+    def get_model_class(self):
+        return MaterialCostDataSourceModel
 
-    data_source_class = MaterialCostDataSource
+    def get_data_source_class(self):
+        return MaterialCostDataSource
