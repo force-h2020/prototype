@@ -13,6 +13,7 @@ class Process_db_access:
             self.cost_B = 1.
 
         def get_prod_cost(self, X_proc):
+            # Transferred
             cost = X_proc[1] * (X_proc[0] - 290)**2 * self.W
             grad_x_cost = np.zeros(7, float)
             grad_x_cost[5] = X_proc[1] * (2 * X_proc[0] - 2 * 290) * self.W
