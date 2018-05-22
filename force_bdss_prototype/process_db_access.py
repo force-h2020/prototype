@@ -1,5 +1,4 @@
 import numpy as np
-from .material_db_access import Material_db_access
 
 
 class Process_db_access:
@@ -7,7 +6,6 @@ class Process_db_access:
     class __Process_db:
 
         def __init__(self, R):
-            self.m_db_access = Material_db_access()
             self.R = R
             self.V_r = 1.
             self.W = 1.
