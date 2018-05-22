@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.special import factorial
-from .initializer import Initializer
 
 
 def _analytical_solution(A0, B0, P0, S0, C0, k_ps, t):
