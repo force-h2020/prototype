@@ -23,6 +23,7 @@ class Material_db_access:
             return (v, delta_H)
 
         def get_mat_cost(self, V_a, C_e, V_r, p_C):
+            # Transferred
             const_A = 1
             const_C = 1
             cost_B = 1

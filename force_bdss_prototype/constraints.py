@@ -4,9 +4,8 @@ from .process_db_access import Process_db_access
 
 class Constraints:
     # default constructor
-    def __init__(self, R, C):
+    def __init__(self, R):
         self.R = R
-        self.C = C
         self.react_knowledge = Reaction_knowledge_access()
         self.p_db_access = Process_db_access(self.R)
 

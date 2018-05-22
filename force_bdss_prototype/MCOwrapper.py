@@ -13,7 +13,7 @@ class MCOwrapper:
         self.R = R
         self.C = C
         self.obj = Objectives(self.R, self.C)
-        self.constraints = Constraints(self.R, self.C)
+        self.constraints = Constraints(self.R)
         self.ini = Initializer()
         constr = self.constraints.get_linear_constraints(4)
         obj_f = lambda y: self.obj.obj_calc(y)[0]
