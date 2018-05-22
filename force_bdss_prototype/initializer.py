@@ -23,7 +23,6 @@ class Initializer:
             X[4] = C_min + 0.5 * (C_max - C_min)
             X[2] = 0
             X[3] = 0
-            info = self.react_knowledge.good_practice4reaction(R)
             X[0] = 0.5 - X[4]
             X[1] = 0.5
             tau = self.react_knowledge.estimate_reaction_time(R)

@@ -8,10 +8,6 @@ class Material_db_access:
         def __init__(self):
             pass
 
-        def get_component_dat(self, X):
-            m = 1.
-            return m
-
         def get_pure_component_density(self, X):
             # p in mol/l
             p = 1.
