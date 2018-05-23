@@ -13,6 +13,7 @@ class Initializer:
             self.react_knowledge = Reaction_knowledge_access()
 
         def get_init_data_kin_model(self, R):
+            # Transferred to json
             A = R["reactants"][0]
             B = R["reactants"][1]
             p_db_access = Process_db_access(R)
@@ -30,6 +31,7 @@ class Initializer:
             return X
 
         def get_material_relation_data(self, R):
+            # Transferred to json
             S = self.react_knowledge.get_side_products(R)[0]
             R_S = { "reactants": R["reactants"], "products": [S] }
             vp, grad_Hp = self.m_db_access.get_arrhenius_params(R)

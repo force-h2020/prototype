@@ -21,18 +21,21 @@ class Process_db_access:
             return (cost, grad_x_cost)
 
         def get_contamination_range(self, A):
+            # Transferred to json
             # [C] in mol/l
             c_min = 0.001
             c_max = 0.1
             return (c_min, c_max)
 
         def get_temp_range(self):
+            # Transferred to json
             # T in Kelvin
             T_min = 270
             T_max = 400
             return (T_min, T_max)
 
         def get_reactor_vol(self):
+            # Transferred to json
             return self.V_r
 
     instance = None

@@ -1,3 +1,4 @@
+# Transferred
 import numpy as np
 
 
@@ -9,11 +10,13 @@ class Material_db_access:
             pass
 
         def get_pure_component_density(self, X):
+            # Transferred to json
             # p in mol/l
             p = 1.
             return p
 
         def get_arrhenius_params(self, R):
+            # Transferred to json
             if R["products"][0]["name"] == "product":
                 # delta H in kJ/mol
                 delta_H = 1.5
