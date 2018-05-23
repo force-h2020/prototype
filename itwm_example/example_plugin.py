@@ -9,19 +9,11 @@ from itwm_example.production_cost_data_source\
 
 
 class ExamplePlugin(BaseExtensionPlugin):
-    id = plugin_id("itwm", "example")
+    id = plugin_id("itwm", "example", 0)
 
-    def _data_source_factories_default(self):
+    def get_factory_classes(self):
         return [
-            FixedValueDataSourceFactory(self),
-            ProductionCostDataSourceFactory(self),
+            FixedValueDataSourceFactory,
+            ProductionCostDataSourceFactory,
+            CSVWriterFactory
         ]
-
-    def _mco_factories_default(self):
-        return []
-
-    def _notification_listener_factories_default(self):
-        return [CSVWriterFactory(self)]
-
-    def _ui_hooks_factories_default(self):
-        return []
