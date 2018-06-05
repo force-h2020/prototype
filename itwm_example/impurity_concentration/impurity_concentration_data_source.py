@@ -7,7 +7,22 @@ from force_bdss.data_sources.base_data_source import BaseDataSource
 
 class ImpurityConcentrationDataSource(BaseDataSource):
     def run(self, model, parameters):
-
+        # 0: A concentration
+        # 1: 0.5. B concentration
+        # 2: 0. P concentration
+        # 3: 0. S concentration
+        # 4: 0.505. C concentration
+        # 5: 335. Temperature
+        # 6: 360. Reaction time
+        X = [
+            parameters[0].value,
+            parameters[1].value,
+            parameters[2].value,
+            parameters[3].value,
+            parameters[4].value,
+            parameters[5].value,
+            parameters[6].value
+        ]
         X_mat, grad_x_X_mat = _run(X, self.M)
         I = float(X_mat[3] + X_mat[4] + X_mat[0] + X_mat[1])
         dIda = np.sum(grad_x_X_mat[0:2, 0] + grad_x_X_mat[3:5, 0])
@@ -23,10 +38,13 @@ class ImpurityConcentrationDataSource(BaseDataSource):
     def slots(self, model):
         return (
             (
-                Slot(description="V_a_tilde", type="VOLUME"),
-                Slot(description="C_e", type="CONCENTRATION"),
-                Slot(description="reactor volume", type="VOLUME"),
-                Slot(description="rho_C", type="DENSITY"),
+                Slot(description="A concentration", type="CONCENTRATION"),
+                Slot(description="B concentration", type="CONCENTRATION"),
+                Slot(description="P concentration", type="CONCENTRATION"),
+                Slot(description="S concentration", type="CONCENTRATION"),
+                Slot(description="C concentration", type="CONCENTRATION"),
+                Slot(description="Temperature", type="TEMPERATURE"),
+                Slot(description="Reaction time", type="TIME"),
             ),
             (
                 Slot(description="Impurity concentration",
