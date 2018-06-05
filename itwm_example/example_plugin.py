@@ -1,3 +1,6 @@
+from itwm_example.pure_densities.pure_densities_factory import \
+    PureDensitiesFactory
+
 from force_bdss.api import BaseExtensionPlugin, plugin_id
 from itwm_example.csv_writer.csv_writer_factory import CSVWriterFactory
 from itwm_example.fixed_value_data_source.fixed_value_data_source_factory \
@@ -26,5 +29,6 @@ class ExamplePlugin(BaseExtensionPlugin):
             ArrheniusParametersFactory,
             MaterialCostDataSourceFactory,
             ImpurityConcentrationDataSourceFactory,
+            PureDensitiesFactory,
             CSVWriterFactory
         ]
