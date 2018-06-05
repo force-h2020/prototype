@@ -24,7 +24,7 @@ class ImpurityConcentrationDataSource(BaseDataSource):
             parameters[6].value
         ]
         X_mat, grad_x_X_mat = _run(X, self.M)
-        I = float(X_mat[3] + X_mat[4] + X_mat[0] + X_mat[1])
+        impurity_conc = float(X_mat[3] + X_mat[4] + X_mat[0] + X_mat[1])
         dIda = np.sum(grad_x_X_mat[0:2, 0] + grad_x_X_mat[3:5, 0])
         dIdb = np.sum(grad_x_X_mat[0:2, 1] + grad_x_X_mat[3:5, 1])
         dIdp = np.sum(grad_x_X_mat[0:2, 2] + grad_x_X_mat[3:5, 2])
@@ -33,7 +33,7 @@ class ImpurityConcentrationDataSource(BaseDataSource):
         dIdT = np.sum(grad_x_X_mat[0:2, 5] + grad_x_X_mat[3:5, 5])
         dIdt = np.sum(grad_x_X_mat[0:2, 6] + grad_x_X_mat[3:5, 6])
         grad_x_I = np.array([dIda, dIdb, dIdp, dIds, dIdc, dIdT, dIdt])
-        return I, grad_x_I
+        return impurity_conc, grad_x_I
 
     def slots(self, model):
         return (
@@ -247,4 +247,3 @@ def _run(X0, M):
     dkdT = 1 / (R * X0[5])**2 * np.sum(k_ps * M[0])
     grad_x_X_mat[:, 5] = dkdT * grad_x_X_mat[:, 5]
     return X_mat, grad_x_X_mat
-
