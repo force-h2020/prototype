@@ -9,15 +9,12 @@ P = { "name": "product", "manufacturer": "", "pdi": 0 }
 R = { "reactants": [A, B], "products": [P] }
 nptype = type(np.array([]))
 
+
 class Material_db_accessTestCase(unittest.TestCase):
 
     def test_instance(self):
         m_db = Material_db_access()
         self.assertIsInstance(m_db, Material_db_access)
-
-    def test_component_dat_return_type(self):
-        m_db = Material_db_access()
-        self.assertEqual(type(m_db.get_component_dat(A)), float)
 
     def test_component_density_return_type(self):
         m_db = Material_db_access()

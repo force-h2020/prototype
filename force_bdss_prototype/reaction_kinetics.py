@@ -1,6 +1,5 @@
 import numpy as np
 from scipy.special import factorial
-from .initializer import Initializer
 
 
 def _analytical_solution(A0, B0, P0, S0, C0, k_ps, t):
@@ -176,15 +175,6 @@ def _calc_k(T, M):
 
 
 class Reaction_kinetics:
-
-    def __init__(self):
-        self.ini = Initializer()
-
-    def run_default(self, R):
-        X = self.ini.get_init_data_kin_model(R)
-        M = self.ini.get_material_relation_data(R)
-        return self.run(X, M)
-
     def run(self, X0, M):
         # solver of kinetic module
         R = 8.3144598e-3
