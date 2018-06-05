@@ -10,23 +10,16 @@ P = { "name": "product", "manufacturer": "", "pdi": 0 }
 R = { "reactants": [A, B], "products": [P] }
 nptype = type(np.array([]))
 
+
 class Reaction_knowledge_accessTestCase(unittest.TestCase):
 
     def test_instance(self):
         react_knowldg = Reaction_knowledge_access()
         self.assertIsInstance(react_knowldg, Reaction_knowledge_access)
 
-    def test_educts4products_return_type(self):
-        react_knowldg = Reaction_knowledge_access()
-        self.assertEqual(type(react_knowldg.get_educts4product(P)), nptype)
-
     def test_sideproducts_return_type(self):
         react_knowldg = Reaction_knowledge_access()
         self.assertEqual(type(react_knowldg.get_side_products(R)), nptype)
-
-    def test_good_practice4reaction_return_type(self):
-        react_knowldg = Reaction_knowledge_access()
-        self.assertEqual(type(react_knowldg.good_practice4reaction(R)), str)
 
     def test_estimate_reaction_time_return_type(self):
         react_knowldg = Reaction_knowledge_access()

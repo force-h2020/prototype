@@ -11,23 +11,12 @@ R = { "reactants": [A, B], "products": [P] }
 M = (np.array([1, 1], float), np.array([1.5, 6.], float))
 nptype = type(np.array([]))
 
+
 class Reaction_kineticsTestCase(unittest.TestCase):
 
     def test_instance(self):
         rkin = Reaction_kinetics()
         self.assertIsInstance(rkin, Reaction_kinetics)
-
-    def test_run_return_type(self):
-        rkin = Reaction_kinetics()
-        X_mat, grad_x_X_mat = rkin.run_default(R)
-        self.assertEqual(type(X_mat), nptype)
-        self.assertEqual(type(grad_x_X_mat), nptype)
-
-    def test_run_return_shape(self):
-        rkin = Reaction_kinetics()
-        X_mat, grad_x_X_mat = rkin.run_default(R)
-        self.assertEqual(X_mat.shape, (5,))
-        self.assertEqual(grad_x_X_mat.shape, (5, 7))
 
     def test_analytic_solutionreturn_type(self):
         params = [0.4, 0.5, 0., 0., 0.1, np.array([1, 2]), 20]
