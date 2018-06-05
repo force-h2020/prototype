@@ -8,29 +8,13 @@ class Reaction_knowledge_access:
         def __init__(self):
             pass
 
-        def get_educts4product(self, P):
-            A = { "name": "eductA", "manufacturer": "", "pdi": 0 }
-            B = { "name": "eductB", "manufacturer": "", "pdi": 0 }
-            return np.array([A, B])
-
         def get_side_products(self, R):
-            A = R["reactants"][0]
-            B = R["reactants"][1]
-            P = R["products"][0]
-            S = { "name": "sideproduct", "manufacturer": "", "pdi": 0 }
+            # Useless
+            S = {"name": "sideproduct", "manufacturer": "", "pdi": 0}
             return np.array([S])
 
-        def good_practice4reaction(self, R):
-            A = R["reactants"][0]
-            B = R["reactants"][1]
-            P = R["products"][0]
-            info = ""
-            return info
-
         def estimate_reaction_time(self, R):
-            A = R["reactants"][0]
-            B = R["reactants"][1]
-            P = R["products"][0]
+            # Transferred to json
             # estimated reaction time in s
             e_time = 360.
             return e_time

@@ -13,12 +13,20 @@ class MCOwrapper:
         self.R = R
         self.C = C
         self.obj = Objectives(self.R, self.C)
-        self.constraints = Constraints(self.R, self.C)
+        self.constraints = Constraints(self.R)
         self.ini = Initializer()
-        constr = self.constraints.get_linear_constraints(4)
+        constr = self.constraints.get_linear_constraints()
         obj_f = lambda y: self.obj.obj_calc(y)[0]
         obj_jac = lambda y: self.obj.obj_calc(y)[1]
         X0 = self.ini.get_init_data_kin_model(self.R)
+        # X0 structure:
+        # 0: A concentration
+        # 1: 0.5. B concentration
+        # 2: 0. P concentration
+        # 3: 0. S concentration
+        # 4: 0.505. C concentration
+        # 5: 335. Temperature
+        # 6: 360. Reaction time
         y0 = self.obj.x_to_y(X0)
         self.mcosolver = MCOsolver(y0, constr, obj_f, obj_jac)
 

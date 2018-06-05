@@ -13,6 +13,7 @@ class Initializer:
             self.react_knowledge = Reaction_knowledge_access()
 
         def get_init_data_kin_model(self, R):
+            # Transferred to json
             A = R["reactants"][0]
             B = R["reactants"][1]
             p_db_access = Process_db_access(R)
@@ -23,7 +24,6 @@ class Initializer:
             X[4] = C_min + 0.5 * (C_max - C_min)
             X[2] = 0
             X[3] = 0
-            info = self.react_knowledge.good_practice4reaction(R)
             X[0] = 0.5 - X[4]
             X[1] = 0.5
             tau = self.react_knowledge.estimate_reaction_time(R)
@@ -31,6 +31,7 @@ class Initializer:
             return X
 
         def get_material_relation_data(self, R):
+            # Transferred to json
             S = self.react_knowledge.get_side_products(R)[0]
             R_S = { "reactants": R["reactants"], "products": [S] }
             vp, grad_Hp = self.m_db_access.get_arrhenius_params(R)
