@@ -4,6 +4,7 @@ from .reaction_kinetics import Reaction_kinetics
 
 
 class KPI:
+    # Transferred
     #default constructor
     def __init__(self, R):
         self.R = R

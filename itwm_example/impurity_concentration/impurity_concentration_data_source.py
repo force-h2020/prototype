@@ -1,6 +1,58 @@
-# Transferred
 import numpy as np
 from scipy.special import factorial
+
+from force_bdss.core.slot import Slot
+from force_bdss.data_sources.base_data_source import BaseDataSource
+
+
+class ImpurityConcentrationDataSource(BaseDataSource):
+    def run(self, model, parameters):
+        # 0: A concentration
+        # 1: 0.5. B concentration
+        # 2: 0. P concentration
+        # 3: 0. S concentration
+        # 4: 0.505. C concentration
+        # 5: 335. Temperature
+        # 6: 360. Reaction time
+        X = [
+            parameters[0].value,
+            parameters[1].value,
+            parameters[2].value,
+            parameters[3].value,
+            parameters[4].value,
+            parameters[5].value,
+            parameters[6].value
+        ]
+        X_mat, grad_x_X_mat = _run(X, self.M)
+        impurity_conc = float(X_mat[3] + X_mat[4] + X_mat[0] + X_mat[1])
+        dIda = np.sum(grad_x_X_mat[0:2, 0] + grad_x_X_mat[3:5, 0])
+        dIdb = np.sum(grad_x_X_mat[0:2, 1] + grad_x_X_mat[3:5, 1])
+        dIdp = np.sum(grad_x_X_mat[0:2, 2] + grad_x_X_mat[3:5, 2])
+        dIds = np.sum(grad_x_X_mat[0:2, 3] + grad_x_X_mat[3:5, 3])
+        dIdc = np.sum(grad_x_X_mat[0:2, 4] + grad_x_X_mat[3:5, 4])
+        dIdT = np.sum(grad_x_X_mat[0:2, 5] + grad_x_X_mat[3:5, 5])
+        dIdt = np.sum(grad_x_X_mat[0:2, 6] + grad_x_X_mat[3:5, 6])
+        grad_x_I = np.array([dIda, dIdb, dIdp, dIds, dIdc, dIdT, dIdt])
+        return impurity_conc, grad_x_I
+
+    def slots(self, model):
+        return (
+            (
+                Slot(description="A concentration", type="CONCENTRATION"),
+                Slot(description="B concentration", type="CONCENTRATION"),
+                Slot(description="P concentration", type="CONCENTRATION"),
+                Slot(description="S concentration", type="CONCENTRATION"),
+                Slot(description="C concentration", type="CONCENTRATION"),
+                Slot(description="Temperature", type="TEMPERATURE"),
+                Slot(description="Reaction time", type="TIME"),
+            ),
+            (
+                Slot(description="Impurity concentration",
+                     type="CONCENTRATION"),
+                Slot(description="Impurity concentration gradient",
+                     type="CONCENTRATION_GRADIENT")
+            )
+        )
 
 
 def _analytical_solution(A0, B0, P0, S0, C0, k_ps, t):
@@ -175,25 +227,23 @@ def _calc_k(T, M):
     return k_ps
 
 
-class Reaction_kinetics:
-    def run(self, X0, M):
-        # solver of kinetic module
-        R = 8.3144598e-3
-        k_ps = _calc_k(X0[5], M)
-        X_mat = _analytical_solution(X0[0],
-                                     X0[1],
-                                     X0[2],
-                                     X0[3],
-                                     X0[4],
-                                     k_ps,
-                                     X0[6])
-        grad_x_X_mat = _grad_x(X0[0],
-                               X0[1],
-                               X0[2],
-                               X0[3],
-                               X0[4],
-                               k_ps,
-                               X0[6])
-        dkdT = 1 / (R * X0[5])**2 * np.sum(k_ps * M[0])
-        grad_x_X_mat[:, 5] = dkdT * grad_x_X_mat[:, 5]
-        return (X_mat, grad_x_X_mat)
+def _run(X0, M):
+    R = 8.3144598e-3
+    k_ps = _calc_k(X0[5], M)
+    X_mat = _analytical_solution(X0[0],
+                                 X0[1],
+                                 X0[2],
+                                 X0[3],
+                                 X0[4],
+                                 k_ps,
+                                 X0[6])
+    grad_x_X_mat = _grad_x(X0[0],
+                           X0[1],
+                           X0[2],
+                           X0[3],
+                           X0[4],
+                           k_ps,
+                           X0[6])
+    dkdT = 1 / (R * X0[5])**2 * np.sum(k_ps * M[0])
+    grad_x_X_mat[:, 5] = dkdT * grad_x_X_mat[:, 5]
+    return X_mat, grad_x_X_mat
