@@ -15,6 +15,8 @@ from itwm_example.material_cost_data_source\
 from itwm_example.production_cost_data_source\
     .production_cost_data_source_factory import \
     ProductionCostDataSourceFactory
+from itwm_example.arrhenius_parameters.arrhenius_parameters_factory import \
+    ArrheniusParametersFactory
 
 
 class ExamplePlugin(BaseExtensionPlugin):
@@ -24,6 +26,7 @@ class ExamplePlugin(BaseExtensionPlugin):
         return [
             FixedValueDataSourceFactory,
             ProductionCostDataSourceFactory,
+            ArrheniusParametersFactory,
             MaterialCostDataSourceFactory,
             ImpurityConcentrationDataSourceFactory,
             PureDensitiesFactory,
