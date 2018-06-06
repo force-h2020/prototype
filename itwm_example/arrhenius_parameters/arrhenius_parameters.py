@@ -17,9 +17,17 @@ class ArrheniusParameters(BaseDataSource):
             (
             ),
             (
-                Slot(type="ARRHENIUS_NU"),
-                Slot(type="ARRHENIUS_DELTA_H"),
-                Slot(type="ARRHENIUS_NU"),
-                Slot(type="ARRHENIUS_DELTA_H"),
+                Slot(type="ARRHENIUS_NU",
+                     description="Arrhenius nu parameter "
+                                 "for the main reaction"),
+                Slot(type="ARRHENIUS_DELTA_H",
+                     description="Arrhenius delta H parameter "
+                                 "for the main reaction"),
+                Slot(type="ARRHENIUS_NU",
+                     description="Arrhenius nu parameter "
+                                 "for the secondary reaction"),
+                Slot(type="ARRHENIUS_DELTA_H",
+                     description="Arrhenius delta H parameter "
+                                 "for the secondary reaction"),
             )
         )
