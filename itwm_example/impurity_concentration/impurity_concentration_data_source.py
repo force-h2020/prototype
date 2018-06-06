@@ -7,23 +7,36 @@ from force_bdss.data_sources.base_data_source import BaseDataSource
 
 class ImpurityConcentrationDataSource(BaseDataSource):
     def run(self, model, parameters):
-        # 0: A concentration
-        # 1: 0.5. B concentration
-        # 2: 0. P concentration
-        # 3: 0. S concentration
-        # 4: 0.505. C concentration
-        # 5: 335. Temperature
-        # 6: 360. Reaction time
-        X = [
-            parameters[0].value,
-            parameters[1].value,
-            parameters[2].value,
-            parameters[3].value,
-            parameters[4].value,
-            parameters[5].value,
-            parameters[6].value
-        ]
-        X_mat, grad_x_X_mat = _run(X, self.M)
+        V_a_tilde = parameters[0].value
+        C_conc_e = parameters[1].value
+        temperature = parameters[2].value
+        reaction_time = parameters[3].value
+        arrhenius_nu_main_reaction = parameters[4].value
+        arrhenius_delta_H_main_reaction = parameters[5].value
+        arrhenius_nu_secondary_reaction = parameters[6].value
+        arrhenius_delta_H_secondary_reaction = parameters[7].value
+        reactor_volume = parameters[8].value
+        A_density = parameters[9].value
+        B_density = parameters[10].value
+        C_density = parameters[11].value
+
+        X = np.zeros(7, float)
+        X[0] = A_density * (1 -
+                            C_conc_e / C_density) * V_a_tilde / reactor_volume
+        X[1] = B_density * (reactor_volume - V_a_tilde) / reactor_volume
+        X[2] = 0
+        X[3] = 0
+        X[4] = C_conc_e * V_a_tilde / reactor_volume
+        X[5] = temperature
+        X[6] = reaction_time
+
+        M = (
+            np.array([arrhenius_nu_main_reaction,
+                      arrhenius_nu_secondary_reaction]),
+            np.array([arrhenius_delta_H_main_reaction,
+                      arrhenius_delta_H_secondary_reaction])
+        )
+        X_mat, grad_x_X_mat = _run(X, M)
         impurity_conc = float(X_mat[3] + X_mat[4] + X_mat[0] + X_mat[1])
         dIda = np.sum(grad_x_X_mat[0:2, 0] + grad_x_X_mat[3:5, 0])
         dIdb = np.sum(grad_x_X_mat[0:2, 1] + grad_x_X_mat[3:5, 1])
@@ -38,13 +51,22 @@ class ImpurityConcentrationDataSource(BaseDataSource):
     def slots(self, model):
         return (
             (
-                Slot(description="A concentration", type="CONCENTRATION"),
-                Slot(description="B concentration", type="CONCENTRATION"),
-                Slot(description="P concentration", type="CONCENTRATION"),
-                Slot(description="S concentration", type="CONCENTRATION"),
-                Slot(description="C concentration", type="CONCENTRATION"),
+                Slot(description="V_A_tilde", type="VOLUME"),
+                Slot(description="C_e concentration", type="CONCENTRATION"),
                 Slot(description="Temperature", type="TEMPERATURE"),
                 Slot(description="Reaction time", type="TIME"),
+                Slot(description="Arrhenius nu main reaction",
+                     type="ARRHENIUS_NU"),
+                Slot(description="Arrhenius delta H main reaction",
+                     type="ARRHENIUS_DELTA_H"),
+                Slot(description="Arrhenius nu secondary reaction",
+                     type="ARRHENIUS_NU"),
+                Slot(description="Arrhenius delta H secondary reaction",
+                     type="ARRHENIUS_DELTA_H"),
+                Slot(description="Reactor volume", type="VOLUME"),
+                Slot(description="A pure density", type="DENSITY"),
+                Slot(description="B pure density", type="DENSITY"),
+                Slot(description="C pure density", type="DENSITY"),
             ),
             (
                 Slot(description="Impurity concentration",
