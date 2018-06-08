@@ -11,19 +11,19 @@ def analytical_solution(A0, B0, P0, S0, C0, k_ps, t):
     C = C0
     return np.array([A, B, P, S, C])
 
-def sum1(A0, B0, k, t, n=5):
+def sum1(A0, B0, k, t, n=4):
     exponent = np.arange(1, n + 1, 1)
     denominator = factorial(exponent)
     result = ((B0 - A0) ** (exponent - 1)) * (k * t) ** exponent
     return np.sum(result / denominator)
 
-def sum2(A0, B0, k, t, n=5):
+def sum2(A0, B0, k, t, n=4):
     exponent = np.arange(2, n + 1, 1)
     denominator = factorial(exponent) / (exponent - 1)
     result = ((B0 - A0) ** (exponent - 2)) * (k * t) ** exponent
     return np.sum(result / denominator)
 
-def sum3(A0, B0, k, t, n=5):
+def sum3(A0, B0, k, t, n=4):
     exponent = np.arange(1, n + 1, 1)
     denominator = factorial(exponent) / exponent
     result = ((B0 - A0) ** (exponent - 1)) * (k * t) ** (exponent - 1)
@@ -31,7 +31,7 @@ def sum3(A0, B0, k, t, n=5):
 
 def alpha(A0, B0, k, t):
     epsilon = np.abs((A0 - B0) * k * t)
-    if epsilon > 8e-2:
+    if epsilon > 0.4e-2:
         multiplier = np.exp((B0 - A0) * k * t)
         result = A0 * B0 * (multiplier - 1) / (B0 * multiplier - A0)
     else:
@@ -44,7 +44,7 @@ def alpha(A0, B0, k, t):
 
 def dalda(A0, B0, k, t):
     epsilon = np.abs((A0 - B0) * k * t)
-    if epsilon > 8e-2:
+    if epsilon > 0.4e-2:
         B0expo = B0 * np.exp((B0 - A0) * k * t)
         result = B0expo * (B0expo + k * t * A0**2 - k * t * A0 * B0 - B0)
         result /= (B0expo - A0)**2
@@ -64,7 +64,7 @@ def dalda(A0, B0, k, t):
 
 def daldb(A0, B0, k, t):
     epsilon = np.abs((A0 - B0) * k * t)
-    if epsilon > 8e-2:
+    if epsilon > 0.4e-2:
         expo = np.exp((B0 - A0) * k * t)
         B0expo = B0 * expo
         result = A0 * ((k * t * B0**2 - k * t * A0 * B0 - A0) * expo + A0)
@@ -85,7 +85,7 @@ def daldb(A0, B0, k, t):
 
 def daldk(A0, B0, k, t):
     epsilon = np.abs((A0 - B0) * k * t)
-    if epsilon > 8e-2:
+    if epsilon > 0.4e-2:
         B0expo = B0 * np.exp((B0 - A0) * k * t)
         result = t * A0 * B0expo * (B0 - A0)**2 / (B0expo - A0)**2
     else:
@@ -104,7 +104,7 @@ def daldk(A0, B0, k, t):
 
 def daldt(A0, B0, k, t):
     epsilon = np.abs((A0 - B0) * k * t)
-    if epsilon > 8e-2:
+    if epsilon > 0.4e-2:
         B0expo = B0 * np.exp((B0 - A0) * k * t)
         result = k * A0 * B0expo * (B0 - A0)**2 / (B0expo - A0)**2
     else:
