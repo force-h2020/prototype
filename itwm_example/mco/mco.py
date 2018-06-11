@@ -38,7 +38,10 @@ class MCO(BaseMCO):
         self.started = True
 
         for weights in weight_combinations:
-            evaluator = WeightedEvaluator(weights, parameters)
+            evaluator = WeightedEvaluator(
+                weights,
+                parameters,
+                single_point_evaluator)
             optimal_point, optimal_kpis = evaluator.optimize()
             # When there is new data, this operation informs the system that
             # new data has been received. It must be a dictionary as given.
