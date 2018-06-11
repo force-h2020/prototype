@@ -3,6 +3,8 @@ import sys
 import itertools
 import collections
 
+import numpy as np
+
 from force_bdss.api import BaseMCO
 
 
@@ -17,8 +19,17 @@ def rotated_range(start, stop, starting_value):
 
 
 class MCO(BaseMCO):
+    NUM_POINTS = 7
+
     def run(self, model):
         parameters = model.parameters
+        kpis = model.kpis
+
+        weights = get_weights(len(kpis), self.NUM_POINTS)
+
+
+        new_obj = lambda y: np.dot(self.w, self.obj_f(y))
+        new_obj_jac = lambda y: np.dot(self.w, self.obj_jac(y))
 
         values = []
         for p in parameters:
@@ -58,3 +69,19 @@ class MCO(BaseMCO):
             " ".join([str(v) for v in in_values]).encode("utf-8"))
 
         return out[0].decode("utf-8").split()
+
+
+def get_weights(dimension, num_points):
+    scaling = 1.0 / (num_points)
+    for int_w in _int_weights(dimension, num_points):
+        yield [scaling * val for val in int_w]
+
+
+def _int_weights(dimension, num_points):
+    if dimension == 1:
+        yield [num_points]
+    else:
+        for i in list(range(num_points, -1, -1)):
+            for entry in _int_weights(dimension - 1, num_points - i):
+                yield [i] + entry
+
