@@ -1,9 +1,9 @@
 import subprocess
-import sys
 import collections
-from traits.api import HasStrictTraits, List, Float
 import numpy as np
 from scipy import optimize
+
+from traits.api import HasStrictTraits, List, Float, Str, Instance
 
 from force_bdss.api import BaseMCO
 from force_bdss.mco.parameters.base_mco_parameter import BaseMCOParameter
@@ -29,6 +29,10 @@ class MCO(BaseMCO):
         weight_combinations = get_weight_combinations(len(kpis),
                                                       self.NUM_POINTS)
 
+        application = self.factory.plugin.application
+        single_point_evaluator = SinglePointEvaluator(
+            sys.argv[0], application.workflow_filepath
+        )
 
         self.started = True
 
@@ -46,13 +50,23 @@ class MCO(BaseMCO):
         # we set this event to True
         self.finished = True
 
-    def calculate_singlepoint(self, in_values):
-        application = self.factory.plugin.application
+
+class SinglePointEvaluator(HasStrictTraits):
+    evalution_executable_path = Str()
+    workflow_filepath = Str()
+
+    def __init__(self, evaluation_executable_path, workflow_path):
+        super(SinglePointEvaluator, self).__init__(
+            evaluation_executable_path=evaluation_executable_path,
+            workflow_path=workflow_path
+        )
+
+    def evaluate(self, in_values):
 
         ps = subprocess.Popen(
-            [sys.argv[0],
+            [self.evaluation_executable_path,
              "--evaluate",
-             application.workflow_filepath],
+             self.workflow_filepath],
             stdout=subprocess.PIPE,
             stdin=subprocess.PIPE)
 
@@ -63,26 +77,33 @@ class MCO(BaseMCO):
 
 
 class WeightedEvaluator(HasStrictTraits):
+    single_point_evaluator = Instance(SinglePointEvaluator)
     weights = List(Float)
     parameters = List(BaseMCOParameter)
 
-    def __init__(self, weights, parameters):
+    def __init__(self, single_point_evaluator, weights, parameters):
         super(WeightedEvaluator, self).__init__(
-            weights=weights, parameters=parameters)
+            single_point_evaluator=single_point_evaluator,
+            weights=weights,
+            parameters=parameters,
+        )
 
-    def score(self, point):
-        return np.dot(self.weights, self.calculate_singlepoint(point))
+    def _score(self, point):
+        return np.dot(
+            self.weights,
+            self.single_point_evaluator.evaluate(point))
 
     def optimize(self):
         initial_point = [p.initial_value for p in self.parameters]
         constraints = [(p.lower_bound, p.upper_bound) for p in self.parameters]
 
-        weighted_score_func = self.score
+        weighted_score_func = self._score
 
         optimal_point = opt(weighted_score_func, initial_point, constraints)
         optimal_kpis = self.calculate_singlepoint(optimal_point)
 
         return (optimal_point, optimal_kpis)
+
 
 
 def opt(weighted_score_func,
