@@ -104,7 +104,7 @@ class WeightedEvaluator(HasStrictTraits):
         weighted_score_func = self._score
 
         optimal_point = opt(weighted_score_func, initial_point, constraints)
-        optimal_kpis = self.calculate_singlepoint(optimal_point)
+        optimal_kpis = self.single_point_evaluator.evaluate(optimal_point)
 
         return (optimal_point, optimal_kpis)
 
