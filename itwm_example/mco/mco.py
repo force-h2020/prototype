@@ -1,11 +1,12 @@
 import subprocess
 import sys
-import itertools
 import collections
-
+from traits.api import HasStrictTraits, List, Float
 import numpy as np
+from scipy import optimize
 
 from force_bdss.api import BaseMCO
+from force_bdss.mco.parameters.base_mco_parameter import BaseMCOParameter
 
 
 def rotated_range(start, stop, starting_value):
@@ -25,30 +26,20 @@ class MCO(BaseMCO):
         parameters = model.parameters
         kpis = model.kpis
 
-        weights = get_weights(len(kpis), self.NUM_POINTS)
+        weight_combinations = get_weight_combinations(len(kpis),
+                                                      self.NUM_POINTS)
 
-
-        new_obj = lambda y: np.dot(self.w, self.obj_f(y))
-        new_obj_jac = lambda y: np.dot(self.w, self.obj_jac(y))
-
-        values = []
-        for p in parameters:
-            values.append(
-                rotated_range(int(p.lower_bound),
-                              int(p.upper_bound),
-                              int(p.initial_value))
-            )
-
-        value_iterator = itertools.product(*values)
 
         self.started = True
 
-        for value in value_iterator:
+        for weights in weight_combinations:
+            evaluator = WeightedEvaluator(weights, parameters)
+            optimal_point, optimal_kpis = evaluator.optimize()
             # When there is new data, this operation informs the system that
             # new data has been received. It must be a dictionary as given.
             self.new_data = {
-                'input': tuple(value),
-                'output': tuple(out_data)
+                'input': tuple(optimal_point),
+                'output': tuple(optimal_kpis)
             }
 
         # To inform the rest of the system that the evaluation has completed.
@@ -71,7 +62,41 @@ class MCO(BaseMCO):
         return out[0].decode("utf-8").split()
 
 
-def get_weights(dimension, num_points):
+class WeightedEvaluator(HasStrictTraits):
+    weights = List(Float)
+    parameters = List(BaseMCOParameter)
+
+    def __init__(self, weights, parameters):
+        super(WeightedEvaluator, self).__init__(
+            weights=weights, parameters=parameters)
+
+    def score(self, point):
+        return np.dot(self.weights, self.calculate_singlepoint(point))
+
+    def optimize(self):
+        initial_point = [p.initial_value for p in self.parameters]
+        constraints = [(p.lower_bound, p.upper_bound) for p in self.parameters]
+
+        weighted_score_func = self.score
+
+        optimal_point = opt(weighted_score_func, initial_point, constraints)
+        optimal_kpis = self.calculate_singlepoint(optimal_point)
+
+        return (optimal_point, optimal_kpis)
+
+
+def opt(weighted_score_func,
+        initial_point,
+        constraints):
+
+    return optimize.minimize(
+        weighted_score_func,
+        initial_point,
+        method="SLSQP",
+        bounds=constraints).x
+
+
+def get_weight_combinations(dimension, num_points):
     scaling = 1.0 / (num_points)
     for int_w in _int_weights(dimension, num_points):
         yield [scaling * val for val in int_w]
