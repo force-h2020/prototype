@@ -1,6 +1,5 @@
 import sys
 import subprocess
-import collections
 import numpy as np
 from scipy import optimize
 
@@ -8,16 +7,6 @@ from traits.api import HasStrictTraits, List, Float, Str, Instance
 
 from force_bdss.api import BaseMCO
 from force_bdss.mco.parameters.base_mco_parameter import BaseMCOParameter
-
-
-def rotated_range(start, stop, starting_value):
-    """Produces a range of integers, then rotates so that the starting value
-    is starting_value"""
-    r = list(range(start, stop))
-    start_idx = r.index(starting_value)
-    d = collections.deque(r)
-    d.rotate(-start_idx)
-    return list(d)
 
 
 class MCO(BaseMCO):
@@ -106,8 +95,7 @@ class WeightedEvaluator(HasStrictTraits):
         optimal_point = opt(weighted_score_func, initial_point, constraints)
         optimal_kpis = self.single_point_evaluator.evaluate(optimal_point)
 
-        return (optimal_point, optimal_kpis)
-
+        return optimal_point, optimal_kpis
 
 
 def opt(weighted_score_func,
@@ -122,15 +110,15 @@ def opt(weighted_score_func,
 
 
 def get_weight_combinations(dimension, num_points):
-    scaling = 1.0 / (num_points)
+    scaling = 1.0 / (num_points - 1)
     for int_w in _int_weights(dimension, num_points):
         yield [scaling * val for val in int_w]
 
 
 def _int_weights(dimension, num_points):
     if dimension == 1:
-        yield [num_points]
+        yield [num_points - 1]
     else:
-        for i in list(range(num_points, -1, -1)):
+        for i in list(range(num_points-1, -1, -1)):
             for entry in _int_weights(dimension - 1, num_points - i):
                 yield [i] + entry
