@@ -1,3 +1,4 @@
+import sys
 import subprocess
 import collections
 import numpy as np
@@ -130,4 +131,3 @@ def _int_weights(dimension, num_points):
         for i in list(range(num_points, -1, -1)):
             for entry in _int_weights(dimension - 1, num_points - i):
                 yield [i] + entry
-
