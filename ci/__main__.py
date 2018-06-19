@@ -5,7 +5,7 @@ DEFAULT_PYTHON_VERSION = "2.7"
 PYTHON_VERSIONS = ["2.7", "3.5"]
 
 ADDITIONAL_CORE_DEPS = [
-    "scipy==0.19.0-1"
+    "scipy==1.0.0-3"
 ]
 
 ADDITIONAL_PIP_DEPS_27 = [
