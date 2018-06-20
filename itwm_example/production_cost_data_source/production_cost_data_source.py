@@ -13,7 +13,7 @@ class ProductionCostDataSource(BaseDataSource):
         cost = reaction_time * (temperature - 290)**2 * model.W
         cost_gradient = [
                 reaction_time * (2 * temperature - 2 * 290) * model.W,
-                (temperature - 290)**2 * self.W
+                (temperature - 290)**2 * model.W
         ]
 
         return [
