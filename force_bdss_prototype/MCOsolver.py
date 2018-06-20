@@ -10,7 +10,6 @@ class MCOsolver:
     def __init__(self, y0, constr, obj_f, obj_jac):
         self.constr = constr
         self.y0 = y0
-        print(self.y0)
         self.obj_f = obj_f
         self.obj_jac = obj_jac
 
