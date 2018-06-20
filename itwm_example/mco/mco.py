@@ -34,9 +34,10 @@ class MCO(BaseMCO):
             log.info("Doing MCO run with weights: {}".format(weights))
 
             evaluator = WeightedEvaluator(
+                single_point_evaluator,
                 weights,
                 parameters,
-                single_point_evaluator)
+            )
             optimal_point, optimal_kpis = evaluator.optimize()
             # When there is new data, this operation informs the system that
             # new data has been received. It must be a dictionary as given.
@@ -51,13 +52,13 @@ class MCO(BaseMCO):
 
 
 class SinglePointEvaluator(HasStrictTraits):
-    evalution_executable_path = Str()
+    evaluation_executable_path = Str()
     workflow_filepath = Str()
 
-    def __init__(self, evaluation_executable_path, workflow_path):
+    def __init__(self, evaluation_executable_path, workflow_filepath):
         super(SinglePointEvaluator, self).__init__(
             evaluation_executable_path=evaluation_executable_path,
-            workflow_path=workflow_path
+            workflow_filepath=workflow_filepath
         )
 
     def evaluate(self, in_values):
