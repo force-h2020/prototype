@@ -1,8 +1,7 @@
 import numpy as np
 from scipy.special import factorial
 
-from force_bdss.core.slot import Slot
-from force_bdss.data_sources.base_data_source import BaseDataSource
+from force_bdss.api import DataValue, Slot, BaseDataSource
 
 
 class ImpurityConcentrationDataSource(BaseDataSource):
@@ -46,7 +45,10 @@ class ImpurityConcentrationDataSource(BaseDataSource):
         dIdT = np.sum(grad_x_X_mat[0:2, 5] + grad_x_X_mat[3:5, 5])
         dIdt = np.sum(grad_x_X_mat[0:2, 6] + grad_x_X_mat[3:5, 6])
         grad_x_I = np.array([dIda, dIdb, dIdp, dIds, dIdc, dIdT, dIdt])
-        return impurity_conc, grad_x_I
+        return [
+            DataValue(value=impurity_conc, type="CONCENTRATION"),
+            DataValue(value=grad_x_I, type="CONCENTRATION_GRADIENT")
+        ]
 
     def slots(self, model):
         return (
