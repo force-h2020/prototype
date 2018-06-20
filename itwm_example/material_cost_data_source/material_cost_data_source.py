@@ -38,13 +38,15 @@ class MaterialCostDataSource(BaseDataSource):
     def slots(self, model):
         return (
             (
-                Slot(description="Volume A", type="VOLUME"),
-                Slot(description="C_e", type="VOLUME"),
+                Slot(description="Volume of contaminated A", type="VOLUME"),
+                Slot(description="Concentration of contaminant",
+                     type="CONCENTRATION"),
                 Slot(description="Reactor Volume", type="VOLUME"),
-                Slot(description="Rho_C", type="VOLUME"),
+                Slot(description="Density of contaminant", type="DENSITY"),
             ),
             (
-                Slot(description="Cost", type="COST"),
-                Slot(description="Cost gradient", type="COST_GRADIENT"),
+                Slot(description="Material cost", type="COST"),
+                Slot(description="Material cost gradient",
+                     type="COST_GRADIENT"),
             )
         )
