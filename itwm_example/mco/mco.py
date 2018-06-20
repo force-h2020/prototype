@@ -1,5 +1,6 @@
 import sys
 import subprocess
+import logging
 import numpy as np
 from scipy import optimize
 
@@ -7,6 +8,9 @@ from traits.api import HasStrictTraits, List, Float, Str, Instance
 
 from force_bdss.api import BaseMCO
 from force_bdss.mco.parameters.base_mco_parameter import BaseMCOParameter
+
+
+log = logging.getLogger(__name__)
 
 
 class MCO(BaseMCO):
@@ -27,6 +31,8 @@ class MCO(BaseMCO):
         self.started = True
 
         for weights in weight_combinations:
+            log.info("Doing MCO run with weights: {}".format(weights))
+
             evaluator = WeightedEvaluator(
                 weights,
                 parameters,
@@ -55,13 +61,17 @@ class SinglePointEvaluator(HasStrictTraits):
         )
 
     def evaluate(self, in_values):
+        cmd = [self.evaluation_executable_path,
+               "--logfile",
+               "bdss.log",
+               "--evaluate",
+               self.workflow_filepath],
 
-        ps = subprocess.Popen(
-            [self.evaluation_executable_path,
-             "--evaluate",
-             self.workflow_filepath],
+        log.info("Spawning subprocess: {}".format(cmd))
+        ps = subprocess.Popen(cmd,
+            stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
-            stdin=subprocess.PIPE)
+        )
 
         out = ps.communicate(
             " ".join([str(v) for v in in_values]).encode("utf-8"))
@@ -92,6 +102,9 @@ class WeightedEvaluator(HasStrictTraits):
 
         weighted_score_func = self._score
 
+        log.info("Running optimisation.")
+        log.info("Initial point: {}".format(initial_point))
+        log.info("Constraints: {}".format(constraints))
         optimal_point = opt(weighted_score_func, initial_point, constraints)
         optimal_kpis = self.single_point_evaluator.evaluate(optimal_point)
 
