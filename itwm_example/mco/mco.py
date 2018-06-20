@@ -66,18 +66,17 @@ class SinglePointEvaluator(HasStrictTraits):
                "--logfile",
                "bdss.log",
                "--evaluate",
-               self.workflow_filepath],
+               self.workflow_filepath]
 
         log.info("Spawning subprocess: {}".format(cmd))
         ps = subprocess.Popen(cmd,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
         )
-
         out = ps.communicate(
             " ".join([str(v) for v in in_values]).encode("utf-8"))
 
-        return out[0].decode("utf-8").split()
+        return [float(x) for x in out[0].decode("utf-8").split()]
 
 
 class WeightedEvaluator(HasStrictTraits):
