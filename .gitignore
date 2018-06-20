@@ -1,11 +1,5 @@
-<<<<<<< current
 build/*
 dist/*
-force_bdss_prototype/__pycache__/*
 force_bdss_prototype.egg*
-=======
-build/*
-dist/*
 */__pycache__/*
-force_bdss_prototype.egg*
->>>>>>> before discard
+*.pyc
