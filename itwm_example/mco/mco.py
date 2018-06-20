@@ -69,7 +69,8 @@ class SinglePointEvaluator(HasStrictTraits):
                self.workflow_filepath]
 
         log.info("Spawning subprocess: {}".format(cmd))
-        ps = subprocess.Popen(cmd,
+        ps = subprocess.Popen(
+            cmd,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
         )
