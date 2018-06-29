@@ -99,9 +99,12 @@ class WeightedEvaluator(HasStrictTraits):
         )
 
     def _score(self, point):
-        return np.dot(
+        score = np.dot(
             self.weights,
             self.single_point_evaluator.evaluate(point))
+
+        log.info("Weighted score: {}".format(score))
+        return score
 
     def optimize(self):
         initial_point = [p.initial_value for p in self.parameters]
@@ -114,6 +117,8 @@ class WeightedEvaluator(HasStrictTraits):
         log.info("Constraints: {}".format(constraints))
         optimal_point = opt(weighted_score_func, initial_point, constraints)
         optimal_kpis = self.single_point_evaluator.evaluate(optimal_point)
+        log.info("Optimal point : {}".format(optimal_point))
+        log.info("KPIs at optimal point : {}".format(optimal_kpis))
 
         return optimal_point, optimal_kpis
 
