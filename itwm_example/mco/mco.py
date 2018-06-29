@@ -74,8 +74,14 @@ class SinglePointEvaluator(HasStrictTraits):
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
         )
+        log.info("Sending values: {}".format([str(v) for v in in_values]))
+
         out = ps.communicate(
             " ".join([str(v) for v in in_values]).encode("utf-8"))
+
+        log.info(
+            "Received values: {}".format(
+                [x for x in out[0].decode("utf-8").split()]))
 
         return [float(x) for x in out[0].decode("utf-8").split()]
 
