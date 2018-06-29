@@ -14,7 +14,7 @@ class TestImpurityConcentrationDataSource(unittest.TestCase):
         model = self.factory.create_model()
         values = [
             0.5,
-            0.101,
+            0.1,
             335.0,
             360.0,
             0.02,
@@ -34,4 +34,4 @@ class TestImpurityConcentrationDataSource(unittest.TestCase):
 
         res = data_source.run(model, data_values)
 
-        self.assertAlmostEqual(res[0].value, 0.372519388493335, 6)
+        self.assertAlmostEqual(res[0].value, 0.372027129767, 6)
