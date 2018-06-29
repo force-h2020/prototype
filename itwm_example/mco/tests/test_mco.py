@@ -32,7 +32,6 @@ class TestMCO(unittest.TestCase):
             [0.0, 0.0, 1.0],
         ])
 
-
         self.assertEqual(
             list(get_weight_combinations(3, 9)),
             [[1.0, 0.0, 0.0], [0.875, 0.125, 0.0], [0.875, 0.0, 0.125],
