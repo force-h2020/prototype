@@ -14,14 +14,13 @@ log = logging.getLogger(__name__)
 
 
 class MCO(BaseMCO):
-    NUM_POINTS = 7
 
     def run(self, model):
         parameters = model.parameters
         kpis = model.kpis
 
         weight_combinations = get_weight_combinations(len(kpis),
-                                                      self.NUM_POINTS)
+                                                      model.num_points)
 
         application = self.factory.plugin.application
         single_point_evaluator = SinglePointEvaluator(

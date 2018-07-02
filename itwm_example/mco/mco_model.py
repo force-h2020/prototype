@@ -1,5 +1,5 @@
-from force_bdss.api import BaseMCOModel
+from force_bdss.api import BaseMCOModel, PositiveInt
 
 
 class MCOModel(BaseMCOModel):
-    pass
+    num_points = PositiveInt(7)
