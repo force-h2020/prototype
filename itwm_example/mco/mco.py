@@ -51,6 +51,7 @@ class MCO(BaseMCO):
 
 
 class SinglePointEvaluator(HasStrictTraits):
+    """Evaluates a single point."""
     evaluation_executable_path = Str()
     workflow_filepath = Str()
 
@@ -86,6 +87,9 @@ class SinglePointEvaluator(HasStrictTraits):
 
 
 class WeightedEvaluator(HasStrictTraits):
+    """Performs an optimization given a set of weights for the individual
+    KPIs.
+    """
     single_point_evaluator = Instance(SinglePointEvaluator)
     weights = List(Float)
     parameters = List(BaseMCOParameter)
@@ -122,9 +126,9 @@ class WeightedEvaluator(HasStrictTraits):
         return optimal_point, optimal_kpis
 
 
-def opt(weighted_score_func,
-        initial_point,
-        constraints):
+def opt(weighted_score_func, initial_point, constraints):
+    """Partial func. Performs a scipy optimise with SLSQP method given the
+    scoring function, the initial point, and a set of constraints."""
 
     return optimize.minimize(
         weighted_score_func,
@@ -134,12 +138,37 @@ def opt(weighted_score_func,
 
 
 def get_weight_combinations(dimension, num_points):
+    """Given the number of dimensions, this function provides all possible
+    combinations of weights adding to 1.0. For example, a dimension 3
+    will give all combinations (x, y, z) where x+y+z = 1.0.
+
+    The num_points parameter indicates how many divisions along a single
+    dimension will be performed. For example num_points == 3 will evaluate
+    for x being 0.0, 0.5 and 1.0. The returned (x, y, z) combinations will
+    of course be much higher than 3.
+
+    Parameters
+    ----------
+    dimension: int
+        The dimension of the vector
+
+    num_points: int
+        The number of divisions along each dimension
+
+    Returns
+    -------
+    generator
+        A generator returning all the possible combinations satisfying the
+        requirement that the sum of all the weights must always be 1.0
+    """
     scaling = 1.0 / (num_points - 1)
     for int_w in _int_weights(dimension, num_points):
         yield [scaling * val for val in int_w]
 
 
 def _int_weights(dimension, num_points):
+    """Helper routine for the previous one. The meaning is the same, but
+    works with integers instead of floats, adding up to num_points"""
     if dimension == 1:
         yield [num_points - 1]
     else:
