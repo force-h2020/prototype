@@ -26,8 +26,8 @@ class MCO(BaseMCO):
                                                       model.num_points)
 
         application = self.factory.plugin.application
-        if False:
-            single_point_evaluator = SpawningSinglePointEvaluator(
+        if model.evaluation_mode == "Subprocess":
+            single_point_evaluator = SubprocessSinglePointEvaluator(
                 sys.argv[0], application.workflow_filepath
             )
         else:
@@ -65,13 +65,13 @@ class ISinglePointEvaluator(Interface):
 
 
 @provides(ISinglePointEvaluator)
-class SpawningSinglePointEvaluator(HasStrictTraits):
+class SubprocessSinglePointEvaluator(HasStrictTraits):
     """Evaluates a single point."""
     evaluation_executable_path = Str()
     workflow_filepath = Str()
 
     def __init__(self, evaluation_executable_path, workflow_filepath):
-        super(SpawningSinglePointEvaluator, self).__init__(
+        super(SubprocessSinglePointEvaluator, self).__init__(
             evaluation_executable_path=evaluation_executable_path,
             workflow_filepath=workflow_filepath
         )
