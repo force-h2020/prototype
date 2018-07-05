@@ -17,7 +17,12 @@ class CSVWriter(BaseNotificationListener):
         if isinstance(event, MCOProgressEvent):
             with open(self.model.path, 'ab') as f:
                 writer = csv.writer(f)
-                writer.writerow(event.input + event.output)
+                writer.writerow(["%.10f" % value
+                                 for value in event.input + event.output])
 
     def initialize(self, model):
         self.model = model
+
+        # truncate the file
+        with open(self.model.path, 'wb'):
+            pass
