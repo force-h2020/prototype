@@ -19,9 +19,22 @@ from itwm_example.production_cost_data_source\
 from itwm_example.arrhenius_parameters.arrhenius_parameters_factory import \
     ArrheniusParametersFactory
 
+PLUGIN_VERSION = 0
+
 
 class ExamplePlugin(BaseExtensionPlugin):
-    id = plugin_id("itwm", "example", 0)
+    id = plugin_id("itwm", "example", PLUGIN_VERSION)
+
+    def get_name(self):
+        return u"ITWM Example"
+
+    def get_description(self):
+        return (
+            u"An example plugin from ITWM to evaluate a simple chemical "
+            u"reaction")
+
+    def get_version(self):
+        return PLUGIN_VERSION
 
     def get_factory_classes(self):
         return [
