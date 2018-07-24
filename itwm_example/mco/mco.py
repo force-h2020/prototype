@@ -4,10 +4,13 @@ import logging
 import numpy as np
 from scipy import optimize
 
-from traits.api import HasStrictTraits, List, Float, Str, Instance
+from traits.api import (
+    HasStrictTraits, List, Float, Str, Instance, Interface, provides
+)
 
-from force_bdss.api import BaseMCO
-from force_bdss.mco.parameters.base_mco_parameter import BaseMCOParameter
+from force_bdss.api import (
+    BaseMCO, BaseMCOParameter, execute_workflow, Workflow, DataValue
+)
 
 
 log = logging.getLogger(__name__)
@@ -23,9 +26,15 @@ class MCO(BaseMCO):
                                                       model.num_points)
 
         application = self.factory.plugin.application
-        single_point_evaluator = SinglePointEvaluator(
-            sys.argv[0], application.workflow_filepath
-        )
+        if model.evaluation_mode == "Subprocess":
+            single_point_evaluator = SubprocessSinglePointEvaluator(
+                sys.argv[0], application.workflow_filepath
+            )
+        else:
+            single_point_evaluator = InternalSinglePointEvaluator(
+                application.workflow,
+                model.parameters
+            )
 
         self.started = True
 
@@ -50,13 +59,19 @@ class MCO(BaseMCO):
         self.finished = True
 
 
-class SinglePointEvaluator(HasStrictTraits):
+class ISinglePointEvaluator(Interface):
+    def evaluate(self, in_values):
+        """"""
+
+
+@provides(ISinglePointEvaluator)
+class SubprocessSinglePointEvaluator(HasStrictTraits):
     """Evaluates a single point."""
     evaluation_executable_path = Str()
     workflow_filepath = Str()
 
     def __init__(self, evaluation_executable_path, workflow_filepath):
-        super(SinglePointEvaluator, self).__init__(
+        super(SubprocessSinglePointEvaluator, self).__init__(
             evaluation_executable_path=evaluation_executable_path,
             workflow_filepath=workflow_filepath
         )
@@ -86,11 +101,41 @@ class SinglePointEvaluator(HasStrictTraits):
         return [float(x) for x in out[0].decode("utf-8").split()]
 
 
+@provides(ISinglePointEvaluator)
+class InternalSinglePointEvaluator(HasStrictTraits):
+    workflow = Instance(Workflow)
+    parameters = List()
+
+    def __init__(self, workflow, parameters):
+        super(InternalSinglePointEvaluator, self).__init__(
+            workflow=workflow,
+            parameters=parameters
+        )
+
+    def evaluate(self, in_values):
+        value_names = [p.name for p in self.parameters]
+        value_types = [p.type for p in self.parameters]
+
+        # The values must be given a type. The MCO may pass raw numbers
+        # with no type information. You are free to use metadata your MCO may
+        # provide, but it is not mandatory that this data is available. You
+        # can also use the model specification itself.
+        # In any case, you must return a list of DataValue objects.
+        data_values = [
+            DataValue(type=type_, name=name, value=value)
+            for type_, name, value in zip(
+                value_types, value_names, in_values)]
+
+        kpis = execute_workflow(self.workflow, data_values)
+
+        return [kpi.value for kpi in kpis]
+
+
 class WeightedEvaluator(HasStrictTraits):
     """Performs an optimization given a set of weights for the individual
     KPIs.
     """
-    single_point_evaluator = Instance(SinglePointEvaluator)
+    single_point_evaluator = Instance(ISinglePointEvaluator)
     weights = List(Float)
     parameters = List(BaseMCOParameter)
 
