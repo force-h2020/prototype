@@ -1,14 +1,11 @@
 import click
 from subprocess import check_call
 
-DEFAULT_PYTHON_VERSION = "2.7"
-PYTHON_VERSIONS = ["2.7", "3.5"]
+DEFAULT_PYTHON_VERSION = "3.5"
+PYTHON_VERSIONS = ["3.5"]
 
 ADDITIONAL_CORE_DEPS = [
     "scipy==1.0.0-3"
-]
-
-ADDITIONAL_PIP_DEPS_27 = [
 ]
 
 
