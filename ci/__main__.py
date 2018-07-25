@@ -30,11 +30,6 @@ def install(python_version):
         "edm", "install", "-e", env_name,
         "--yes"] + ADDITIONAL_CORE_DEPS)
 
-    if python_version == "2.7" and len(ADDITIONAL_PIP_DEPS_27):
-        check_call([
-            "edm", "run", "-e", env_name, "--",
-            "pip", "install"] + ADDITIONAL_PIP_DEPS_27)
-
     check_call([
         "edm", "run", "-e", env_name, "--",
         "pip", "install", "-e", "."])
