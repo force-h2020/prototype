@@ -1,6 +1,6 @@
-from traits.api import String
+from traits.api import Unicode
 from force_bdss.api import BaseNotificationListenerModel
 
 
 class CSVWriterModel(BaseNotificationListenerModel):
-    path = String("output.csv")
+    path = Unicode("output.csv")
