@@ -26,12 +26,12 @@ class ExamplePlugin(BaseExtensionPlugin):
     id = plugin_id("itwm", "example", PLUGIN_VERSION)
 
     def get_name(self):
-        return u"ITWM Example"
+        return "ITWM Example"
 
     def get_description(self):
         return (
-            u"An example plugin from ITWM to evaluate a simple chemical "
-            u"reaction")
+            "An example plugin from ITWM to evaluate a simple chemical "
+            "reaction")
 
     def get_version(self):
         return PLUGIN_VERSION
