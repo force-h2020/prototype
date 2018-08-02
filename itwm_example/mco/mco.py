@@ -36,8 +36,6 @@ class MCO(BaseMCO):
                 model.parameters
             )
 
-        self.started = True
-
         for weights in weight_combinations:
             log.info("Doing MCO run with weights: {}".format(weights))
 
@@ -49,14 +47,12 @@ class MCO(BaseMCO):
             optimal_point, optimal_kpis = evaluator.optimize()
             # When there is new data, this operation informs the system that
             # new data has been received. It must be a dictionary as given.
-            self.new_data = {
-                'input': tuple(optimal_point),
-                'output': tuple(optimal_kpis)
-            }
 
-        # To inform the rest of the system that the evaluation has completed.
-        # we set this event to True
-        self.finished = True
+            self.notify_new_point(
+                [DataValue(value=v) for v in optimal_point],
+                [DataValue(value=v) for v in optimal_kpis],
+                weights
+            )
 
 
 class ISinglePointEvaluator(Interface):
