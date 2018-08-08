@@ -14,10 +14,12 @@ class CSVWriter(BaseNotificationListener):
 
     def deliver(self, event):
         if isinstance(event, MCOProgressEvent):
-            with open(self.model.path, 'ab') as f:
+            with open(self.model.path, 'a') as f:
                 writer = csv.writer(f)
-                writer.writerow(["%.10f" % value
-                                 for value in event.input + event.output])
+                row = ["%.10f" % dv.value for dv in event.optimal_point]
+                for dv, weight in zip(event.optimal_kpis, event.weights):
+                    row.extend([dv.value, weight])
+                writer.writerow(row)
 
     def initialize(self, model):
         self.model = model
