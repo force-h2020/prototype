@@ -25,10 +25,8 @@ class MCOFactory(BaseMCOFactory):
     def get_communicator_class(self):
         return MCOCommunicator
 
-    #: This method must return a list of all the possible
-    #: parameter factories. This depends on what kind of parameters
-    #: the MCO supports.
-    def parameter_factories(self):
+    #: Factory classes of the parameters the MCO supports.
+    def get_parameter_factory_classes(self):
         return [
-            RangedMCOParameterFactory(self)
+            RangedMCOParameterFactory
         ]
