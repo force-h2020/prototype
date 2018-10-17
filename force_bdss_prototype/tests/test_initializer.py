@@ -2,13 +2,18 @@ import unittest
 import numpy as np
 
 from ..initializer import Initializer
+from ..material_db_access import Material_db_access
 
 A = { "name": "eductA", "manufacturer": "", "pdi": 0 }
 B = { "name": "eductB", "manufacturer": "", "pdi": 0 }
 C = { "name": "contamination", "manufacturer": "", "pdi": 0 }
 P = { "name": "product", "manufacturer": "", "pdi": 0 }
 R = { "reactants": [A, B], "products": [P] }
-p_array = np.array([1, 1, 1])
+m_db_access = Material_db_access()
+p_A = m_db_access.get_pure_component_density(A)
+p_B = m_db_access.get_pure_component_density(B)
+p_C = m_db_access.get_pure_component_density(C)
+p_array = np.array([p_A, p_B, p_C])
 nptype = type(np.array([]))
 
 class InitializerTestCase(unittest.TestCase):
@@ -19,17 +24,17 @@ class InitializerTestCase(unittest.TestCase):
 
     def test_init_data_return_type(self):
         ini = Initializer()
-        self.assertEqual(type(ini.get_init_data_kin_model(R)), nptype)
+        self.assertEqual(type(ini.get_init_data_kin_model(R, C)), nptype)
 
     def test_init_data_return_shape(self):
         ini = Initializer()
-        self.assertEqual(ini.get_init_data_kin_model(R).shape, (7,))
+        self.assertEqual(ini.get_init_data_kin_model(R, C).shape, (7,))
 
     def test_init_data_concentration_consistency(self):
         ini = Initializer()
-        concentrations = ini.get_init_data_kin_model(R)[np.array([0, 1, 4])]
+        concentrations = ini.get_init_data_kin_model(R, C)[np.array([0, 1, 4])]
         conservation = np.sum(concentrations / p_array)
-        self.assertEqual(conservation, 1)
+        self.assertTrue(conservation - 1 < 1e-6)
 
     def test_mat_relation_return_type(self):
         ini = Initializer()

@@ -1,7 +1,6 @@
-# Transferred
 import numpy as np
 from scipy.special import factorial
-
+from .initializer import Initializer
 
 def _analytical_solution(A0, B0, P0, S0, C0, k_ps, t):
     a = _alpha(A0, B0, np.sum(k_ps), t)
@@ -13,21 +12,21 @@ def _analytical_solution(A0, B0, P0, S0, C0, k_ps, t):
     return np.array([A, B, P, S, C])
 
 
-def _sum1(A0, B0, k, t, n=5):
+def _sum1(A0, B0, k, t, n=4):
     exponent = np.arange(1, n + 1, 1)
     denominator = factorial(exponent)
     result = ((B0 - A0) ** (exponent - 1)) * (k * t) ** exponent
     return np.sum(result / denominator)
 
 
-def _sum2(A0, B0, k, t, n=5):
+def _sum2(A0, B0, k, t, n=4):
     exponent = np.arange(2, n + 1, 1)
     denominator = factorial(exponent) / (exponent - 1)
     result = ((B0 - A0) ** (exponent - 2)) * (k * t) ** exponent
     return np.sum(result / denominator)
 
 
-def _sum3(A0, B0, k, t, n=5):
+def _sum3(A0, B0, k, t, n=4):
     exponent = np.arange(1, n + 1, 1)
     denominator = factorial(exponent) / exponent
     result = ((B0 - A0) ** (exponent - 1)) * (k * t) ** (exponent - 1)
@@ -36,7 +35,7 @@ def _sum3(A0, B0, k, t, n=5):
 
 def _alpha(A0, B0, k, t):
     epsilon = np.abs((A0 - B0) * k * t)
-    if epsilon > 8e-2:
+    if epsilon > 0.4e-2:
         multiplier = np.exp((B0 - A0) * k * t)
         result = A0 * B0 * (multiplier - 1) / (B0 * multiplier - A0)
     else:
@@ -50,7 +49,7 @@ def _alpha(A0, B0, k, t):
 
 def _dalda(A0, B0, k, t):
     epsilon = np.abs((A0 - B0) * k * t)
-    if epsilon > 8e-2:
+    if epsilon > 0.4e-2:
         B0expo = B0 * np.exp((B0 - A0) * k * t)
         result = B0expo * (B0expo + k * t * A0**2 - k * t * A0 * B0 - B0)
         result /= (B0expo - A0)**2
@@ -71,7 +70,7 @@ def _dalda(A0, B0, k, t):
 
 def _daldb(A0, B0, k, t):
     epsilon = np.abs((A0 - B0) * k * t)
-    if epsilon > 8e-2:
+    if epsilon > 0.4e-2:
         expo = np.exp((B0 - A0) * k * t)
         B0expo = B0 * expo
         result = A0 * ((k * t * B0**2 - k * t * A0 * B0 - A0) * expo + A0)
@@ -93,7 +92,7 @@ def _daldb(A0, B0, k, t):
 
 def _daldk(A0, B0, k, t):
     epsilon = np.abs((A0 - B0) * k * t)
-    if epsilon > 8e-2:
+    if epsilon > 0.4e-2:
         B0expo = B0 * np.exp((B0 - A0) * k * t)
         result = t * A0 * B0expo * (B0 - A0)**2 / (B0expo - A0)**2
     else:
@@ -113,7 +112,7 @@ def _daldk(A0, B0, k, t):
 
 def _daldt(A0, B0, k, t):
     epsilon = np.abs((A0 - B0) * k * t)
-    if epsilon > 8e-2:
+    if epsilon > 0.4e-2:
         B0expo = B0 * np.exp((B0 - A0) * k * t)
         result = k * A0 * B0expo * (B0 - A0)**2 / (B0expo - A0)**2
     else:
@@ -176,6 +175,13 @@ def _calc_k(T, M):
 
 
 class Reaction_kinetics:
+
+    def run_default(self, R, C):
+        self.ini = Initializer()
+        X = self.ini.get_init_data_kin_model(R, C)
+        M = self.ini.get_material_relation_data(R)
+        return self.run(X, M)
+
     def run(self, X0, M):
         # solver of kinetic module
         R = 8.3144598e-3

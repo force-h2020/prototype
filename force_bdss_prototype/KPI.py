@@ -6,7 +6,8 @@ from .reaction_kinetics import Reaction_kinetics
 class KPI:
     # Transferred
     #default constructor
-    def __init__(self, R):
+    def __init__(self, R
+    ):
         self.R = R
         self.ini = Initializer()
         self.react_kinetics = Reaction_kinetics()
@@ -23,5 +24,5 @@ class KPI:
         dIdc = np.sum(grad_x_X_mat[0:2, 4] + grad_x_X_mat[3:5, 4])
         dIdT = np.sum(grad_x_X_mat[0:2, 5] + grad_x_X_mat[3:5, 5])
         dIdt = np.sum(grad_x_X_mat[0:2, 6] + grad_x_X_mat[3:5, 6])
-        grad_x_I = np.array([dIda, dIdb, dIdp, dIds, dIdc, dIdT, dIdt])
-        return (I, grad_x_I)
+        grad_x_I = np.array([dIda, dIdb, dIdp, dIds, dIdc, dIdT, dIdt]) / I
+        return (float(np.log(I)), grad_x_I)

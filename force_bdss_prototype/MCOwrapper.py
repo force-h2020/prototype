@@ -18,7 +18,7 @@ class MCOwrapper:
         constr = self.constraints.get_linear_constraints()
         obj_f = lambda y: self.obj.obj_calc(y)[0]
         obj_jac = lambda y: self.obj.obj_calc(y)[1]
-        X0 = self.ini.get_init_data_kin_model(self.R)
+        X0 = self.ini.get_init_data_kin_model(self.R, self.C)
         # X0 structure:
         # 0: A concentration
         # 1: 0.5. B concentration
@@ -31,7 +31,7 @@ class MCOwrapper:
         self.mcosolver = MCOsolver(y0, constr, obj_f, obj_jac)
 
     def solve(self):
-        results = self.mcosolver.solve()
+        results = self.mcosolver.solve(N=100)
         res = np.empty((results.shape[0], results.shape[1] + 3))
         for i in range(results.shape[0]):
             y = results[i, :]

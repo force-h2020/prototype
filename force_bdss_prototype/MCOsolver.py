@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 import scipy.optimize as sp_opt
 
 
@@ -15,12 +16,17 @@ class MCOsolver:
 
     def solve(self, N=7):
         new_obj = lambda y: np.dot(self.w, self.obj_f(y))
+        #if np.any(y == float("nan")) else False
         new_obj_jac = lambda y: np.dot(self.w, self.obj_jac(y))
+        print("Calculating optimal parameters...")
+        i = 0
         for self.w[0] in np.linspace(0, 1, N):
             for self.w[1] in np.linspace(0, 1 - self.w[0],
-                                         N - int((N - 1)*self.w[0])):
+                                         N - round((N - 1)*self.w[0])):
                 self.w[2] = 1 - self.w[0] - self.w[1]
                 #if not np.any(self.w == 0):
+                i += 1
+                progress(i, (N*N + N)/2)
                 self.store_curr_res(self.KKTsolver(new_obj, new_obj_jac))
         return self.res[:self.i]
 
@@ -36,3 +42,12 @@ class MCOsolver:
             self.res = res
         self.res[self.i] = y
         self.i = self.i + 1
+
+def progress(count, total, status=''):
+    bar_len = 60
+    filled_len = int(round(bar_len * count / float(total)))
+
+    percents = round(100.0 * count / float(total), 1)
+    bar = '=' * filled_len + '-' * (bar_len - filled_len)
+    sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
+    sys.stdout.flush()

@@ -16,6 +16,10 @@ class Material_db_accessTestCase(unittest.TestCase):
         m_db = Material_db_access()
         self.assertIsInstance(m_db, Material_db_access)
 
+    def test_component_molec_mass(self):
+        m_db = Material_db_access()
+        self.assertEqual(type(m_db.get_component_molec_mass(A)), float)
+
     def test_component_density_return_type(self):
         m_db = Material_db_access()
         self.assertEqual(type(m_db.get_pure_component_density(A)), float)
@@ -26,13 +30,6 @@ class Material_db_accessTestCase(unittest.TestCase):
         self.assertEqual(type(v), float)
         self.assertEqual(type(delta_H), float)
 
-    def test_mat_cost_return_type(self):
+    def test_supplier_cost(self):
         m_db = Material_db_access()
-        cost, grad_y_cost = m_db.get_mat_cost(0.5, 0.1, 1, 1)
-        self.assertEqual(type(cost), float)
-        self.assertEqual(type(grad_y_cost), nptype)
-
-    def test_mat_cost_return_shape(self):
-        m_db = Material_db_access()
-        _, grad_y_cost = m_db.get_mat_cost(0.5, 0.1, 1, 1)
-        self.assertEqual(grad_y_cost.shape, (4,))
+        self.assertEqual(type(m_db.get_supplier_cost_educt(A)), float)

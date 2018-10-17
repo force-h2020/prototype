@@ -9,10 +9,19 @@ class Material_db_access:
         def __init__(self):
             pass
 
+        def get_component_molec_mass(self, X):
+            mass = 1.
+            return mass
+
         def get_pure_component_density(self, X):
             # Transferred to json
-            # p in mol/l
-            p = 1.
+            # p in particles/l
+            if X["name"] == "eductA":
+                p = 4e24
+            if X["name"] == "eductB":
+                p = 5e24
+            if X["name"] == "contamination":
+                p = 8e24
             return p
 
         def get_arrhenius_params(self, R):
@@ -22,21 +31,12 @@ class Material_db_access:
                 delta_H = 1.5
             else:
                 delta_H = 12.
-            v = 0.02
+            v = 0.02 / (6.022e23)
             return (v, delta_H)
 
-        def get_mat_cost(self, V_a, C_e, V_r, p_C):
-            # Transferred
-            const_A = 1
-            const_C = 1
-            cost_B = 1
-            tot_cost_A = V_a * ((1 - C_e / p_C) * const_A + const_C * p_C / C_e)
-            tot_cost_B = (V_r - V_a) * cost_B
-            cost = tot_cost_A + tot_cost_B
-            dva = ((1 - C_e / p_C) * const_A + const_C * p_C / C_e) - cost_B
-            dce = - V_a * const_A / p_C - const_C * p_C / (C_e)**2
-            grad_y_cost = np.array([dva, dce, 0, 0])
-            return (cost, grad_y_cost)
+        def get_supplier_cost_educt(self, X):
+            cost = 1.
+            return cost
 
     instance = None
 

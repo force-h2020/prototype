@@ -19,7 +19,7 @@ class Constraints:
 
     def get_va_range(self):
         # Transferred to json
-        return (0, self.p_db_access.get_reactor_vol())
+        return (1e-9, self.p_db_access.get_reactor_vol())
 
     def get_contamination_range(self, educt):
         # Transferred to json

@@ -39,3 +39,14 @@ class Process_db_accessTestCase(unittest.TestCase):
         p_db = Process_db_access(R)
         V_r = p_db.get_reactor_vol()
         self.assertEqual(type(V_r), float)
+
+    def test_mat_cost_return_type(self):
+        p_db = Process_db_access(R)
+        cost, grad_y_cost = p_db.get_mat_cost(0.5, 0.1, 1, 1)
+        self.assertEqual(type(cost), float)
+        self.assertEqual(type(grad_y_cost), nptype)
+
+    def test_mat_cost_return_shape(self):
+        p_db = Process_db_access(R)
+        _, grad_y_cost = p_db.get_mat_cost(0.5, 0.1, 1, 1)
+        self.assertEqual(grad_y_cost.shape, (4,))

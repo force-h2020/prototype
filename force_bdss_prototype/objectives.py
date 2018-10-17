@@ -41,7 +41,7 @@ class Objectives:
         O = np.zeros(3, float)
         (O[0], grad_x_O1) = self.kpi.kpi_calc(X)
         (O[1], grad_x_O2) = self.p_db_access.get_prod_cost(X[5:])
-        (O[2], grad_y_O3) = self.m_db_access.get_mat_cost(y[0], y[1], V_r, p_C)
+        (O[2], grad_y_O3) = self.p_db_access.get_mat_cost(y[0], y[1], V_r, p_C)
         grad_x_O = np.array([grad_x_O1, grad_x_O2])
         dadVa = p_A * (1 - y[1] / p_C) / V_r
         dadCe = - p_A * y[0] / (p_C * V_r)
@@ -70,3 +70,18 @@ class Objectives:
         y[2] = X[5]
         y[3] = X[6]
         return y
+
+    def y_to_x(self, y):
+        p_A = self.m_db_access.get_pure_component_density(self.R["reactants"][0])
+        p_B = self.m_db_access.get_pure_component_density(self.R["reactants"][1])
+        p_C = self.m_db_access.get_pure_component_density(self.C)
+        V_r = self.p_db_access.get_reactor_vol()
+        X = np.zeros(7, float)
+        X[0] = p_A*(1 - y[1]/p_C)*y[0]/V_r
+        X[1] = p_B*(V_r - y[0])/V_r
+        X[2] = 0
+        X[3] = 0
+        X[4] = y[1]*y[0]/V_r
+        X[5] = y[2]
+        X[6] = y[3]
+        return X

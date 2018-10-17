@@ -12,20 +12,26 @@ class Initializer:
             self.m_db_access = Material_db_access()
             self.react_knowledge = Reaction_knowledge_access()
 
-        def get_init_data_kin_model(self, R):
+        def get_init_data_kin_model(self, R, C):
             # Transferred to json
             A = R["reactants"][0]
             B = R["reactants"][1]
+            p_A = self.m_db_access.get_pure_component_density(A)
+            p_B = self.m_db_access.get_pure_component_density(B)
+            p_C = self.m_db_access.get_pure_component_density(C)
             p_db_access = Process_db_access(R)
             X = np.zeros(7)
             T_min, T_max = p_db_access.get_temp_range()
-            X[5] = T_min + 0.5 * (T_max - T_min)
+            X[5] = 0.5 * (T_max + T_min)
             C_min, C_max = p_db_access.get_contamination_range(A)
-            X[4] = C_min + 0.5 * (C_max - C_min)
+            C_bar = 0.5 * (C_max + C_min)
+            E = p_C - C_bar
+            E /= p_C / p_A + p_C / p_B - C_bar * p_C / (p_B * p_C)
             X[2] = 0
             X[3] = 0
-            X[0] = 0.5 - X[4]
-            X[1] = 0.5
+            X[0] = E
+            X[1] = E
+            X[4] = C_bar * (1 - X[1] / p_B)
             tau = self.react_knowledge.estimate_reaction_time(R)
             X[6] = tau
             return X
