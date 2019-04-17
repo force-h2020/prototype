@@ -40,10 +40,10 @@ class Initializer:
             # Transferred to json
             S = self.react_knowledge.get_side_products(R)[0]
             R_S = { "reactants": R["reactants"], "products": [S] }
-            vp, grad_Hp = self.m_db_access.get_arrhenius_params(R)
-            vs, grad_Hs = self.m_db_access.get_arrhenius_params(R_S)
+            vp, delta_Hp = self.m_db_access.get_arrhenius_params(R)
+            vs, delta_Hs = self.m_db_access.get_arrhenius_params(R_S)
             M_v = np.array([vp, vs])
-            M_delta_H = np.array([grad_Hp, grad_Hs])
+            M_delta_H = np.array([delta_Hp, delta_Hs])
             return (M_v, M_delta_H)
 
     instance = None

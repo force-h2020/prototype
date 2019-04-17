@@ -14,12 +14,13 @@ class Constraints:
         va_range = self.get_va_range()
         C_range = self.get_contamination_range(self.R["reactants"][0])
         T_range = self.get_temp_range()
-        tau_range = (0, self.get_max_reaction_time())
+        tau_range = (1e-2, self.get_max_reaction_time())
         return (va_range, C_range, T_range, tau_range)
 
     def get_va_range(self):
         # Transferred to json
-        return (1e-9, self.p_db_access.get_reactor_vol())
+        V_r = self.p_db_access.get_reactor_vol()
+        return (1e-9 * V_r, V_r)
 
     def get_contamination_range(self, educt):
         # Transferred to json
@@ -34,5 +35,5 @@ class Constraints:
     def get_max_reaction_time(self):
         tau = self.react_knowledge.estimate_reaction_time(self.R)
         # Translators guess
-        tau *= 10
+        tau *= 3
         return tau

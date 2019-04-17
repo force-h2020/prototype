@@ -17,21 +17,22 @@ class Material_db_access:
             # Transferred to json
             # p in particles/l
             if X["name"] == "eductA":
-                p = 4e24
+                p = 5
             if X["name"] == "eductB":
-                p = 5e24
+                p = 10
             if X["name"] == "contamination":
-                p = 8e24
+                p = 55
             return p
 
         def get_arrhenius_params(self, R):
             # Transferred to json
             if R["products"][0]["name"] == "product":
                 # delta H in kJ/mol
-                delta_H = 1.5
+                delta_H = 1000 * 8.3144598e-3
+                v = 2e-2
             else:
-                delta_H = 12.
-            v = 0.02 / (6.022e23)
+                delta_H = 4500 * 8.3144598e-3
+                v = 2e-2
             return (v, delta_H)
 
         def get_supplier_cost_educt(self, X):

@@ -22,11 +22,11 @@ class MCOsolver:
         i = 0
         for self.w[0] in np.linspace(0, 1, N):
             for self.w[1] in np.linspace(0, 1 - self.w[0],
-                                         N - round((N - 1)*self.w[0])):
+                                         int(N - round((N - 1)*self.w[0]))):
                 self.w[2] = 1 - self.w[0] - self.w[1]
-                #if not np.any(self.w == 0):
                 i += 1
                 progress(i, (N*N + N)/2)
+                #if not np.any(self.w == 0):
                 self.store_curr_res(self.KKTsolver(new_obj, new_obj_jac))
         return self.res[:self.i]
 
@@ -46,7 +46,6 @@ class MCOsolver:
 def progress(count, total, status=''):
     bar_len = 60
     filled_len = int(round(bar_len * count / float(total)))
-
     percents = round(100.0 * count / float(total), 1)
     bar = '=' * filled_len + '-' * (bar_len - filled_len)
     sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
