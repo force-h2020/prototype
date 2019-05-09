@@ -150,12 +150,6 @@ class WeightedEvaluator(HasStrictTraits):
 
     def _score(self, point):
 
-        """
-        score = np.dot(
-            self.weights,
-            self.single_point_evaluator.evaluate(point))
-        """
-
         #: Edited scaled weighting function
         generator = zip(self.weights, self.scale_factors)
         scaled_weights = [weight * scale for weight, scale in generator]
