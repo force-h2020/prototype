@@ -24,6 +24,7 @@ class MCO(BaseMCO):
 
         weight_combinations = get_weight_combinations(len(kpis),
                                                       model.num_points)
+        scale_factors = [kpi.scale_factor for kpi in kpis]
 
         application = self.factory.plugin.application
         if model.evaluation_mode == "Subprocess":
@@ -37,11 +38,13 @@ class MCO(BaseMCO):
             )
 
         for weights in weight_combinations:
+            # Using adjusted weights to better assess performance
             log.info("Doing MCO run with weights: {}".format(weights))
 
             evaluator = WeightedEvaluator(
                 single_point_evaluator,
                 weights,
+                scale_factors,
                 parameters,
             )
             optimal_point, optimal_kpis = evaluator.optimize()
@@ -133,21 +136,36 @@ class WeightedEvaluator(HasStrictTraits):
     """
     single_point_evaluator = Instance(ISinglePointEvaluator)
     weights = List(Float)
+    scale_factors = List(Float)
     parameters = List(BaseMCOParameter)
 
-    def __init__(self, single_point_evaluator, weights, parameters):
+    def __init__(self, single_point_evaluator, weights, scale_factors, parameters):
         super(WeightedEvaluator, self).__init__(
             single_point_evaluator=single_point_evaluator,
             weights=weights,
+            scale_factors=scale_factors,
             parameters=parameters,
         )
 
     def _score(self, point):
+
+        """
         score = np.dot(
             self.weights,
             self.single_point_evaluator.evaluate(point))
+        """
 
+        # Edited weighting function
+
+        scaled_weights = [weight * scale for weight, scale in zip(self.weights, self.scale_factors)]
+
+        score = np.dot(
+            scaled_weights,
+            self.single_point_evaluator.evaluate(point))
+
+        log.info("Scaled Weights: {}".format(scaled_weights))
         log.info("Weighted score: {}".format(score))
+
         return score
 
     def optimize(self):
@@ -202,6 +220,7 @@ def get_weight_combinations(dimension, num_points):
         A generator returning all the possible combinations satisfying the
         requirement that the sum of all the weights must always be 1.0
     """
+
     scaling = 1.0 / (num_points - 1)
     for int_w in _int_weights(dimension, num_points):
         yield [scaling * val for val in int_w]
@@ -210,6 +229,7 @@ def get_weight_combinations(dimension, num_points):
 def _int_weights(dimension, num_points):
     """Helper routine for the previous one. The meaning is the same, but
     works with integers instead of floats, adding up to num_points"""
+
     if dimension == 1:
         yield [num_points - 1]
     else:
