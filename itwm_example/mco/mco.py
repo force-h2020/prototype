@@ -139,7 +139,8 @@ class WeightedEvaluator(HasStrictTraits):
     scale_factors = List(Float)
     parameters = List(BaseMCOParameter)
 
-    def __init__(self, single_point_evaluator, weights, scale_factors, parameters):
+    def __init__(self, single_point_evaluator, weights,
+                 scale_factors, parameters):
         super(WeightedEvaluator, self).__init__(
             single_point_evaluator=single_point_evaluator,
             weights=weights,
@@ -155,9 +156,9 @@ class WeightedEvaluator(HasStrictTraits):
             self.single_point_evaluator.evaluate(point))
         """
 
-        # Edited weighting function
-
-        scaled_weights = [weight * scale for weight, scale in zip(self.weights, self.scale_factors)]
+        #: Edited scaled weighting function
+        generator = zip(self.weights, self.scale_factors)
+        scaled_weights = [weight * scale for weight, scale in generator]
 
         score = np.dot(
             scaled_weights,
