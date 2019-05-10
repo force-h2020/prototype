@@ -20,7 +20,7 @@ class MCO(BaseMCO):
 
     def run(self, model):
         parameters = model.parameters
-        kpis = model.kpi
+        kpis = model.kpis
 
         application = self.factory.plugin.application
         if model.evaluation_mode == "Subprocess":
@@ -284,7 +284,7 @@ def get_scaling_factors(single_point_evaluator, kpis, parameters):
         extrema[i] += np.asarray(optimal_kpis)
 
     #: Calculate required scaling factors by normalising KPI range
-    for i in np.argwhere(auto_scales):
+    for i in np.argwhere(auto_scales).flatten():
         minimum = extrema[i][i]
         maximum = np.max(extrema[:, i])
         scaling_factors[i] = 1 / (maximum - minimum)
