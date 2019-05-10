@@ -20,9 +20,7 @@ class MCO(BaseMCO):
 
     def run(self, model):
         parameters = model.parameters
-        kpis = model.kpis
-        auto_scales = [kpi.auto_scale for kpi in kpis]
-        scale_factors = [kpi.scale_factor for kpi in kpis]
+        kpis = model.kpi
 
         application = self.factory.plugin.application
         if model.evaluation_mode == "Subprocess":
@@ -35,44 +33,22 @@ class MCO(BaseMCO):
                 model.parameters
             )
 
-        #: Get initial weights referring to extrema of each variable range
-        min_max = np.zeros((len(kpis), len(kpis)))
-        initial_weights = get_weight_combinations(len(kpis), 2)
-
-        for i, weights in enumerate(initial_weights):
-
-            log.info("Doing MCO run with weights: {}".format(weights))
-
-            evaluator = WeightedEvaluator(
-                single_point_evaluator,
-                weights,
-                scale_factors,
-                parameters,
-            )
-
-            optimal_point, optimal_kpis = evaluator.optimize()
-            min_max[i] += np.asarray(optimal_kpis)
-
-        #: Calculate scaling factors if not given by normalising variable range
-        for i, option in enumerate(auto_scales):
-            if option:
-                minimum = min_max[i][i]
-                maximum = np.max(min_max[:, i])
-                scale_factors[i] = 1 / (maximum - minimum)
-
-        #: Get non-zero weight combinations for each variable
+        #: Get scaling factors and non-zero weight combinations for each KPI
+        scaling_factors = get_scaling_factors(single_point_evaluator,
+                                              kpis,
+                                              parameters)
         weight_combinations = get_weight_combinations(len(kpis),
                                                       model.num_points,
                                                       False)
 
         for weights in weight_combinations:
-            # Using scaled weights to better assess performance
+
             log.info("Doing MCO run with weights: {}".format(weights))
 
             evaluator = WeightedEvaluator(
                 single_point_evaluator,
                 weights,
-                scale_factors,
+                scaling_factors,
                 parameters,
             )
 
@@ -230,6 +206,9 @@ def get_weight_combinations(dimension, num_points, zero_values=True):
     for x being 0.0, 0.5 and 1.0. The returned (x, y, z) combinations will
     of course be much higher than 3.
 
+    Note that if the zero_values parameter is set to false, then ensure
+    num_points > dimension in order for the generator to return any values.
+
     Parameters
     ----------
     dimension: int
@@ -269,3 +248,47 @@ def _int_weights(dimension, num_points, zero_values):
                                       num_points - i,
                                       zero_values):
                 yield [i] + entry
+
+
+def get_scaling_factors(single_point_evaluator, kpis, parameters):
+    """KPI Scaling factors for MCO are calculated (as required) by
+    normalising by the possible range of each optimal KPI value.
+    Also known as Sen's Multi-Objective Programming Method[1]_.
+
+    References
+    ----------
+    .. [1] Chandra Sen, "Sen's Multi-Objective Programming Method and Its
+       Comparison with Other Techniques", American Journal of Operational
+       Research, vol. 8, pp. 10-13, 2018
+    """
+
+    #: Get initial weights referring to extrema of each variable range
+    auto_scales = [kpi.auto_scale for kpi in kpis]
+    scaling_factors = [kpi.scale_factor for kpi in kpis]
+    extrema = np.zeros((len(kpis), len(kpis)))
+    initial_weights = get_weight_combinations(len(kpis), 2)
+
+    #: Calculate extrema for each KPI optimisation
+    for i, weights in enumerate(initial_weights):
+
+        log.info("Doing extrema MCO run with weights: {}".format(weights))
+
+        evaluator = WeightedEvaluator(
+            single_point_evaluator,
+            weights,
+            scaling_factors,
+            parameters,
+        )
+
+        optimal_point, optimal_kpis = evaluator.optimize()
+        extrema[i] += np.asarray(optimal_kpis)
+
+    #: Calculate required scaling factors by normalising KPI range
+    for i in np.argwhere(auto_scales):
+        minimum = extrema[i][i]
+        maximum = np.max(extrema[:, i])
+        scaling_factors[i] = 1 / (maximum - minimum)
+
+    log.info("Using KPI scaling factors: {}".format(scaling_factors))
+
+    return scaling_factors
