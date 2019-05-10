@@ -21,9 +21,7 @@ class MCO(BaseMCO):
     def run(self, model):
         parameters = model.parameters
         kpis = model.kpis
-
-        weight_combinations = get_weight_combinations(len(kpis),
-                                                      model.num_points)
+        auto_scales = [kpi.auto_scale for kpi in kpis]
         scale_factors = [kpi.scale_factor for kpi in kpis]
 
         application = self.factory.plugin.application
@@ -37,6 +35,36 @@ class MCO(BaseMCO):
                 model.parameters
             )
 
+        #: Get initial weights referring to extrema of each variable range
+        min_max = np.zeros((len(kpis), len(kpis)))
+        initial_weights = get_weight_combinations(len(kpis), 2)
+
+        for i, weights in enumerate(initial_weights):
+
+            log.info("Doing MCO run with weights: {}".format(weights))
+
+            evaluator = WeightedEvaluator(
+                single_point_evaluator,
+                weights,
+                scale_factors,
+                parameters,
+            )
+
+            optimal_point, optimal_kpis = evaluator.optimize()
+            min_max[i] += np.asarray(optimal_kpis)
+
+        #: Calculate scaling factors if not given by normalising variable range
+        for i, option in enumerate(auto_scales):
+            if option:
+                minimum = min_max[i][i]
+                maximum = np.max(min_max[:, i])
+                scale_factors[i] = 1 / (maximum - minimum)
+
+        #: Get non-zero weight combinations for each variable
+        weight_combinations = get_weight_combinations(len(kpis),
+                                                      model.num_points,
+                                                      False)
+
         for weights in weight_combinations:
             # Using adjusted weights to better assess performance
             log.info("Doing MCO run with weights: {}".format(weights))
@@ -47,6 +75,7 @@ class MCO(BaseMCO):
                 scale_factors,
                 parameters,
             )
+
             optimal_point, optimal_kpis = evaluator.optimize()
             # When there is new data, this operation informs the system that
             # new data has been received. It must be a dictionary as given.
@@ -191,7 +220,7 @@ def opt(weighted_score_func, initial_point, constraints):
         bounds=constraints).x
 
 
-def get_weight_combinations(dimension, num_points):
+def get_weight_combinations(dimension, num_points, zero_points=True):
     """Given the number of dimensions, this function provides all possible
     combinations of weights adding to 1.0. For example, a dimension 3
     will give all combinations (x, y, z) where x+y+z = 1.0.
@@ -217,17 +246,23 @@ def get_weight_combinations(dimension, num_points):
     """
 
     scaling = 1.0 / (num_points - 1)
-    for int_w in _int_weights(dimension, num_points):
+    for int_w in _int_weights(dimension, num_points, zero_points):
         yield [scaling * val for val in int_w]
 
 
-def _int_weights(dimension, num_points):
+def _int_weights(dimension, num_points, zero_points):
     """Helper routine for the previous one. The meaning is the same, but
     works with integers instead of floats, adding up to num_points"""
 
     if dimension == 1:
         yield [num_points - 1]
     else:
-        for i in list(range(num_points-1, -1, -1)):
-            for entry in _int_weights(dimension - 1, num_points - i):
+        if zero_points:
+            integers = np.arange(num_points-1, -1, -1)
+        else:
+            integers = np.arange(num_points-2, 0, -1)
+        for i in integers:
+            for entry in _int_weights(dimension - 1,
+                                      num_points - i,
+                                      zero_points):
                 yield [i] + entry
