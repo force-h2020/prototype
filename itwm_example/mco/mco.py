@@ -66,7 +66,7 @@ class MCO(BaseMCO):
                                                       False)
 
         for weights in weight_combinations:
-            # Using adjusted weights to better assess performance
+            # Using scaled weights to better assess performance
             log.info("Doing MCO run with weights: {}".format(weights))
 
             evaluator = WeightedEvaluator(
@@ -220,7 +220,7 @@ def opt(weighted_score_func, initial_point, constraints):
         bounds=constraints).x
 
 
-def get_weight_combinations(dimension, num_points, zero_points=True):
+def get_weight_combinations(dimension, num_points, zero_values=True):
     """Given the number of dimensions, this function provides all possible
     combinations of weights adding to 1.0. For example, a dimension 3
     will give all combinations (x, y, z) where x+y+z = 1.0.
@@ -238,6 +238,9 @@ def get_weight_combinations(dimension, num_points, zero_points=True):
     num_points: int
         The number of divisions along each dimension
 
+    zero_values: bool (default=True)
+        Whether to include zero valued weights
+
     Returns
     -------
     generator
@@ -246,23 +249,23 @@ def get_weight_combinations(dimension, num_points, zero_points=True):
     """
 
     scaling = 1.0 / (num_points - 1)
-    for int_w in _int_weights(dimension, num_points, zero_points):
+    for int_w in _int_weights(dimension, num_points, zero_values):
         yield [scaling * val for val in int_w]
 
 
-def _int_weights(dimension, num_points, zero_points):
+def _int_weights(dimension, num_points, zero_values):
     """Helper routine for the previous one. The meaning is the same, but
     works with integers instead of floats, adding up to num_points"""
 
     if dimension == 1:
         yield [num_points - 1]
     else:
-        if zero_points:
+        if zero_values:
             integers = np.arange(num_points-1, -1, -1)
         else:
             integers = np.arange(num_points-2, 0, -1)
         for i in integers:
             for entry in _int_weights(dimension - 1,
                                       num_points - i,
-                                      zero_points):
+                                      zero_values):
                 yield [i] + entry
