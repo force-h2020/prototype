@@ -45,10 +45,12 @@ class MCO(BaseMCO):
 
             log.info("Doing MCO run with weights: {}".format(weights))
 
+            generator = zip(weights, scaling_factors)
+            scaled_weights = [weight * scale for weight, scale in generator]
+
             evaluator = WeightedEvaluator(
                 single_point_evaluator,
-                weights,
-                scaling_factors,
+                scaled_weights,
                 parameters,
             )
 
@@ -59,7 +61,7 @@ class MCO(BaseMCO):
             self.notify_new_point(
                 [DataValue(value=v) for v in optimal_point],
                 [DataValue(value=v) for v in optimal_kpis],
-                weights
+                scaled_weights
             )
 
 
@@ -141,29 +143,22 @@ class WeightedEvaluator(HasStrictTraits):
     """
     single_point_evaluator = Instance(ISinglePointEvaluator)
     weights = List(Float)
-    scale_factors = List(Float)
     parameters = List(BaseMCOParameter)
 
     def __init__(self, single_point_evaluator, weights,
-                 scale_factors, parameters):
+                 parameters):
         super(WeightedEvaluator, self).__init__(
             single_point_evaluator=single_point_evaluator,
             weights=weights,
-            scale_factors=scale_factors,
             parameters=parameters,
         )
 
     def _score(self, point):
 
-        #: Edited scaled weighting function
-        generator = zip(self.weights, self.scale_factors)
-        scaled_weights = [weight * scale for weight, scale in generator]
-
         score = np.dot(
-            scaled_weights,
+            self.weights,
             self.single_point_evaluator.evaluate(point))
 
-        log.info("Scaled Weights: {}".format(scaled_weights))
         log.info("Weighted score: {}".format(score))
 
         return score
@@ -276,7 +271,6 @@ def get_scaling_factors(single_point_evaluator, kpis, parameters):
         evaluator = WeightedEvaluator(
             single_point_evaluator,
             weights,
-            scaling_factors,
             parameters,
         )
 
