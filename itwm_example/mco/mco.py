@@ -22,10 +22,6 @@ class MCO(BaseMCO):
         parameters = model.parameters
         kpis = model.kpis
 
-        weight_combinations = get_weight_combinations(len(kpis),
-                                                      model.num_points)
-        scale_factors = [kpi.scale_factor for kpi in kpis]
-
         application = self.factory.plugin.application
         if model.evaluation_mode == "Subprocess":
             single_point_evaluator = SubprocessSinglePointEvaluator(
@@ -37,16 +33,27 @@ class MCO(BaseMCO):
                 model.parameters
             )
 
+        #: Get scaling factors and non-zero weight combinations for each KPI
+        scaling_factors = get_scaling_factors(single_point_evaluator,
+                                              kpis,
+                                              parameters)
+        weight_combinations = get_weight_combinations(len(kpis),
+                                                      model.num_points,
+                                                      False)
+
         for weights in weight_combinations:
-            # Using adjusted weights to better assess performance
+
             log.info("Doing MCO run with weights: {}".format(weights))
+
+            generator = zip(weights, scaling_factors)
+            scaled_weights = [weight * scale for weight, scale in generator]
 
             evaluator = WeightedEvaluator(
                 single_point_evaluator,
-                weights,
-                scale_factors,
+                scaled_weights,
                 parameters,
             )
+
             optimal_point, optimal_kpis = evaluator.optimize()
             # When there is new data, this operation informs the system that
             # new data has been received. It must be a dictionary as given.
@@ -54,7 +61,7 @@ class MCO(BaseMCO):
             self.notify_new_point(
                 [DataValue(value=v) for v in optimal_point],
                 [DataValue(value=v) for v in optimal_kpis],
-                weights
+                scaled_weights
             )
 
 
@@ -136,29 +143,22 @@ class WeightedEvaluator(HasStrictTraits):
     """
     single_point_evaluator = Instance(ISinglePointEvaluator)
     weights = List(Float)
-    scale_factors = List(Float)
     parameters = List(BaseMCOParameter)
 
     def __init__(self, single_point_evaluator, weights,
-                 scale_factors, parameters):
+                 parameters):
         super(WeightedEvaluator, self).__init__(
             single_point_evaluator=single_point_evaluator,
             weights=weights,
-            scale_factors=scale_factors,
             parameters=parameters,
         )
 
     def _score(self, point):
 
-        #: Edited scaled weighting function
-        generator = zip(self.weights, self.scale_factors)
-        scaled_weights = [weight * scale for weight, scale in generator]
-
         score = np.dot(
-            scaled_weights,
+            self.weights,
             self.single_point_evaluator.evaluate(point))
 
-        log.info("Scaled Weights: {}".format(scaled_weights))
         log.info("Weighted score: {}".format(score))
 
         return score
@@ -191,7 +191,7 @@ def opt(weighted_score_func, initial_point, constraints):
         bounds=constraints).x
 
 
-def get_weight_combinations(dimension, num_points):
+def get_weight_combinations(dimension, num_points, zero_values=True):
     """Given the number of dimensions, this function provides all possible
     combinations of weights adding to 1.0. For example, a dimension 3
     will give all combinations (x, y, z) where x+y+z = 1.0.
@@ -201,6 +201,9 @@ def get_weight_combinations(dimension, num_points):
     for x being 0.0, 0.5 and 1.0. The returned (x, y, z) combinations will
     of course be much higher than 3.
 
+    Note that if the zero_values parameter is set to false, then ensure
+    num_points > dimension in order for the generator to return any values.
+
     Parameters
     ----------
     dimension: int
@@ -208,6 +211,9 @@ def get_weight_combinations(dimension, num_points):
 
     num_points: int
         The number of divisions along each dimension
+
+    zero_values: bool (default=True)
+        Whether to include zero valued weights
 
     Returns
     -------
@@ -217,17 +223,66 @@ def get_weight_combinations(dimension, num_points):
     """
 
     scaling = 1.0 / (num_points - 1)
-    for int_w in _int_weights(dimension, num_points):
+    for int_w in _int_weights(dimension, num_points, zero_values):
         yield [scaling * val for val in int_w]
 
 
-def _int_weights(dimension, num_points):
+def _int_weights(dimension, num_points, zero_values):
     """Helper routine for the previous one. The meaning is the same, but
     works with integers instead of floats, adding up to num_points"""
 
     if dimension == 1:
         yield [num_points - 1]
     else:
-        for i in list(range(num_points-1, -1, -1)):
-            for entry in _int_weights(dimension - 1, num_points - i):
+        if zero_values:
+            integers = np.arange(num_points-1, -1, -1)
+        else:
+            integers = np.arange(num_points-2, 0, -1)
+        for i in integers:
+            for entry in _int_weights(dimension - 1,
+                                      num_points - i,
+                                      zero_values):
                 yield [i] + entry
+
+
+def get_scaling_factors(single_point_evaluator, kpis, parameters):
+    """KPI Scaling factors for MCO are calculated (as required) by
+    normalising by the possible range of each optimal KPI value.
+    Also known as Sen's Multi-Objective Programming Method[1]_.
+
+    References
+    ----------
+    .. [1] Chandra Sen, "Sen's Multi-Objective Programming Method and Its
+       Comparison with Other Techniques", American Journal of Operational
+       Research, vol. 8, pp. 10-13, 2018
+    """
+
+    #: Get initial weights referring to extrema of each variable range
+    auto_scales = [kpi.auto_scale for kpi in kpis]
+    scaling_factors = [kpi.scale_factor for kpi in kpis]
+    extrema = np.zeros((len(kpis), len(kpis)))
+    initial_weights = get_weight_combinations(len(kpis), 2)
+
+    #: Calculate extrema for each KPI optimisation
+    for i, weights in enumerate(initial_weights):
+
+        log.info("Doing extrema MCO run with weights: {}".format(weights))
+
+        evaluator = WeightedEvaluator(
+            single_point_evaluator,
+            weights,
+            parameters,
+        )
+
+        optimal_point, optimal_kpis = evaluator.optimize()
+        extrema[i] += np.asarray(optimal_kpis)
+
+    #: Calculate required scaling factors by normalising KPI range
+    for i in np.argwhere(auto_scales).flatten():
+        minimum = extrema[i][i]
+        maximum = np.max(extrema[:, i])
+        scaling_factors[i] = 1 / (maximum - minimum)
+
+    log.info("Using KPI scaling factors: {}".format(scaling_factors))
+
+    return scaling_factors
