@@ -191,6 +191,13 @@ def opt(weighted_score_func, initial_point, constraints):
         bounds=constraints).x
 
 
+def opt_acadopy(weighted_score_func, initial_point, constraints):
+    """Partial func. Performs a acadopy optimise given the
+    scoring function, the initial point, and a set of constraints."""
+
+    pass
+
+
 def get_weight_combinations(dimension, num_points, zero_values=True):
     """Given the number of dimensions, this function provides all possible
     combinations of weights adding to 1.0. For example, a dimension 3
