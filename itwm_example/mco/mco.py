@@ -173,6 +173,8 @@ class WeightedEvaluator(HasStrictTraits):
         log.info("Initial point: {}".format(initial_point))
         log.info("Constraints: {}".format(constraints))
         optimal_point = opt(weighted_score_func, initial_point, constraints)
+        #: Acaopy optimisation goes here
+        #: opt_acadopy(weighted_score_func, initial_point, constraints)
         optimal_kpis = self.single_point_evaluator.evaluate(optimal_point)
         log.info("Optimal point : {}".format(optimal_point))
         log.info("KPIs at optimal point : {}".format(optimal_kpis))
@@ -193,9 +195,69 @@ def opt(weighted_score_func, initial_point, constraints):
 
 def opt_acadopy(weighted_score_func, initial_point, constraints):
     """Partial func. Performs a acadopy optimise given the
-    scoring function, the initial point, and a set of constraints."""
+    scoring function, the initial point, and a set of constraints.
 
-    pass
+    Parameters
+    ----------
+    weighted_score_func: method
+        Score function to minimise written in pure
+        python that takes in n variables
+    initial_point: array-like (float)
+        Array of initial points for n variables
+    constaints: list of tuple (float, float)
+        List of n constaints of variables as (min, max) values
+
+    Returns
+    -------
+
+    parameters: array-like
+        Array of optimised values for n variables
+    """
+
+    """Import in local function just for testing purposes"""
+    from acadopy.api import (
+        expression_from_method, Parameter, OCP, OptimizationAlgorithm,
+        AT_START, MAX_NUM_ITERATIONS, KKT_TOLERANCE, exp)
+
+    print("Initialising NLP")
+    nlp = OCP(0.0, 0.0, 0)
+
+    """For clarity in this example, we explicitly define variables"""
+    print("Initialising Parameters")
+    volume_a_tilde = Parameter()
+    conc_e = Parameter()
+    temperature = Parameter()
+    reaction_time = Parameter()
+
+    wrapped_function = expression_from_method(weighted_score_func)
+
+    print("Stating Mayer Term")
+    nlp.minimizeMayerTerm(wrapped_function)
+
+    print("Stating Constraints")
+    nlp.subjectTo(constraints[0][0] <= volume_a_tilde <= constraints[0][1])
+    nlp.subjectTo(constraints[1][0] <= conc_e <= constraints[1][1])
+    nlp.subjectTo(constraints[2][0] <= temperature <= constraints[2][1])
+    nlp.subjectTo(constraints[3][0] <= reaction_time <= constraints[3][1])
+
+    print("Stating Initial Values")
+    nlp.subjectTo(AT_START, volume_a_tilde == initial_point[0])
+    nlp.subjectTo(AT_START, conc_e == initial_point[1])
+    nlp.subjectTo(AT_START, temperature == initial_point[2])
+    nlp.subjectTo(AT_START, reaction_time == initial_point[3])
+
+    print("Inititalising Optimsiation algorithm")
+    algorithm = OptimizationAlgorithm(nlp)
+    algorithm.set(MAX_NUM_ITERATIONS, 20)
+    algorithm.set(KKT_TOLERANCE, 1e-10)
+
+    algorithm.solve()
+
+    parameters = algorithm.get_parameters()
+    print(parameters)
+
+    return parameters
+
 
 
 def get_weight_combinations(dimension, num_points, zero_values=True):
