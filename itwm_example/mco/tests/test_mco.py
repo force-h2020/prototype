@@ -1,14 +1,17 @@
 import unittest
 from unittest import mock
 
+from force_bdss.api import (
+    KPISpecification, Workflow
+)
+from force_bdss.tests.probe_classes.mco import ProbeMCOFactory
+from force_bdss.tests.probe_classes.probe_extension_plugin import (
+    ProbeExtensionPlugin
+    )
+
 from itwm_example.mco.mco import (
     get_weight_combinations, MCO, InternalSinglePointEvaluator,
     get_scaling_factors
-    )
-from force_bdss.tests.probe_classes.mco import ProbeMCOFactory
-from force_bdss.core.kpi_specification import KPISpecification
-from force_bdss.tests.probe_classes.probe_extension_plugin import (
-    ProbeExtensionPlugin
     )
 
 
@@ -27,11 +30,29 @@ class TestMCO(unittest.TestCase):
     def setUp(self):
         self.plugin = ProbeExtensionPlugin()
         self.factory = ProbeMCOFactory(self.plugin)
+
         self.mco = MCO(self.factory)
         self.kpis = [KPISpecification(), KPISpecification()]
         self.parameters = [1, 1, 1, 1]
 
         self.mock_evaluator = mock.Mock(spec=InternalSinglePointEvaluator)
+
+    def test_internal_single_point_evaluator(self):
+        parameter_factory = self.factory.parameter_factories[0]
+        parameters = [
+            parameter_factory.create_model()
+            for _ in self.parameters
+        ]
+
+        evaluator = InternalSinglePointEvaluator(
+            workflow=Workflow(),
+            parameters=parameters
+        )
+
+        with mock.patch('force_bdss.api.Workflow.execute',
+                        return_value=[]) as mock_exec:
+            evaluator.evaluate(self.parameters)
+            self.assertEqual(mock_exec.call_count, 1)
 
     def test_scaling_factors(self):
 

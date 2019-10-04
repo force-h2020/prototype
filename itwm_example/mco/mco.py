@@ -9,7 +9,7 @@ from traits.api import (
 )
 
 from force_bdss.api import (
-    BaseMCO, BaseMCOParameter, execute_workflow, Workflow, DataValue
+    BaseMCO, BaseMCOParameter, Workflow, DataValue
 )
 
 
@@ -132,7 +132,7 @@ class InternalSinglePointEvaluator(HasStrictTraits):
             for type_, name, value in zip(
                 value_types, value_names, in_values)]
 
-        kpis = execute_workflow(self.workflow, data_values)
+        kpis = self.workflow.execute(data_values)
 
         return [kpi.value for kpi in kpis]
 
