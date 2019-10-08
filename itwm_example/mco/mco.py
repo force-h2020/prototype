@@ -23,13 +23,14 @@ class MCO(BaseMCO):
         kpis = model.kpis
 
         application = self.factory.plugin.application
+        workflow_file = application.workflow_file
         if model.evaluation_mode == "Subprocess":
             single_point_evaluator = SubprocessSinglePointEvaluator(
-                sys.argv[0], application.workflow_filepath
+                sys.argv[0], workflow_file.path
             )
         else:
             single_point_evaluator = InternalSinglePointEvaluator(
-                application.workflow,
+                workflow_file.workflow,
                 model.parameters
             )
 
