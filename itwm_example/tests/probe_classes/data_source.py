@@ -9,7 +9,9 @@ class ProbeDataSource(unittest.TestCase):
 
     def setUp(self):
         self.plugin = ExamplePlugin()
-        self.factory = self.plugin.data_source_factories[self._data_source_index]
+        self.factory = self.plugin.data_source_factories[
+            self._data_source_index
+        ]
         self.data_source = self.factory.create_data_source()
         self.model = self.factory.create_model()
         self.slots = self.data_source.slots(self.model)
