@@ -1,7 +1,7 @@
-from itwm_example.tests.probe_classes.data_source import ProbeDataSource
+from itwm_example.tests.probe_classes.data_source import BaseTestDataSource
 
 
-class TestImpurityConcentrationDataSource(ProbeDataSource):
+class TestImpurityConcentrationDataSource(BaseTestDataSource):
     def setUp(self):
         self._data_source_index = 4
         super().setUp()

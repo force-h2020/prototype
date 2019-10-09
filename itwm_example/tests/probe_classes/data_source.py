@@ -1,10 +1,11 @@
 import unittest
 
 from force_bdss.api import DataValue
+
 from itwm_example.example_plugin import ExamplePlugin
 
 
-class ProbeDataSource(unittest.TestCase):
+class BaseTestDataSource(unittest.TestCase):
     _data_source_index = None
 
     def setUp(self):
