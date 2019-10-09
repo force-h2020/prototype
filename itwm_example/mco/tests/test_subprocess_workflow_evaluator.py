@@ -4,8 +4,8 @@ from unittest import mock
 
 from force_bdss.api import BaseMCOFactory, Workflow
 
-from enthought_example.example_mco.example_mco_model import ExampleMCOModel
-from enthought_example.example_mco.example_mco import (
+from itwm_example.mco.mco_model import MCOModel
+from itwm_example.mco.subprocess_workflow_evaluator import (
     SubprocessWorkflowEvaluator
 )
 
@@ -35,7 +35,7 @@ class TestSubprocessWorkflowEvaluator(unittest.TestCase):
 
     def test__subprocess_solve(self):
         factory = mock.Mock(spec=BaseMCOFactory)
-        self.evaluator.workflow.mco = ExampleMCOModel(factory)
+        self.evaluator.workflow.mco = MCOModel(factory)
 
         with mock.patch("subprocess.Popen") as mock_popen:
             mock_popen.return_value = self.mock_process
@@ -49,9 +49,9 @@ class TestSubprocessWorkflowEvaluator(unittest.TestCase):
             raise Exception
 
         factory = mock.Mock(spec=BaseMCOFactory)
-        self.evaluator.workflow.mco = ExampleMCOModel(factory)
+        self.evaluator.workflow.mco = MCOModel(factory)
 
-        with mock.patch('enthought_example.example_mco.example_mco'
+        with mock.patch('itwm_example.mco.subprocess_workflow_evaluator'
                         '.SubprocessWorkflowEvaluator._subprocess_evaluate',
                         side_effect=mock_subprocess_evaluate):
             with self.assertRaisesRegex(
