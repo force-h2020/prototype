@@ -5,11 +5,11 @@ from itwm_example.example_plugin import ExamplePlugin
 
 
 class ProbeDataSource(unittest.TestCase):
-    index = None
+    _data_source_index = None
 
     def setUp(self):
         self.plugin = ExamplePlugin()
-        self.factory = self.plugin.data_source_factories[self.index]
+        self.factory = self.plugin.data_source_factories[self._data_source_index]
         self.data_source = self.factory.create_data_source()
         self.model = self.factory.create_model()
         self.slots = self.data_source.slots(self.model)
