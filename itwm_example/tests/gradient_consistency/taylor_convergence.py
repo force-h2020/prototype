@@ -7,6 +7,23 @@ class TaylorTest:
     Estimates and verifies the order of the Taylor remainder
     convergence for a provided (function, function_gradient)
     object.
+
+    Consider a `function` and a `gradient_f` functions.
+    The aim is to verify the consistency of the estimated
+    (usually analytically derived) `gradient_f` with the
+    true derivative of `function`.
+    Note, that the Taylor expansion of the function near a
+    point `x` is:
+        f(x + v) = f(x) + f'(x) * v + O(|v^2|)
+    or, equivalently,
+        f(x + v) - f(x) - f'(x) * v = O(|v^2|)
+    Then, given that the approximation `gradient_f` is correct,
+    the following should hold:
+        f(x + v) - f(x) - `gradient_f`(x) * v = O(|v^2|)
+    We estimate the right hand side term, and if it is growing
+    slower, than constant * |v^2|, the approximation is wrong.
+    This automatically implies that the `gradient_x` implemen-
+    tation is wrong.
     """
 
     def __init__(self, function, gradient, input_dimension):

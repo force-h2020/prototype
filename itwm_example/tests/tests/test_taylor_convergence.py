@@ -78,13 +78,13 @@ class TestTaylorTest(unittest.TestCase):
         for slope in slopes:
             self.assertAlmostEqual(2, slope, 1)
 
-        def default_wrong_function_gradient(x):
+        def wrong_function_gradient(x):
             eps = 1.e-4
             return [2. * x[0] + eps, 3. * x[1] ** 2. + eps]
 
         wrong_taylor_tool = TaylorTest(
             self.default_function,
-            default_wrong_function_gradient,
+            wrong_function_gradient,
             2
         )
 
