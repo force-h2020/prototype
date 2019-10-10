@@ -46,6 +46,14 @@ class TaylorTest:
         ]
         return directions
 
+    def _generate_uniform_perturbations(self, step_size, length=None):
+        if length is None:
+            length = self._default_nof_evaluations
+        perturbations = (
+            (i + 1) * step_size for i in range(length)
+        )
+        return perturbations
+
     def _calculate_taylor_remainders(
             self,
             init_point,
@@ -74,8 +82,9 @@ class TaylorTest:
 
         taylor_remainders = np.zeros(self._default_nof_evaluations)
         shifts = np.zeros(self._default_nof_evaluations)
-        for i in range(self._default_nof_evaluations):
-            shift = (i + 1) * step_size
+        for i, shift in enumerate(
+                self._generate_uniform_perturbations(step_size)
+        ):
             perturbed_point = init_point.copy()
             perturbed_point += shift * direction
 
