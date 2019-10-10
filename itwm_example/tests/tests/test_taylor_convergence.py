@@ -93,3 +93,12 @@ class TestTaylorTest(unittest.TestCase):
         failed_slopes = wrong_taylor_tool.run_taylor_test([1., 2.])
         for slope in failed_slopes:
             self.assertGreater(2, slope)
+
+        taylor_test_sincos = TaylorTest(
+            np.sin,
+            np.cos,
+            1
+        )
+        slopes = taylor_test_sincos.run_taylor_test([1.])
+        for slope in slopes:
+            self.assertGreater(slope, 1.99)

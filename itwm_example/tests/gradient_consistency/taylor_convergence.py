@@ -13,7 +13,7 @@ class TaylorTest:
     (usually analytically derived) `gradient_f` with the
     true derivative of `function`.
     Note, that the Taylor expansion of the function near a
-    point `x` is:
+    point `x` in the direction of `v` is:
         f(x + v) = f(x) + f'(x) * v + O(|v^2|)
     or, equivalently,
         f(x + v) - f(x) - f'(x) * v = O(|v^2|)
@@ -21,7 +21,7 @@ class TaylorTest:
     the following should hold:
         f(x + v) - f(x) - `gradient_f`(x) * v = O(|v^2|)
     We estimate the right hand side term, and if it is growing
-    slower, than constant * |v^2|, the approximation is wrong.
+    slower than O(|v^2|), the approximation is wrong.
     This automatically implies that the `gradient_x` implemen-
     tation is wrong.
     """
@@ -45,7 +45,8 @@ class TaylorTest:
         vector[index] = 1.
         return vector
 
-    def _fit_power_law(self, x, y):
+    @staticmethod
+    def _fit_power_law(x, y):
         regression = linregress(np.log(x), np.log(y))
         return regression.slope
 
@@ -116,7 +117,8 @@ class TaylorTest:
         return shifts, taylor_remainders
 
     def run_taylor_test(self, initial_point):
-        """Estimates the slope of the Taylor reminders power fit
+        """An entry point to the Taylor testing.
+        Estimates the slope of the Taylor reminders power fit
         for a complete set of possible directions.
 
         Returns
