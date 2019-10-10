@@ -1,4 +1,6 @@
 import unittest
+import numpy as np
+from numpy.testing import assert_almost_equal
 
 from itwm_example.tests.gradient_consistency.taylor_convergence import (
     TaylorTest
@@ -46,23 +48,25 @@ class TestTaylorTest(unittest.TestCase):
 
     def test_generate_directions(self):
         test_directions = [
-            [1, 0],
-            [0, 1]
+            np.array([1, 0]),
+            np.array([0, 1])
         ]
         for given, test in zip(
                 self.default_taylor_tool._test_directions(),
                 test_directions
         ):
-            self.assertListEqual(given.tolist(), test)
+            assert_almost_equal(given, test)
 
     def test_taylor_remainders(self):
-        known_remainders = [
-            0.01,
-            0.04,
-            0.09,
-            0.16,
-            0.25
-        ]
+        known_remainders = np.array(
+            [
+                0.01,
+                0.04,
+                0.09,
+                0.16,
+                0.25
+            ]
+        )
 
         direction = self.default_taylor_tool._test_directions()[0]
         _, remainders = self.default_taylor_tool._calculate_taylor_remainders(
@@ -70,16 +74,14 @@ class TestTaylorTest(unittest.TestCase):
             direction,
             step_size=0.1
         )
-        for known, calculated in zip(known_remainders, remainders):
-            self.assertAlmostEqual(known, calculated, 8)
+        assert_almost_equal(known_remainders, remainders)
 
     def test_taylor_run(self):
         slopes = self.default_taylor_tool.run_taylor_test([1., 2.])
         for slope in slopes:
             self.assertAlmostEqual(2, slope, 1)
 
-        def wrong_function_gradient(x):
-            eps = 1.e-4
+        def wrong_function_gradient(x, eps=1.e-4):
             return [2. * x[0] + eps, 3. * x[1] ** 2. + eps]
 
         wrong_taylor_tool = TaylorTest(
