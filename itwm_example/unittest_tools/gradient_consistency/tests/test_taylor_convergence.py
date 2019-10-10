@@ -2,9 +2,8 @@ import unittest
 import numpy as np
 from numpy.testing import assert_almost_equal
 
-from itwm_example.tests.gradient_consistency.taylor_convergence import (
-    TaylorTest
-)
+from itwm_example.unittest_tools.gradient_consistency.taylor_convergence \
+    import TaylorTest
 
 
 class TestTaylorTest(unittest.TestCase):
@@ -77,6 +76,8 @@ class TestTaylorTest(unittest.TestCase):
         assert_almost_equal(known_remainders, remainders)
 
     def test_taylor_run(self):
+        self.assertTrue(self.default_taylor_tool.is_correct_gradient([1., 2.]))
+
         slopes = self.default_taylor_tool.run_taylor_test([1., 2.])
         for slope in slopes:
             self.assertAlmostEqual(2, slope, 1)
@@ -99,6 +100,4 @@ class TestTaylorTest(unittest.TestCase):
             np.cos,
             1
         )
-        slopes = taylor_test_sincos.run_taylor_test([1.])
-        for slope in slopes:
-            self.assertGreater(slope, 1.99)
+        self.assertTrue(taylor_test_sincos.is_correct_gradient([1.]))

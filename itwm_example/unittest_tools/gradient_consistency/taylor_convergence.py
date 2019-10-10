@@ -26,10 +26,17 @@ class TaylorTest:
     tation is wrong.
     """
 
-    def __init__(self, function, gradient, input_dimension):
+    def __init__(
+            self,
+            function,
+            gradient,
+            input_dimension,
+            slope_tolerance=1.e-2
+    ):
         self._function = function
         self._gradient = gradient
         self._input_dimension = input_dimension
+        self.slope_tolerance = slope_tolerance
 
         self._default_step_size = 1.e-6
         self._default_nof_evaluations = 5
@@ -138,3 +145,20 @@ class TaylorTest:
             slopes[i] = self._fit_power_law(x, y)
 
         return slopes
+
+    def is_correct_gradient(self, inintial_point):
+        """ Performs a simple Taylor test to verify the
+        convergence rates are acceptable within the tolerance
+        provided.
+
+        Returns
+        -------
+        bool:
+            If all of the tests are successful
+        """
+        slopes = self.run_taylor_test(inintial_point)
+        for slope in slopes:
+            if slope < 2.0 - self.slope_tolerance:
+                return False
+
+        return True
