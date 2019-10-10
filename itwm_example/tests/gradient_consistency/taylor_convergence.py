@@ -53,7 +53,16 @@ class TaylorTest:
             step_size=None
     ):
         """ Runs a series of function evaluation at the given point,
-        perturbing the evaluation point in the provided direction."""
+        perturbing the evaluation point in the provided direction.
+
+        Returns
+        -------
+        shifts: np.array
+            Array of perturbation magnitude (shifts) used to produce
+            perturbed function values
+        taylor_remainders: np.array
+            Array of calculated Taylor remainders
+        """
         if step_size is None:
             step_size = self._default_step_size
 

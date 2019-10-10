@@ -56,16 +56,38 @@ class TestTaylorTest(unittest.TestCase):
             self.assertListEqual(given.tolist(), test)
 
     def test_taylor_remainders(self):
-        for direction in self.default_taylor_tool._test_directions():
-            slope = self.default_taylor_tool._fit_power_law(
-                *self.default_taylor_tool._calculate_taylor_remainders(
-                    [1., 2.],
-                    direction
-                )
-            )
-            self.assertAlmostEqual(slope, 2, 1)
+        known_remainders = [
+            0.01,
+            0.04,
+            0.09,
+            0.16,
+            0.25
+        ]
+
+        direction = self.default_taylor_tool._test_directions()[0]
+        _, remainders = self.default_taylor_tool._calculate_taylor_remainders(
+            [1., 2.],
+            direction,
+            step_size=0.1
+        )
+        for known, calculated in zip(known_remainders, remainders):
+            self.assertAlmostEqual(known, calculated, 8)
 
     def test_taylor_run(self):
         slopes = self.default_taylor_tool.run_taylor_test([1., 2.])
         for slope in slopes:
             self.assertAlmostEqual(2, slope, 1)
+
+        def default_wrong_function_gradient(x):
+            eps = 1.e-4
+            return [2. * x[0] + eps, 3. * x[1] ** 2. + eps]
+
+        wrong_taylor_tool = TaylorTest(
+            self.default_function,
+            default_wrong_function_gradient,
+            2
+        )
+
+        failed_slopes = wrong_taylor_tool.run_taylor_test([1., 2.])
+        for slope in failed_slopes:
+            self.assertGreater(2, slope)
