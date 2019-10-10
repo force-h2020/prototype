@@ -1,9 +1,8 @@
 from unittest import mock, TestCase
 
 from force_bdss.api import (
-    KPISpecification, Workflow, DataValue
+    KPISpecification, Workflow, DataValue, WorkflowEvaluator
 )
-from force_bdss.app.workflow_evaluator import WorkflowEvaluator
 
 from itwm_example.mco.mco import (
     get_weight_combinations, WeightedEvaluator,
