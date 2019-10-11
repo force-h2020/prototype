@@ -12,15 +12,15 @@ class ProductionCostDataSource(BaseDataSource):
         reaction_time = parameters[1].value
 
         temperature_celsius = self.kelvin_to_celsius(temperature)
-        temperature_shifted = temperature_celsius - model.temperature_shift
+        temperature_difference = temperature_celsius - model.temperature_shift
         cost = (
                 reaction_time
-                * temperature_shifted**2
+                * temperature_difference**2
                 * model.W
         )
         cost_gradient = [
-                reaction_time * 2.0 * temperature_shifted * model.W,
-                temperature_shifted**2 * model.W
+                reaction_time * 2.0 * temperature_difference * model.W,
+                temperature_difference**2 * model.W
         ]
 
         return [
