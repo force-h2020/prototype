@@ -101,3 +101,12 @@ class TestTaylorTest(unittest.TestCase):
             1
         )
         self.assertTrue(taylor_test_sincos.is_correct_gradient([1.]))
+
+        taylor_test_linear = TaylorTest(
+            lambda x: x[0] + 3.0*x[1]**2 - 2.0*x[2]**3,
+            lambda x: [1., 6.*x[1], -6.*x[2]**2],
+            3
+        )
+        self.assertTrue(
+            taylor_test_linear.is_correct_gradient([10., -1., -2.])
+        )

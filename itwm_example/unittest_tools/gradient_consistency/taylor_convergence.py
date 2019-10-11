@@ -99,14 +99,16 @@ class TaylorTest:
         if step_size is None:
             step_size = self._default_step_size
 
+        # Preliminary setup:
+        # Calculate the unperturbed solution and gradient
         default_value = self._evaluate_function(init_point)
         perturbation_norm = np.dot(
             direction,
             self._evaluate_gradient(init_point)
         )
-
         taylor_remainders = np.zeros(self._default_nof_evaluations)
         shifts = np.zeros(self._default_nof_evaluations)
+
         for i, shift in enumerate(
                 self._generate_uniform_perturbations(step_size)
         ):
@@ -123,28 +125,36 @@ class TaylorTest:
 
         return shifts, taylor_remainders
 
-    def run_taylor_test(self, initial_point):
+    def run_taylor_test(self, initial_point, return_data=False):
         """An entry point to the Taylor testing.
-        Estimates the slope of the Taylor reminders power fit
-        for a complete set of possible directions.
+        Generator, that estimates and yields the slope of the
+        Taylor reminders power fit for a complete set of possible
+        directions.
 
-        Returns
+        return_data:bool If the Taylor remainders are requested,
+            the generator yields them as well
+
+        Yields
         -------
-        slopes: np.array
-            Array of slopes with respect to the perturbations
-            in the unit directions.
+        slope: float
+            Slopes of power fit with respect to the perturbation
+            in the unit direction.
+        (optional, return_data=True)
+        data: [List(float), List(float)]
+            Shift amplitudes and Taylor reminders for the slope
         """
         initial_point = np.array(initial_point)
 
-        slopes = np.zeros(self._input_dimension)
         for i, direction in enumerate(self._test_directions()):
             x, y = self._calculate_taylor_remainders(
                 initial_point,
                 direction
             )
-            slopes[i] = self._fit_power_law(x, y)
-
-        return slopes
+            slope = self._fit_power_law(x, y)
+            if return_data:
+                yield slope, (x, y)
+            else:
+                yield slope
 
     def is_correct_gradient(self, inintial_point):
         """ Performs a simple Taylor test to verify the
@@ -156,9 +166,12 @@ class TaylorTest:
         bool:
             If all of the tests are successful
         """
-        slopes = self.run_taylor_test(inintial_point)
-        for slope in slopes:
-            if slope < 2.0 - self.slope_tolerance:
+        _remainder_precision = 1.e-14
+        slopes = self.run_taylor_test(inintial_point, return_data=True)
+        for slope, data in slopes:
+            if all(data[1] < _remainder_precision):
+                continue
+            elif slope < 2.0 - self.slope_tolerance:
                 return False
 
         return True
