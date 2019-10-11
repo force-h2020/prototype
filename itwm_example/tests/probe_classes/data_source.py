@@ -21,6 +21,16 @@ class BaseTestDataSource(unittest.TestCase):
         self.slots = self.data_source.slots(self.model)
         self.input_slots, self.output_slots = self.slots
 
+    def basic_evaluation(self):
+        results = []
+        for i, values in enumerate(self.test_case_values):
+            data_values = self.convert_to_data_values(values, self.input_slots)
+
+            res = self.data_source.run(self.model, data_values)
+            results.append(res)
+
+        return results
+
     @staticmethod
     def convert_to_data_values(values, slots):
         return [
@@ -34,12 +44,14 @@ class BaseTestDataSource(unittest.TestCase):
             self.output_slots[1].type
         )
 
+    def base_test_param_to_gradient(self, gradient):
+        self.assertEqual(
+            len(self.input_slots),
+            len(gradient)
+        )
+
     def base_test_basic_evaluation(self):
-        for i, values in enumerate(self.test_case_values):
-            data_values = self.convert_to_data_values(values, self.input_slots)
-
-            res = self.data_source.run(self.model, data_values)
-
+        for i, res in enumerate(self.basic_evaluation()):
             self.assertAlmostEqual(
                 res[0].value,
                 self.test_case_objectives[i],
