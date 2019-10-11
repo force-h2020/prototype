@@ -6,6 +6,8 @@ from itwm_example.example_plugin import ExamplePlugin
 
 
 class BaseTestDataSource(unittest.TestCase):
+    """ Base test class for a generic DataSource.
+    """
     _data_source_index = None
     test_case_values = None
     test_case_objectives = None
@@ -34,6 +36,21 @@ class BaseTestDataSource(unittest.TestCase):
             for slot, value in zip(slots, values)
         ]
 
+    def base_test_basic_evaluation(self):
+        for i in range(len(self.test_case_values)):
+            res = self.basic_evaluation(i)
+            self.assertAlmostEqual(
+                res[0].value,
+                self.test_case_objectives[i],
+                self._objective_precision
+            )
+
+
+class BaseTestGradientDataSource(BaseTestDataSource):
+    """ Base test class for DataSource that implements
+    a pair of (objective value, gradient) calculation
+    at a runtime.
+    """
     def base_test_gradient_type(self):
         self.assertEqual(
             self.output_slots[0].type + "_GRADIENT",
@@ -46,13 +63,4 @@ class BaseTestDataSource(unittest.TestCase):
             self.assertEqual(
                 len(self.input_slots),
                 len(gradient.value)
-            )
-
-    def base_test_basic_evaluation(self):
-        for i in range(len(self.test_case_values)):
-            res = self.basic_evaluation(i)
-            self.assertAlmostEqual(
-                res[0].value,
-                self.test_case_objectives[i],
-                self._objective_precision
             )
