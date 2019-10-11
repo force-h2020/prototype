@@ -44,7 +44,8 @@ class BaseTestDataSource(unittest.TestCase):
             self.output_slots[1].type
         )
 
-    def base_test_param_to_gradient(self, gradient):
+    def base_test_param_to_gradient(self):
+        _, gradient = self.basic_evaluation()
         self.assertEqual(
             len(self.input_slots),
             len(gradient)

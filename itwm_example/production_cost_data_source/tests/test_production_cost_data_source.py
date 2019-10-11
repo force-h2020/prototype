@@ -23,5 +23,4 @@ class TestProductionCostDataSource(BaseTestDataSource):
         super().base_test_gradient_type()
 
     def test_param_to_gradient(self):
-        _, gradient = self.basic_evaluation()
-        super().base_test_param_to_gradient(gradient)
+        super().base_test_param_to_gradient()
