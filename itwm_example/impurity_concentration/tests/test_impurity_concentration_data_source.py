@@ -1,4 +1,5 @@
-from itwm_example.tests.probe_classes.data_source import BaseTestDataSource
+from itwm_example.tests.base_test_classes.base_test_data_source \
+    import BaseTestDataSource
 
 
 class TestImpurityConcentrationDataSource(BaseTestDataSource):

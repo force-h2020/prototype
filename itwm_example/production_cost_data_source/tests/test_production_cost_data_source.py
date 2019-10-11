@@ -1,4 +1,5 @@
-from itwm_example.tests.probe_classes.data_source import BaseTestDataSource
+from itwm_example.tests.base_test_classes.base_test_data_source \
+    import BaseTestDataSource
 
 
 class TestProductionCostDataSource(BaseTestDataSource):
@@ -20,3 +21,7 @@ class TestProductionCostDataSource(BaseTestDataSource):
 
     def test_gradient_type(self):
         super().base_test_gradient_type()
+
+    def test_param_to_gradient(self):
+        _, gradient = self.basic_evaluation()
+        super().base_test_param_to_gradient(gradient)
