@@ -5,15 +5,14 @@ class ProductionCostDataSource(BaseDataSource):
     """Defines a data source that returns the production
     cost of the heat required in the process.
     """
-    temperature_shift = 20
     temperature_zero_kelvin = -270
 
     def run(self, model, parameters):
         temperature = parameters[0].value
         reaction_time = parameters[1].value
 
-        temperature_celsius = temperature + self.temperature_zero_kelvin
-        temperature_shifted = temperature_celsius - self.temperature_shift
+        temperature_celsius = self.kelvin_to_celsius(temperature)
+        temperature_shifted = temperature_celsius - model.temperature_shift
         cost = (
                 reaction_time
                 * temperature_shifted**2
@@ -54,3 +53,6 @@ class ProductionCostDataSource(BaseDataSource):
                      type="COST_GRADIENT"),
             )
         )
+
+    def kelvin_to_celsius(self, temperature):
+        return temperature + self.temperature_zero_kelvin
