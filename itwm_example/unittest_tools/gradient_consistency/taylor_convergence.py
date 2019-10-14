@@ -54,11 +54,26 @@ class TaylorTest:
 
     @staticmethod
     def _fit_power_law(x, y):
+        """Fit power function y = x**slope to data.
+
+        Finds the best fit for the pair of arrays / lists (x,y)
+        that minimises the standard l2-deviation from the
+        power function.
+        Both the (x, y) must contain positive, nonzero values.
+
+        Returns
+        -------
+        slope: float
+            Linear regression fit coefficient
+        """
         regression = linregress(np.log(x), np.log(y))
         return regression.slope
 
     def _test_directions(self):
         """ Generates simple complete set of the test directions.
+
+        The individual directions are implemented in
+            `_single_component_vector`.
 
         Returns
         -------
@@ -72,6 +87,28 @@ class TaylorTest:
         return directions
 
     def _generate_uniform_perturbations(self, step_size, length=None):
+        """Generate a tuple of uniform perturbation values,
+        proportional to the `step_size`.
+
+        For example,
+            >>> perturbations = self._generate_uniform_perturbations(
+            >>>     1., 3
+            >>> )
+            >>> perturbations
+            >>> (1.0, 2.0, 3.0)
+
+        Parameters
+        ----------
+        step_size: float
+            the amplitude of the perturbation
+        length: int
+            the number of the perturbation values
+
+        Returns
+        -------
+        perturbations: tuple(float)
+            Tuple of generated perturbation values
+        """
         if length is None:
             length = self._default_nof_evaluations
         perturbations = (
