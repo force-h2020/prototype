@@ -25,7 +25,8 @@ class MockEval():
 class TestMCO(TestCase):
 
     def setUp(self):
-        self.factory = MCOFactory('pid')
+        self.plugin = {'id': 'pid', 'name': 'Plugin'}
+        self.factory = MCOFactory(self.plugin)
         self.mco = self.factory.create_optimizer()
         self.mco_model = self.factory.create_model()
 
