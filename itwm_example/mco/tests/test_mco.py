@@ -1,18 +1,14 @@
-import unittest
-from unittest import mock
+from unittest import mock, TestCase
 
 from force_bdss.api import (
-    KPISpecification, Workflow
+    KPISpecification, Workflow, DataValue, WorkflowEvaluator
 )
-from force_bdss.tests.probe_classes.mco import ProbeMCOFactory
-from force_bdss.tests.probe_classes.probe_extension_plugin import (
-    ProbeExtensionPlugin
-    )
 
 from itwm_example.mco.mco import (
-    get_weight_combinations, MCO, InternalSinglePointEvaluator,
+    get_weight_combinations, WeightedEvaluator,
     get_scaling_factors
     )
+from itwm_example.mco.mco_factory import MCOFactory
 
 
 class MockEval():
@@ -26,39 +22,49 @@ class MockEval():
         return 0, result
 
 
-class TestMCO(unittest.TestCase):
-    def setUp(self):
-        self.plugin = ProbeExtensionPlugin()
-        self.factory = ProbeMCOFactory(self.plugin)
+class TestMCO(TestCase):
 
-        self.mco = MCO(self.factory)
+    def setUp(self):
+        self.plugin = {'id': 'pid', 'name': 'Plugin'}
+        self.factory = MCOFactory(self.plugin)
+        self.mco = self.factory.create_optimizer()
+        self.mco_model = self.factory.create_model()
+
         self.kpis = [KPISpecification(), KPISpecification()]
         self.parameters = [1, 1, 1, 1]
 
-        self.mock_evaluator = mock.Mock(spec=InternalSinglePointEvaluator)
-
-    def test_internal_single_point_evaluator(self):
-        parameter_factory = self.factory.parameter_factories[0]
-        parameters = [
-            parameter_factory.create_model()
+        self.mco_model.kpis = self.kpis
+        self.mco_model.parameters = [
+            self.factory.parameter_factories[0].create_model()
             for _ in self.parameters
         ]
+        self.evaluator = WorkflowEvaluator(
+            workflow=Workflow()
+        )
+        self.evaluator.workflow.mco = self.mco_model
 
-        evaluator = InternalSinglePointEvaluator(
-            workflow=Workflow(),
+    def test_internal_weighted_evaluator(self):
+        parameters = self.mco_model.parameters
+
+        evaluator = WeightedEvaluator(
+            single_point_evaluator=self.evaluator,
+            weights=[0.5, 0.5],
             parameters=parameters
         )
+        mock_kpi_return = [
+            DataValue(value=2), DataValue(value=3)
+        ]
 
         with mock.patch('force_bdss.api.Workflow.execute',
-                        return_value=[]) as mock_exec:
-            evaluator.evaluate(self.parameters)
-            self.assertEqual(mock_exec.call_count, 1)
+                        return_value=mock_kpi_return) as mock_exec:
+            evaluator.optimize()
+            self.assertEqual(7, mock_exec.call_count)
 
     def test_scaling_factors(self):
 
         with mock.patch('itwm_example.mco.mco.WeightedEvaluator') as mock_eval:
             mock_eval.side_effect = MockEval
-            scaling_factors = get_scaling_factors(self.mock_evaluator,
+            scaling_factors = get_scaling_factors(self.evaluator,
                                                   self.kpis,
                                                   self.parameters)
 
@@ -70,7 +76,7 @@ class TestMCO(unittest.TestCase):
 
         with mock.patch('itwm_example.mco.mco.WeightedEvaluator') as mock_eval:
             mock_eval.side_effect = MockEval
-            scaling_factors = get_scaling_factors(self.mock_evaluator,
+            scaling_factors = get_scaling_factors(self.evaluator,
                                                   temp_kpis,
                                                   self.parameters)
 
