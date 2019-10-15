@@ -169,11 +169,13 @@ class TaylorTest:
             perturbed_point += shift * direction
 
             perturbed_value = self._evaluate_function(perturbed_point)
+            # In order to avoid encountering np.log(0) case, the values of
+            # `y` is shifted by an acceptable (machine precision) amount.
             taylor_remainders[i] = abs(
                     perturbed_value
                     - default_value
                     - shift * perturbation_norm
-            )
+            ) + np.finfo(float).eps
             shifts[i] = shift
 
         return shifts, taylor_remainders
