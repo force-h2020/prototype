@@ -56,10 +56,16 @@ class TaylorTest:
     def _fit_power_law(x, y):
         """Fit power function y = x**slope to data.
 
-        Finds the best fit for the pair of arrays / lists (x,y)
-        that minimises the standard l2-deviation from the
-        power function.
+        Finds the best fit of `slope` for the pair of np.arrays (x,y)
+        that minimises the standard l2-deviation from the power function.
         Both the (x, y) must contain positive, nonzero values.
+
+        Parameters
+        ----------
+        x: np.array
+            One dimensional array of abscissae
+        x: np.array
+            One dimensional array of ordinates
 
         Returns
         -------
@@ -95,7 +101,7 @@ class TaylorTest:
             >>>     1., 3
             >>> )
             >>> perturbations
-            >>> (1.0, 2.0, 3.0)
+            (1.0, 2.0, 3.0)
 
         Parameters
         ----------
@@ -124,6 +130,16 @@ class TaylorTest:
     ):
         """ Runs a series of function evaluation at the given point,
         perturbing the evaluation point in the provided direction.
+
+        Parameters
+        ----------
+        init_point: np.array
+            Initial point, around which the gradient consistency
+            is explored
+        direction: np.array
+            Perturbation direction, e.g., element of _test_directions
+        step_size: float
+            Scales the amplitude of the perturbation direction
 
         Returns
         -------
