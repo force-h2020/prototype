@@ -1,5 +1,5 @@
+import testfixtures
 import unittest
-
 from unittest import mock
 
 from force_bdss.api import BaseMCOFactory, Workflow
@@ -54,11 +54,12 @@ class TestSubprocessWorkflowEvaluator(unittest.TestCase):
         with mock.patch('itwm_example.mco.subprocess_workflow_evaluator'
                         '.SubprocessWorkflowEvaluator._subprocess_evaluate',
                         side_effect=mock_subprocess_evaluate):
-            with self.assertRaisesRegex(
-                    RuntimeError,
-                    'SubprocessWorkflowEvaluator failed '
-                    'to run. This is likely due to an error in the '
-                    'BaseMCOCommunicator assigned to '
-                    "<class 'force_bdss.mco.base_mco_factory."
-                    "BaseMCOFactory'>."):
-                self.evaluator.evaluate([1.0])
+            with testfixtures.LogCapture():
+                with self.assertRaisesRegex(
+                        RuntimeError,
+                        'SubprocessWorkflowEvaluator failed '
+                        'to run. This is likely due to an error in the '
+                        'BaseMCOCommunicator assigned to '
+                        "<class 'force_bdss.mco.base_mco_factory."
+                        "BaseMCOFactory'>."):
+                    self.evaluator.evaluate([1.0])
