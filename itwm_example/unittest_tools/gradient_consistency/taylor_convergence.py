@@ -196,7 +196,7 @@ class TaylorTest:
         data: [List(float), List(float)]
             Shift amplitudes and Taylor reminders for the slope
         """
-        initial_point = np.array(initial_point)
+        initial_point = np.asarray(initial_point)
 
         for i, direction in enumerate(self._test_directions()):
             x, y = self._calculate_taylor_remainders(
