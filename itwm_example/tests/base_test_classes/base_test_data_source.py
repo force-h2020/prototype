@@ -3,6 +3,8 @@ import unittest
 from force_bdss.api import DataValue
 
 from itwm_example.example_plugin import ExamplePlugin
+from itwm_example.unittest_tools.gradient_consistency.taylor_convergence \
+    import TaylorTest
 
 
 class BaseTestDataSource(unittest.TestCase):
@@ -22,6 +24,14 @@ class BaseTestDataSource(unittest.TestCase):
         self.model = self.factory.create_model()
         self.slots = self.data_source.slots(self.model)
         self.input_slots, self.output_slots = self.slots
+
+    def _evaluate_function(self, values):
+        data_values = self.convert_to_data_values(
+            values,
+            self.input_slots
+        )
+        res = self.data_source.run(self.model, data_values)
+        return res[0].value
 
     def basic_evaluation(self, test_case_index):
         values = self.test_case_values[test_case_index]
@@ -64,3 +74,21 @@ class BaseTestGradientDataSource(BaseTestDataSource):
                 len(self.input_slots),
                 len(gradient.value)
             )
+
+    def _evaluate_gradient(self, values):
+        data_values = self.convert_to_data_values(
+            values,
+            self.input_slots
+        )
+        res = self.data_source.run(self.model, data_values)
+        return res[1].value
+
+    def base_test_gradient_convergence(self):
+        taylor_test = TaylorTest(
+            self._evaluate_function,
+            self._evaluate_gradient,
+            len(self.input_slots)
+        )
+        self.assertTrue(
+            taylor_test.is_correct_gradient(self.test_case_values[0])
+        )
