@@ -175,7 +175,7 @@ class TaylorTest:
                     perturbed_value
                     - default_value
                     - shift * perturbation_norm
-            ) + np.finfo(float).eps
+            ) + np.finfo(np.float64).eps
             shifts[i] = shift
 
         return shifts, taylor_remainders
@@ -198,7 +198,7 @@ class TaylorTest:
         data: [List(float), List(float)]
             Shift amplitudes and Taylor reminders for the slope
         """
-        initial_point = np.asarray(initial_point)
+        initial_point = np.asarray(initial_point, dtype=np.float64)
 
         for i, direction in enumerate(self._test_directions()):
             x, y = self._calculate_taylor_remainders(
