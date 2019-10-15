@@ -24,3 +24,6 @@ class TestProductionCostDataSource(BaseTestGradientDataSource):
 
     def test_param_to_gradient(self):
         super().base_test_param_to_gradient()
+
+    def test_gradient_convergence(self):
+        super().base_test_gradient_convergence()
