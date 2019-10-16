@@ -195,34 +195,63 @@ def get_scaling_factors(single_point_evaluator, kpis, parameters):
        Research, vol. 8, pp. 10-13, 2018
     """
 
+    #: Initialize a `WeightedEvaluator` for scaling calculations
+    evaluator = WeightedEvaluator(
+        single_point_evaluator,
+        [1. for _ in kpis],
+        parameters,
+    )
+
     #: Get initial weights referring to extrema of each variable range
     auto_scales = [kpi.auto_scale for kpi in kpis]
-    scaling_factors = [kpi.scale_factor for kpi in kpis]
-    extrema = np.zeros((len(kpis), len(kpis)))
-    initial_weights = get_weight_combinations(len(kpis), 2)
+    scaling_factors = np.array([kpi.scale_factor for kpi in kpis])
 
-    #: Calculate extrema for each KPI optimisation
-    for i, weights in enumerate(initial_weights):
+    #: Calculate default Sen's scaling factors
+    sen_scaling_factors = generate_sen_scaling_factors(
+        evaluator,
+        len(auto_scales)
+    )
 
-        log.info("Doing extrema MCO run with weights: {}".format(weights))
-
-        evaluator = WeightedEvaluator(
-            single_point_evaluator,
-            weights,
-            parameters,
-        )
-
-        optimal_point, optimal_kpis = evaluator.optimize()
-        extrema[i] += np.asarray(optimal_kpis)
-
-    #: Calculate required scaling factors by normalising KPI range
-    for i in np.argwhere(auto_scales).flatten():
-        minimum = extrema[i][i]
-        maximum = np.max(extrema[:, i])
-        scaling_factors[i] = 1 / (maximum - minimum)
+    #: Apply the Sen's scaling factors where necessary
+    scales_mask = np.argwhere(auto_scales).flatten()
+    scaling_factors[scales_mask] = sen_scaling_factors[scales_mask]
 
     log.info("Using KPI scaling factors: {}".format(scaling_factors))
 
+    return scaling_factors.tolist()
+
+
+def generate_sen_scaling_factors(weighted_evaluator, dimension):
+    """ Caclulate the default Sen's scaling factors for the
+    "Multi-Objective Programming Method".
+
+    Parameters
+    ----------
+    weighted_evaluator: WeightedEvaluator
+        Instance that provides optimization functionality
+    dimension: int
+        The dimension of the KPIs vector
+    Returns
+    -------
+    scaling_factors: np.array
+        Sen's scaling factors
+    """
+    extrema = np.zeros((dimension, dimension))
+
+    initial_weights = np.eye(dimension)
+
+    for i, weights in enumerate(initial_weights):
+
+        weighted_evaluator.weights = weights.tolist()
+
+        log.info(
+            f"Doing extrema MCO run with weights: {weighted_evaluator.weights}"
+        )
+
+        _, optimal_kpis = weighted_evaluator.optimize()
+        extrema[i] += np.asarray(optimal_kpis)
+
+    scaling_factors = np.reciprocal(extrema.max(0) - extrema.min(0))
     return scaling_factors
 
 
@@ -237,4 +266,5 @@ def get_dirichlet_weight_combinations(dimension):
     """
     distribution = np.random.dirichlet
     alpha = np.ones(dimension)
-    return distribution(alpha).tolist()
+    while True:
+        yield distribution(alpha).tolist()
