@@ -33,8 +33,7 @@ class BaseTestDataSource(unittest.TestCase):
         res = self.data_source.run(self.model, data_values)
         return res[0].value
 
-    def basic_evaluation(self, test_case_index):
-        values = self.test_case_values[test_case_index]
+    def basic_evaluation(self, values):
         data_values = self.convert_to_data_values(values, self.input_slots)
         res = self.data_source.run(self.model, data_values)
         return res
@@ -47,13 +46,19 @@ class BaseTestDataSource(unittest.TestCase):
         ]
 
     def base_test_basic_evaluation(self):
-        for i in range(len(self.test_case_values)):
-            res = self.basic_evaluation(i)
+        for i, values in enumerate(self.test_case_values):
+            res = self.basic_evaluation(values)
             self.assertAlmostEqual(
                 res[0].value,
                 self.test_case_objectives[i],
                 self._objective_precision
             )
+
+    def base_test_output_slots(self, values):
+        self.assertEqual(
+            len(self.basic_evaluation(values)),
+            len(self.output_slots)
+        )
 
 
 class BaseTestGradientDataSource(BaseTestDataSource):
@@ -68,8 +73,8 @@ class BaseTestGradientDataSource(BaseTestDataSource):
         )
 
     def base_test_param_to_gradient(self):
-        for i in range(len(self.test_case_values)):
-            _, gradient = self.basic_evaluation(i)
+        for values in self.test_case_values:
+            _, gradient = self.basic_evaluation(values)
             self.assertEqual(
                 len(self.input_slots),
                 len(gradient.value)

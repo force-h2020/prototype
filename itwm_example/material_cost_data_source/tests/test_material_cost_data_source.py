@@ -26,3 +26,6 @@ class TestMaterialCostDataSource(BaseTestGradientDataSource):
 
     def test_gradient_convergence(self):
         super().base_test_gradient_convergence()
+
+    def test_output_slots(self):
+        super().base_test_output_slots(self.test_case_values[0])
