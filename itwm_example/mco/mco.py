@@ -224,3 +224,17 @@ def get_scaling_factors(single_point_evaluator, kpis, parameters):
     log.info("Using KPI scaling factors: {}".format(scaling_factors))
 
     return scaling_factors
+
+
+def get_dirichlet_weight_combinations(dimension):
+    """
+        , dirichlet=False
+
+                if not dirichlet:
+                yield [scaling * val for val in int_w]
+            else:
+                yield get_dirichlet_weight_combinations(dimension)
+    """
+    distribution = np.random.dirichlet
+    alpha = np.ones(dimension)
+    return distribution(alpha).tolist()
