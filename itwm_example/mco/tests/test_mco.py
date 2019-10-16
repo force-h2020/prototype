@@ -138,11 +138,14 @@ class TestMCO(TestCase):
              [0.0, 0.25, 0.75], [0.0, 0.125, 0.875], [0.0, 0.0, 1.0]]
         )
 
-        self.assertEqual(list(get_weight_combinations(2, 5, zero_values=False)), [
-            [0.75, 0.25],
-            [0.50, 0.50],
-            [0.25, 0.75],
-        ])
+        self.assertEqual(
+            list(get_weight_combinations(2, 5, zero_values=False)),
+            [
+                [0.75, 0.25],
+                [0.50, 0.50],
+                [0.25, 0.75],
+            ]
+        )
 
         self.assertEqual(
             list(get_weight_combinations(3, 9, zero_values=False)),
