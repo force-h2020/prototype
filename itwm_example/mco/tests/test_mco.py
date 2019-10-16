@@ -43,6 +43,15 @@ class TestMCO(TestCase):
         )
         self.evaluator.workflow.mco = self.mco_model
 
+    def test_basic_eval(self):
+        mock_kpi_return = [
+            DataValue(value=2), DataValue(value=3)
+        ]
+
+        with mock.patch('force_bdss.api.Workflow.execute',
+                        return_value=mock_kpi_return):
+            self.mco.run(self.evaluator)
+
     def test_internal_weighted_evaluator(self):
         parameters = self.mco_model.parameters
 
@@ -129,14 +138,14 @@ class TestMCO(TestCase):
              [0.0, 0.25, 0.75], [0.0, 0.125, 0.875], [0.0, 0.0, 1.0]]
         )
 
-        self.assertEqual(list(get_weight_combinations(2, 5, False)), [
+        self.assertEqual(list(get_weight_combinations(2, 5, zero_values=False)), [
             [0.75, 0.25],
             [0.50, 0.50],
             [0.25, 0.75],
         ])
 
         self.assertEqual(
-            list(get_weight_combinations(3, 9, False)),
+            list(get_weight_combinations(3, 9, zero_values=False)),
             [[0.75, 0.125, 0.125],
              [0.625, 0.25, 0.125],
              [0.625, 0.125, 0.25],

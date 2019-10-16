@@ -47,7 +47,7 @@ class MCO(BaseMCO):
                                               parameters)
         weight_combinations = get_weight_combinations(len(kpis),
                                                       model.num_points,
-                                                      False)
+                                                      zero_values=False)
 
         for weights in weight_combinations:
 
@@ -129,10 +129,14 @@ def opt(weighted_score_func, initial_point, constraints):
         bounds=constraints).x
 
 
-def get_weight_combinations(dimension, num_points, zero_values=True):
+def get_uniform_weight_combinations(dimension, num_points, **kwargs):
     """Given the number of dimensions, this function provides all possible
-    combinations of weights adding to 1.0. For example, a dimension 3
-    will give all combinations (x, y, z) where x+y+z = 1.0.
+    combinations of weights adding to 1.0, such that the sampling points
+    are uniformly distributed along each axis.
+    For example, a dimension 3 will give all combinations (x, y, z),
+    where
+        x + y + z = 1.0,
+    and (x, y, z) can realise only specified equidistant values.
 
     The num_points parameter indicates how many divisions along a single
     dimension will be performed. For example num_points == 3 will evaluate
@@ -150,7 +154,7 @@ def get_weight_combinations(dimension, num_points, zero_values=True):
     num_points: int
         The number of divisions along each dimension
 
-    zero_values: bool (default=True)
+    kwargs["zero_values"]: bool (default=True)
         Whether to include zero valued weights
 
     Returns
@@ -159,10 +163,34 @@ def get_weight_combinations(dimension, num_points, zero_values=True):
         A generator returning all the possible combinations satisfying the
         requirement that the sum of all the weights must always be 1.0
     """
+    zero_values = kwargs.get("zero_values", True)
 
     scaling = 1.0 / (num_points - 1)
     for int_w in _int_weights(dimension, num_points, zero_values):
         yield [scaling * val for val in int_w]
+
+
+def get_weight_combinations(dimension, num_points, **kwargs):
+    """ Given the problem dimension and _effective_ number of points,
+    generates samples for the unit simplex.
+    Parameters
+    ----------
+    dimension: int
+        The dimension of the vector
+
+    num_points: int
+        The number of divisions along each dimension
+
+    Returns
+    -------
+    generator
+        A generator returning random samples of vector satisfying the
+        requirement that the sum of all the elements always equal 1.0
+    """
+
+    # _option = get_dirichlet_weight_combinations
+    distribution_generator = get_uniform_weight_combinations
+    yield from distribution_generator(dimension, num_points, **kwargs)
 
 
 def _int_weights(dimension, num_points, zero_values):
@@ -255,16 +283,38 @@ def generate_sen_scaling_factors(weighted_evaluator, dimension):
     return scaling_factors
 
 
-def get_dirichlet_weight_combinations(dimension):
-    """
-        , dirichlet=False
+def get_dirichlet_weight_combinations(dimension, num_points, *args):
+    """ Generate data sample from Dirichlet distribution,
+    uniformly distributed over a `dimension`-dimensional simplex.
+    The number of points yielded is compatible with that generated
+    by the `get_uniform_weight_combinations` algorithm.
 
-                if not dirichlet:
-                yield [scaling * val for val in int_w]
-            else:
-                yield get_dirichlet_weight_combinations(dimension)
+    Parameters
+    ----------
+    dimension: int
+        The dimension of the vector
+
+    num_points: int
+        The effective number of divisions along each dimension
+
+    Returns
+    -------
+    generator
+        A generator returning random samples of vector satisfying the
+        Dirichlet distribution pdf, and the requirement that the sum
+         of all the elements always equal 1.0
+
+    Note
+    ----------
+    The number of points generated is set to equal the number
+    of points yielded from `get_uniform_weight_combinations`.
     """
     distribution = np.random.dirichlet
-    alpha = np.ones(dimension)
-    while True:
+    alpha = np.ones(dimension)*1.5
+    total_nof_points = (
+            np.math.factorial(dimension + num_points - 2)
+            / np.math.factorial(dimension - 1)
+            / np.math.factorial(num_points - 1)
+    )
+    for _ in range(int(total_nof_points)):
         yield distribution(alpha).tolist()
