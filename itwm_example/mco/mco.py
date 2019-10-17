@@ -250,7 +250,7 @@ def get_scaling_factors(single_point_evaluator, kpis, parameters):
 
 
 def generate_sen_scaling_factors(weighted_evaluator, dimension):
-    """ Caclulate the default Sen's scaling factors for the
+    """ Calculate the default Sen's scaling factors for the
     "Multi-Objective Programming Method".
 
     Parameters
