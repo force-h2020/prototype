@@ -34,6 +34,20 @@ class BaseTestDataSource(unittest.TestCase):
         return res[0].value
 
     def basic_evaluation(self, values):
+        """ With `values` provided, we convert the numeric
+        values into the DataSource acceptable format, and
+        perform `DataSource().run` evaluation.
+
+        Parameters
+        ----------
+        values: List[Int, Float]
+            Generic type values to `run` with
+
+        Returns
+        ----------
+        res: List[DataValues]
+            `run` outputs
+        """
         data_values = self.convert_to_data_values(values, self.input_slots)
         res = self.data_source.run(self.model, data_values)
         return res
@@ -46,6 +60,12 @@ class BaseTestDataSource(unittest.TestCase):
         ]
 
     def base_test_basic_evaluation(self):
+        """ Base test method for basic evaluation
+        (see `basic_evaluation`)
+        For the setup list of test case values, we verity
+        that the `run` output is consistent with the known
+        provided test case objectives.
+        """
         for i, values in enumerate(self.test_case_values):
             res = self.basic_evaluation(values)
 
@@ -60,6 +80,10 @@ class BaseTestDataSource(unittest.TestCase):
                 )
 
     def base_test_output_slots(self, values):
+        """ Base test to verify the number of output slots
+        is consistent with the `run` output in terms of the
+        number of output values.
+        """
         self.assertEqual(
             len(self.basic_evaluation(values)),
             len(self.output_slots)
@@ -78,6 +102,11 @@ class BaseTestGradientDataSource(BaseTestDataSource):
         )
 
     def base_test_basic_evaluation(self):
+        """ Overrides the base test evaluation method,
+        specifically to verify the objective value consistency
+        _only_, within the precision.
+        Gradients consistency are NOT tested here.
+        """
         for i, values in enumerate(self.test_case_values):
             res = self.basic_evaluation(values)
             self.assertAlmostEqual(
@@ -87,6 +116,10 @@ class BaseTestGradientDataSource(BaseTestDataSource):
             )
 
     def base_test_param_to_gradient(self):
+        """ Base test to verify the consistency between
+        the number of input slots and the length of the
+        output gradients, as this should be injective.
+        """
         for values in self.test_case_values:
             _, gradient = self.basic_evaluation(values)
             self.assertEqual(
@@ -103,6 +136,10 @@ class BaseTestGradientDataSource(BaseTestDataSource):
         return res[1].value
 
     def base_test_gradient_convergence(self):
+        """ Base test for gradient consistency. Estimates the
+        order of convergence for gradient versus known values.
+        See implementation of `TaylorTest` for details.
+        """
         taylor_test = TaylorTest(
             self._evaluate_function,
             self._evaluate_gradient,
