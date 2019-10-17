@@ -38,11 +38,13 @@ class TestDirichletSpaceSampler(BaseTestSampler):
 
     def generate_samplers(self):
         for dimension in self.dimensions:
-            for alpha in self.alphas:
-                yield DirichletSpaceSampler(
-                    dimension=dimension,
-                    alpha=alpha
-                )
+            for nof_points in self.nof_points:
+                for alpha in self.alphas:
+                    yield DirichletSpaceSampler(
+                        dimension,
+                        nof_points,
+                        alpha=alpha
+                    )
 
     def test__get_sample_point(self):
         for sampler in self.generate_samplers():
@@ -53,36 +55,27 @@ class TestDirichletSpaceSampler(BaseTestSampler):
 
     def test_generate_space_sample(self):
         for sampler in self.generate_samplers():
-            for nof_points in self.nof_points:
 
-                space_sample = list(
-                    sampler.generate_space_sample(
-                        nof_points
-                    )
+            space_sample = list(
+                sampler.generate_space_sample()
+            )
+            self.assertEqual(
+                len(space_sample),
+                convert_samples_pp_to_samples_total(
+                    sampler.dimension,
+                    sampler.resolution
                 )
-                self.assertEqual(
-                    len(space_sample),
-                    convert_samples_pp_to_samples_total(
-                        sampler.dimension,
-                        nof_points
-                    )
-                )
+            )
 
-                for sample in space_sample:
-                    self.assertAlmostEqual(
-                        sum(sample),
-                        1.
-                    )
+            for sample in space_sample:
+                self.assertAlmostEqual(
+                    sum(sample),
+                    1.
+                )
 
 
 class TestUniformSpaceSampler(BaseTestSampler):
     distribution = UniformSpaceSampler
-
-    def setUp(self):
-        self.sampler = self.distribution(
-            dimension=3,
-            resolution=5
-        )
 
     def test_space_sample(self):
         self.assertEqual(
@@ -138,7 +131,7 @@ class TestUniformSpaceSampler(BaseTestSampler):
         )
 
         self.assertEqual(
-            list(self.generate_values(2, 5, zero_values=False)),
+            list(self.generate_values(2, 5, with_zero_values=False)),
             [
                 [0.75, 0.25],
                 [0.50, 0.50],
@@ -147,7 +140,7 @@ class TestUniformSpaceSampler(BaseTestSampler):
         )
 
         self.assertEqual(
-            list(self.generate_values(3, 9, zero_values=False)),
+            list(self.generate_values(3, 9, with_zero_values=False)),
             [[0.75, 0.125, 0.125],
              [0.625, 0.25, 0.125],
              [0.625, 0.125, 0.25],

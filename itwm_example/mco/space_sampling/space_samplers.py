@@ -1,6 +1,9 @@
 import abc
 import numpy as np
 
+from traits.api import ABCHasStrictTraits, Bool, ListFloat, Float
+from force_bdss.api import PositiveInt
+
 
 def convert_samples_pp_to_samples_total(space_dimension, nof_points):
     samples_total = (
@@ -11,9 +14,14 @@ def convert_samples_pp_to_samples_total(space_dimension, nof_points):
     return int(samples_total)
 
 
-class SpaceSampler(abc.ABC):
-    def __init__(self, dimension, **kwargs):
+class SpaceSampler(ABCHasStrictTraits):
+    dimension = PositiveInt()
+
+    resolution = PositiveInt()
+
+    def __init__(self, dimension, resolution, **kwargs):
         self.dimension = dimension
+        self.resolution = resolution
 
     @abc.abstractmethod
     def _get_sample_point(self):
@@ -25,34 +33,40 @@ class SpaceSampler(abc.ABC):
 
 
 class DirichletSpaceSampler(SpaceSampler):
+    _centering_coef = Float()
+    alpha = ListFloat()
+
     distribution_function = np.random.dirichlet
 
-    def __init__(self, dimension, alpha=None, **kwargs):
-        super().__init__(dimension, **kwargs)
+    def __init__(self, dimension, resolution, alpha=None, **kwargs):
+        super().__init__(dimension, resolution, **kwargs)
+
         if alpha is None:
             self._centering_coef = 1.
         else:
             self._centering_coef = alpha
 
-        self.alpha = np.ones(dimension) * self._centering_coef
+        self.alpha = [self._centering_coef for _ in range(self.dimension)]
 
     def _get_sample_point(self):
         return self.distribution_function(self.alpha).tolist()
 
-    def generate_space_sample(self, nof_points):
+    def generate_space_sample(self):
         total_nof_points = convert_samples_pp_to_samples_total(
             self.dimension,
-            nof_points
+            self.resolution
         )
         for _ in range(total_nof_points):
             yield self._get_sample_point()
 
 
 class UniformSpaceSampler(SpaceSampler):
-    def __init__(self, dimension, resolution, zero_values=True, **kwargs):
-        super().__init__(dimension, **kwargs)
-        self.resolution = resolution
-        self.zero_values = zero_values
+    with_zero_values = Bool()
+
+    def __init__(self, dimension, resolution, with_zero_values=True, **kwargs):
+        super().__init__(dimension, resolution, **kwargs)
+
+        self.with_zero_values = with_zero_values
 
     def generate_space_sample(self, **kwargs):
         yield from self._get_sample_point()
@@ -75,7 +89,7 @@ class UniformSpaceSampler(SpaceSampler):
         if dimension == 1:
             yield [resolution - 1]
         else:
-            if self.zero_values:
+            if self.with_zero_values:
                 integers = np.arange(resolution-1, -1, -1)
             else:
                 integers = np.arange(resolution-2, 0, -1)
