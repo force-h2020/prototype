@@ -14,7 +14,7 @@ from force_bdss.api import (
 from force_bdss.mco.i_evaluator import IEvaluator
 
 from .subprocess_workflow_evaluator import SubprocessWorkflowEvaluator
-from .space_sampling.space_samplers import UniformSpaceSampler
+from .scaling_tools.kpi_scaling import get_scaling_factors
 
 log = logging.getLogger(__name__)
 
@@ -81,6 +81,17 @@ class MCO(BaseMCO):
     def _optimizer_default(self):
         return WeightedEvaluator
 
+    def get_scaling_factors(self, evaluator, kpis, parameters):
+        scaling_factors_evaluator = self.optimizer(
+            evaluator,
+            [1. for _ in kpis],
+            parameters,
+        )
+        scaling_factors = get_scaling_factors(
+            scaling_factors_evaluator, kpis
+        )
+        return scaling_factors
+
     def run(self, evaluator):
 
         model = evaluator.mco_model
@@ -103,9 +114,9 @@ class MCO(BaseMCO):
             single_point_evaluator = evaluator
 
         #: Get scaling factors and non-zero weight combinations for each KPI
-        scaling_factors = get_scaling_factors(single_point_evaluator,
-                                              kpis,
-                                              parameters)
+        scaling_factors = self.get_scaling_factors(
+            single_point_evaluator, kpis, parameters
+        )
 
         for weights in model.weights_samples(with_zero_values=False):
 
@@ -140,96 +151,3 @@ def opt(weighted_score_func, initial_point, constraints):
         initial_point,
         method="SLSQP",
         bounds=constraints).x
-
-
-def get_weight_combinations(dimension, num_points, **kwargs):
-    """ Given the problem dimension and _effective_ number of points,
-    generates samples for the unit simplex.
-    Parameters
-    ----------
-    dimension: int
-        The dimension of the vector
-
-    num_points: int
-        The number of divisions along each dimension
-
-    Returns
-    -------
-    generator
-        A generator returning random samples of vector satisfying the
-        requirement that the sum of all the elements always equal 1.0
-    """
-
-    generator = UniformSpaceSampler(dimension, num_points, **kwargs)
-    yield from generator.generate_space_sample()
-
-
-def get_scaling_factors(single_point_evaluator, kpis, parameters):
-    """KPI Scaling factors for MCO are calculated (as required) by
-    normalising by the possible range of each optimal KPI value.
-    Also known as Sen's Multi-Objective Programming Method[1]_.
-
-    References
-    ----------
-    .. [1] Chandra Sen, "Sen's Multi-Objective Programming Method and Its
-       Comparison with Other Techniques", American Journal of Operational
-       Research, vol. 8, pp. 10-13, 2018
-    """
-
-    #: Initialize a `WeightedEvaluator` for scaling calculations
-    evaluator = WeightedEvaluator(
-        single_point_evaluator,
-        [1. for _ in kpis],
-        parameters,
-    )
-
-    #: Get initial weights referring to extrema of each variable range
-    auto_scales = [kpi.auto_scale for kpi in kpis]
-    scaling_factors = np.array([kpi.scale_factor for kpi in kpis])
-
-    #: Calculate default Sen's scaling factors
-    sen_scaling_factors = generate_sen_scaling_factors(
-        evaluator,
-        len(auto_scales)
-    )
-
-    #: Apply the Sen's scaling factors where necessary
-    scaling_factors[auto_scales] = sen_scaling_factors[auto_scales]
-
-    log.info("Using KPI scaling factors: {}".format(scaling_factors))
-
-    return scaling_factors.tolist()
-
-
-def generate_sen_scaling_factors(weighted_evaluator, dimension):
-    """ Calculate the default Sen's scaling factors for the
-    "Multi-Objective Programming Method".
-
-    Parameters
-    ----------
-    weighted_evaluator: WeightedEvaluator
-        Instance that provides optimization functionality
-    dimension: int
-        The dimension of the KPIs vector
-    Returns
-    -------
-    scaling_factors: np.array
-        Sen's scaling factors
-    """
-    extrema = np.zeros((dimension, dimension))
-
-    initial_weights = np.eye(dimension)
-
-    for i, weights in enumerate(initial_weights):
-
-        weighted_evaluator.weights = weights.tolist()
-
-        log.info(
-            f"Doing extrema MCO run with weights: {weighted_evaluator.weights}"
-        )
-
-        _, optimal_kpis = weighted_evaluator.optimize()
-        extrema[i] += np.asarray(optimal_kpis)
-
-    scaling_factors = np.reciprocal(extrema.max(0) - extrema.min(0))
-    return scaling_factors

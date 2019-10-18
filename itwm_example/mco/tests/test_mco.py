@@ -1,17 +1,20 @@
 from unittest import mock, TestCase
 
+from traits.api import provides, HasTraits
+
 from force_bdss.api import (
     KPISpecification, Workflow, DataValue, WorkflowEvaluator
 )
 
 from itwm_example.mco.mco import (
     WeightedEvaluator,
-    get_scaling_factors
+    IOptimizer
     )
 from itwm_example.mco.mco_factory import MCOFactory
 
 
-class MockEval():
+@provides(IOptimizer)
+class MockOptimizer(HasTraits):
 
     def __init__(self, eval, weights, param, **kwargs):
         self.value = 10
@@ -70,23 +73,26 @@ class TestMCO(TestCase):
             self.assertEqual(7, mock_exec.call_count)
 
     def test_scaling_factors(self):
+        self.mco.optimizer = MockOptimizer
 
-        with mock.patch('itwm_example.mco.mco.WeightedEvaluator') as mock_eval:
-            mock_eval.side_effect = MockEval
-            scaling_factors = get_scaling_factors(self.evaluator,
-                                                  self.kpis,
-                                                  self.parameters)
+        scaling_factors = self.mco.get_scaling_factors(
+            self.evaluator,
+            self.kpis,
+            self.parameters
+        )
 
-            self.assertEqual(scaling_factors, [0.1, 0.1])
+        self.assertEqual(scaling_factors, [0.1, 0.1])
 
     def test_auto_scale(self):
 
         temp_kpis = [KPISpecification(), KPISpecification(auto_scale=False)]
 
-        with mock.patch('itwm_example.mco.mco.WeightedEvaluator') as mock_eval:
-            mock_eval.side_effect = MockEval
-            scaling_factors = get_scaling_factors(self.evaluator,
-                                                  temp_kpis,
-                                                  self.parameters)
+        self.mco.optimizer = MockOptimizer
 
-            self.assertEqual(scaling_factors, [0.1, 1.])
+        scaling_factors = self.mco.get_scaling_factors(
+            self.evaluator,
+            temp_kpis,
+            self.parameters
+        )
+
+        self.assertEqual(scaling_factors, [0.1, 1.])
