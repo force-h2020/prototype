@@ -5,7 +5,7 @@ import numpy as np
 from scipy import optimize
 
 from traits.api import (
-    HasStrictTraits, List, Float, Instance
+    HasStrictTraits, List, Float, Instance, Interface, provides, Type
 )
 
 from force_bdss.api import (
@@ -18,61 +18,16 @@ from .subprocess_workflow_evaluator import SubprocessWorkflowEvaluator
 log = logging.getLogger(__name__)
 
 
-class MCO(BaseMCO):
+class IOptimizer(Interface):
 
-    def run(self, evaluator):
+    def _score(self, *args, **kwargs):
+        """ Objective function score with given parameters"""
 
-        model = evaluator.mco_model
-        parameters = model.parameters
-        kpis = model.kpis
-
-        if model.evaluation_mode == "Subprocess":
-            # Here we create an instance of our WorkflowEvaluator subclass
-            # that allows for evaluation of a state in the workflow via calling
-            # force_bdss on a new subprocess running in 'evaluate' mode.
-            # Note: a BaseMCOCommunicator must be present to pass in parameter
-            # values and returning the KPI for a force_bdss run in 'evaluate'
-            # mode
-            single_point_evaluator = SubprocessWorkflowEvaluator(
-                workflow=evaluator.workflow,
-                workflow_filepath=evaluator.workflow_filepath,
-                executable_path=sys.argv[0]
-            )
-        else:
-            single_point_evaluator = evaluator
-
-        #: Get scaling factors and non-zero weight combinations for each KPI
-        scaling_factors = get_scaling_factors(single_point_evaluator,
-                                              kpis,
-                                              parameters)
-        weight_combinations = get_weight_combinations(len(kpis),
-                                                      model.num_points,
-                                                      zero_values=False)
-
-        for weights in weight_combinations:
-
-            log.info("Doing MCO run with weights: {}".format(weights))
-
-            generator = zip(weights, scaling_factors)
-            scaled_weights = [weight * scale for weight, scale in generator]
-
-            evaluator = WeightedEvaluator(
-                single_point_evaluator,
-                scaled_weights,
-                parameters,
-            )
-
-            optimal_point, optimal_kpis = evaluator.optimize()
-            # When there is new data, this operation informs the system that
-            # new data has been received. It must be a dictionary as given.
-
-            self.notify_new_point(
-                [DataValue(value=v) for v in optimal_point],
-                [DataValue(value=v) for v in optimal_kpis],
-                scaled_weights
-            )
+    def optimize(self):
+        """ Perform an optimization procedure"""
 
 
+@provides(IOptimizer)
 class WeightedEvaluator(HasStrictTraits):
     """Performs an optimization given a set of weights for the individual
     KPIs.
@@ -116,6 +71,66 @@ class WeightedEvaluator(HasStrictTraits):
         log.info("KPIs at optimal point : {}".format(optimal_kpis))
 
         return optimal_point, optimal_kpis
+
+
+class MCO(BaseMCO):
+
+    optimizer = Type(IOptimizer)
+
+    def _optimizer_default(self):
+        return WeightedEvaluator
+
+    def run(self, evaluator):
+
+        model = evaluator.mco_model
+        parameters = model.parameters
+        kpis = model.kpis
+
+        if model.evaluation_mode == "Subprocess":
+            # Here we create an instance of our WorkflowEvaluator subclass
+            # that allows for evaluation of a state in the workflow via calling
+            # force_bdss on a new subprocess running in 'evaluate' mode.
+            # Note: a BaseMCOCommunicator must be present to pass in parameter
+            # values and returning the KPI for a force_bdss run in 'evaluate'
+            # mode
+            single_point_evaluator = SubprocessWorkflowEvaluator(
+                workflow=evaluator.workflow,
+                workflow_filepath=evaluator.workflow_filepath,
+                executable_path=sys.argv[0]
+            )
+        else:
+            single_point_evaluator = evaluator
+
+        #: Get scaling factors and non-zero weight combinations for each KPI
+        scaling_factors = get_scaling_factors(single_point_evaluator,
+                                              kpis,
+                                              parameters)
+        weight_combinations = get_weight_combinations(len(kpis),
+                                                      model.num_points,
+                                                      with_zero_values=False)
+
+        for weights in weight_combinations:
+
+            log.info("Doing MCO run with weights: {}".format(weights))
+
+            generator = zip(weights, scaling_factors)
+            scaled_weights = [weight * scale for weight, scale in generator]
+
+            evaluator = self.optimizer(
+                single_point_evaluator,
+                scaled_weights,
+                parameters,
+            )
+
+            optimal_point, optimal_kpis = evaluator.optimize()
+            # When there is new data, this operation informs the system that
+            # new data has been received. It must be a dictionary as given.
+
+            self.notify_new_point(
+                [DataValue(value=v) for v in optimal_point],
+                [DataValue(value=v) for v in optimal_kpis],
+                scaled_weights
+            )
 
 
 def opt(weighted_score_func, initial_point, constraints):
@@ -163,7 +178,7 @@ def get_uniform_weight_combinations(dimension, num_points, **kwargs):
         A generator returning all the possible combinations satisfying the
         requirement that the sum of all the weights must always be 1.0
     """
-    zero_values = kwargs.get("zero_values", True)
+    zero_values = kwargs.get("with_zero_values", True)
 
     scaling = 1.0 / (num_points - 1)
     for int_w in _int_weights(dimension, num_points, zero_values):
@@ -188,9 +203,12 @@ def get_weight_combinations(dimension, num_points, **kwargs):
         requirement that the sum of all the elements always equal 1.0
     """
 
-    # _option = get_dirichlet_weight_combinations
-    distribution_generator = get_uniform_weight_combinations
-    yield from distribution_generator(dimension, num_points, **kwargs)
+    from .space_sampling.space_samplers import UniformSpaceSampler
+    generator = UniformSpaceSampler(dimension, num_points, **kwargs)
+    yield from generator.generate_space_sample()
+
+    # distribution_generator = get_uniform_weight_combinations
+    # yield from distribution_generator(dimension, num_points, **kwargs)
 
 
 def _int_weights(dimension, num_points, zero_values):
