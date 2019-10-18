@@ -106,17 +106,8 @@ class MCO(BaseMCO):
         scaling_factors = get_scaling_factors(single_point_evaluator,
                                               kpis,
                                               parameters)
-        weight_combinations = get_weight_combinations(len(kpis),
-                                                      model.num_points,
-                                                      with_zero_values=False)
 
-        weights_generator = UniformSpaceSampler(
-            len(kpis),
-            model.num_points,
-            with_zero_values=False
-        ).generate_space_sample()
-
-        for weights in weights_generator:
+        for weights in model.weights_samples(with_zero_values=False):
 
             log.info("Doing MCO run with weights: {}".format(weights))
 
@@ -203,8 +194,7 @@ def get_scaling_factors(single_point_evaluator, kpis, parameters):
     )
 
     #: Apply the Sen's scaling factors where necessary
-    scales_mask = np.argwhere(auto_scales).flatten()
-    scaling_factors[scales_mask] = sen_scaling_factors[scales_mask]
+    scaling_factors[auto_scales] = sen_scaling_factors[auto_scales]
 
     log.info("Using KPI scaling factors: {}".format(scaling_factors))
 
