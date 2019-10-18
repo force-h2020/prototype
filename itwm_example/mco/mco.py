@@ -14,6 +14,7 @@ from force_bdss.api import (
 from force_bdss.mco.i_evaluator import IEvaluator
 
 from .subprocess_workflow_evaluator import SubprocessWorkflowEvaluator
+from .space_sampling.space_samplers import UniformSpaceSampler
 
 log = logging.getLogger(__name__)
 
@@ -109,7 +110,13 @@ class MCO(BaseMCO):
                                                       model.num_points,
                                                       with_zero_values=False)
 
-        for weights in weight_combinations:
+        weights_generator = UniformSpaceSampler(
+            len(kpis),
+            model.num_points,
+            with_zero_values=False
+        ).generate_space_sample()
+
+        for weights in weights_generator:
 
             log.info("Doing MCO run with weights: {}".format(weights))
 
@@ -144,47 +151,6 @@ def opt(weighted_score_func, initial_point, constraints):
         bounds=constraints).x
 
 
-def get_uniform_weight_combinations(dimension, num_points, **kwargs):
-    """Given the number of dimensions, this function provides all possible
-    combinations of weights adding to 1.0, such that the sampling points
-    are uniformly distributed along each axis.
-    For example, a dimension 3 will give all combinations (x, y, z),
-    where
-        x + y + z = 1.0,
-    and (x, y, z) can realise only specified equidistant values.
-
-    The num_points parameter indicates how many divisions along a single
-    dimension will be performed. For example num_points == 3 will evaluate
-    for x being 0.0, 0.5 and 1.0. The returned (x, y, z) combinations will
-    of course be much higher than 3.
-
-    Note that if the zero_values parameter is set to false, then ensure
-    num_points > dimension in order for the generator to return any values.
-
-    Parameters
-    ----------
-    dimension: int
-        The dimension of the vector
-
-    num_points: int
-        The number of divisions along each dimension
-
-    kwargs["zero_values"]: bool (default=True)
-        Whether to include zero valued weights
-
-    Returns
-    -------
-    generator
-        A generator returning all the possible combinations satisfying the
-        requirement that the sum of all the weights must always be 1.0
-    """
-    zero_values = kwargs.get("with_zero_values", True)
-
-    scaling = 1.0 / (num_points - 1)
-    for int_w in _int_weights(dimension, num_points, zero_values):
-        yield [scaling * val for val in int_w]
-
-
 def get_weight_combinations(dimension, num_points, **kwargs):
     """ Given the problem dimension and _effective_ number of points,
     generates samples for the unit simplex.
@@ -203,30 +169,8 @@ def get_weight_combinations(dimension, num_points, **kwargs):
         requirement that the sum of all the elements always equal 1.0
     """
 
-    from .space_sampling.space_samplers import UniformSpaceSampler
     generator = UniformSpaceSampler(dimension, num_points, **kwargs)
     yield from generator.generate_space_sample()
-
-    # distribution_generator = get_uniform_weight_combinations
-    # yield from distribution_generator(dimension, num_points, **kwargs)
-
-
-def _int_weights(dimension, num_points, zero_values):
-    """Helper routine for the previous one. The meaning is the same, but
-    works with integers instead of floats, adding up to num_points"""
-
-    if dimension == 1:
-        yield [num_points - 1]
-    else:
-        if zero_values:
-            integers = np.arange(num_points-1, -1, -1)
-        else:
-            integers = np.arange(num_points-2, 0, -1)
-        for i in integers:
-            for entry in _int_weights(dimension - 1,
-                                      num_points - i,
-                                      zero_values):
-                yield [i] + entry
 
 
 def get_scaling_factors(single_point_evaluator, kpis, parameters):
@@ -299,40 +243,3 @@ def generate_sen_scaling_factors(weighted_evaluator, dimension):
 
     scaling_factors = np.reciprocal(extrema.max(0) - extrema.min(0))
     return scaling_factors
-
-
-def get_dirichlet_weight_combinations(dimension, num_points, *args):
-    """ Generate data sample from Dirichlet distribution,
-    uniformly distributed over a `dimension`-dimensional simplex.
-    The number of points yielded is compatible with that generated
-    by the `get_uniform_weight_combinations` algorithm.
-
-    Parameters
-    ----------
-    dimension: int
-        The dimension of the vector
-
-    num_points: int
-        The effective number of divisions along each dimension
-
-    Returns
-    -------
-    generator
-        A generator returning random samples of vector satisfying the
-        Dirichlet distribution pdf, and the requirement that the sum
-         of all the elements always equal 1.0
-
-    Note
-    ----------
-    The number of points generated is set to equal the number
-    of points yielded from `get_uniform_weight_combinations`.
-    """
-    distribution = np.random.dirichlet
-    alpha = np.ones(dimension)*1.5
-    total_nof_points = (
-            np.math.factorial(dimension + num_points - 2)
-            / np.math.factorial(dimension - 1)
-            / np.math.factorial(num_points - 1)
-    )
-    for _ in range(int(total_nof_points)):
-        yield distribution(alpha).tolist()
