@@ -82,6 +82,7 @@ class MCO(BaseMCO):
         return WeightedEvaluator
 
     def get_scaling_factors(self, evaluator, kpis, parameters):
+        """ Generate Sen's scaling factors for optimization."""
         scaling_factors_evaluator = self.optimizer(
             evaluator,
             [1. for _ in kpis],
