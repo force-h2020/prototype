@@ -74,8 +74,7 @@ def kpi_scaling_factors(evaluator, kpis, scaling_method=sen_scaling_method):
 
     #: Calculate scaling factors defined by the `scaling_method`
     scaling_factors = scaling_method(
-        len(evaluator.weights),
-        optimization_wrapper
+        len(evaluator.weights), optimization_wrapper
     )
 
     #: Apply the scaling factors where necessary
