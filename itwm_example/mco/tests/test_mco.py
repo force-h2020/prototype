@@ -6,10 +6,7 @@ from force_bdss.api import (
     KPISpecification, Workflow, DataValue, WorkflowEvaluator
 )
 
-from itwm_example.mco.mco import (
-    WeightedEvaluator,
-    IOptimizer
-    )
+from itwm_example.mco.mco import IOptimizer
 from itwm_example.mco.mco_factory import MCOFactory
 
 
@@ -58,7 +55,7 @@ class TestMCO(TestCase):
     def test_internal_weighted_evaluator(self):
         parameters = self.mco_model.parameters
 
-        evaluator = WeightedEvaluator(
+        evaluator = self.mco.optimizer(
             single_point_evaluator=self.evaluator,
             weights=[0.5, 0.5],
             parameters=parameters
