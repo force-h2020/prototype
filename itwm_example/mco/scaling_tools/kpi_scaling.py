@@ -44,12 +44,14 @@ def sen_scaling_method(evaluator):
 
 
 def get_scaling_factors(evaluator, kpis, scaling_method=sen_scaling_method):
-    """KPI Scaling factors for MCO are calculated (as required) by
-    normalising by the possible range of each optimal KPI value.
+    """Calculates scaling factors for KPIs, defined in MCO.
+    Scaling factors are calculated (as required) by the provided scaling
+    method. In general, this provides normalization values for the possible
+    range of each KPI..
     Performs scaling for all KPIs that have `auto_scale == True`.
-    Otherwise, keeps default scale factor.
+    Otherwise, keeps the default scale factor.
 
-     Parameters
+    Parameters
     ----------
     evaluator: IOptimizer
         Instance that provides optimization functionality
@@ -59,14 +61,14 @@ def get_scaling_factors(evaluator, kpis, scaling_method=sen_scaling_method):
         A method to scale KPI weights
     """
 
-    #: Get initial weights referring to extrema of each variable range
-    auto_scales = [kpi.auto_scale for kpi in kpis]
+    #: Get default scaling weights for each KPI variable
     default_scaling_factors = np.array([kpi.scale_factor for kpi in kpis])
 
-    #: Calculate default Sen's scaling factors
+    #: Calculate scaling factors defined by the `scaling_method`
     scaling_factors = scaling_method(evaluator)
 
-    #: Apply the Sen's scaling factors where necessary
+    #: Apply the scaling factors where necessary
+    auto_scales = [kpi.auto_scale for kpi in kpis]
     default_scaling_factors[auto_scales] = scaling_factors[auto_scales]
 
     log.info("Using KPI scaling factors: {}".format(default_scaling_factors))
