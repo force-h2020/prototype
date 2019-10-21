@@ -14,7 +14,7 @@ from force_bdss.api import (
 from force_bdss.mco.i_evaluator import IEvaluator
 
 from .subprocess_workflow_evaluator import SubprocessWorkflowEvaluator
-from .scaling_tools.kpi_scaling import get_scaling_factors
+from .scaling_tools.kpi_scaling import kpi_scaling_factors
 
 log = logging.getLogger(__name__)
 
@@ -88,7 +88,7 @@ class MCO(BaseMCO):
             [1. for _ in kpis],
             parameters,
         )
-        scaling_factors = get_scaling_factors(
+        scaling_factors = kpi_scaling_factors(
             scaling_factors_evaluator, kpis
         )
         return scaling_factors
