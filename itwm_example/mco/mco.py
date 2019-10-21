@@ -21,14 +21,6 @@ class MCO(BaseMCO):
     def _optimizer_default(self):
         return WeightedOptimizer
 
-    @staticmethod
-    def optimization_wrapper(evaluator):
-        def inner(weights):
-            evaluator.weights = list(weights)
-            return evaluator.optimize()
-
-        return inner
-
     def get_scaling_factors(
         self, evaluator, kpis, parameters, scaling_method=None
     ):
@@ -54,7 +46,7 @@ class MCO(BaseMCO):
         if scaling_method is None:
             scaling_method = sen_scaling_method
 
-        optimizer = self.optimizer(evaluator, [1.0 for _ in kpis], parameters)
+        optimizer = self.optimizer(evaluator, parameters)
 
         #: Get default scaling weights for each KPI variable
         default_scaling_factors = np.array([kpi.scale_factor for kpi in kpis])
@@ -63,7 +55,7 @@ class MCO(BaseMCO):
         #: call of the .optimize method.
         #: Then, calculate scaling factors defined by the `scaling_method`
         scaling_factors = scaling_method(
-            len(optimizer.weights), self.optimization_wrapper(optimizer)
+            len(kpis), optimizer.optimize
         )
 
         #: Apply the scaling factors where necessary
@@ -103,9 +95,9 @@ class MCO(BaseMCO):
         )
 
         optimizer = self.optimizer(
-            single_point_evaluator, [1.0 for _ in kpis], parameters
+            single_point_evaluator, parameters
         )
-        optimizer = self.optimization_wrapper(optimizer)
+        # optimizer = self.optimization_wrapper(optimizer)
 
         for weights in model.weights_samples(with_zero_values=False):
 
@@ -114,7 +106,7 @@ class MCO(BaseMCO):
             generator = zip(weights, scaling_factors)
             scaled_weights = [weight * scale for weight, scale in generator]
 
-            optimal_point, optimal_kpis = optimizer(scaled_weights)
+            optimal_point, optimal_kpis = optimizer.optimize(scaled_weights)
 
             # When there is new data, this operation informs the system that
             # new data has been received. It must be a dictionary as given.

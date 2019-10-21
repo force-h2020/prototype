@@ -1,4 +1,5 @@
 import logging
+from functools import partial
 
 import numpy as np
 from scipy import optimize as scipy_optimize
@@ -8,7 +9,6 @@ from traits.api import (
     HasStrictTraits,
     provides,
     List,
-    Float,
     Instance,
 )
 
@@ -43,32 +43,29 @@ class WeightedOptimizer(HasStrictTraits):
 
     single_point_evaluator = Instance(IEvaluator)
 
-    weights = List(Float)
-
     parameters = List(BaseMCOParameter)
 
-    def __init__(self, single_point_evaluator, weights, parameters):
+    def __init__(self, single_point_evaluator, parameters):
         super().__init__(
             single_point_evaluator=single_point_evaluator,
-            weights=weights,
             parameters=parameters,
         )
 
-    def _score(self, point):
+    def _score(self, point, weights):
 
         score = np.dot(
-            self.weights, self.single_point_evaluator.evaluate(point)
+            weights, self.single_point_evaluator.evaluate(point)
         )
 
         log.info("Weighted score: {}".format(score))
 
         return score
 
-    def optimize(self):
+    def optimize(self, weights):
         initial_point = [p.initial_value for p in self.parameters]
         constraints = [(p.lower_bound, p.upper_bound) for p in self.parameters]
 
-        weighted_score_func = self._score
+        weighted_score_func = partial(self._score, weights=weights)
 
         log.info("Running optimisation.")
         log.info("Initial point: {}".format(initial_point))
@@ -83,16 +80,12 @@ class WeightedOptimizer(HasStrictTraits):
 
 @provides(IOptimizer)
 class MockOptimizer:
-    def __init__(self, eval, weights, param, **kwargs):
-        self.weights = weights
-        self.dimension = len(self.weights)
+    def __init__(self, eval, param, **kwargs):
+        self.dimension = 2
         self.margins = np.array([10.0 for _ in range(self.dimension)])
         self.min_values = np.array([i for i in range(self.dimension)])
 
         self.scaling_values = np.array([0.1] * self.dimension)
 
-    def optimize(self):
-        return 0, self.min_values + self.weights * self.margins
-
-    def weighted_optimize(self, weights):
+    def optimize(self, weights):
         return 0, self.min_values + weights * self.margins
