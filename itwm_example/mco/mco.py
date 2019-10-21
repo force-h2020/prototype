@@ -30,7 +30,7 @@ class MCO(BaseMCO):
         return inner
 
     def get_scaling_factors(
-        self, optimizer, kpis, parameters, scaling_method=None
+        self, evaluator, kpis, parameters, scaling_method=None
     ):
         """Calculates scaling factors for KPIs, defined in MCO.
         Scaling factors are calculated (as required) by the provided scaling
@@ -41,7 +41,7 @@ class MCO(BaseMCO):
 
         Parameters
         ----------
-        optimizer: IOptimizer
+        _evaluator: WorkFlowEvaluator
             Instance that provides optimization functionality
         kpis: List[KPISpecification]
             List of KPI objects to scale
@@ -54,7 +54,7 @@ class MCO(BaseMCO):
         if scaling_method is None:
             scaling_method = sen_scaling_method
 
-        evaluator = self.optimizer(optimizer, [1.0 for _ in kpis], parameters)
+        optimizer = self.optimizer(evaluator, [1.0 for _ in kpis], parameters)
 
         #: Get default scaling weights for each KPI variable
         default_scaling_factors = np.array([kpi.scale_factor for kpi in kpis])
@@ -63,7 +63,7 @@ class MCO(BaseMCO):
         #: call of the .optimize method.
         #: Then, calculate scaling factors defined by the `scaling_method`
         scaling_factors = scaling_method(
-            len(evaluator.weights), self.optimization_wrapper(evaluator)
+            len(optimizer.weights), self.optimization_wrapper(optimizer)
         )
 
         #: Apply the scaling factors where necessary
