@@ -6,7 +6,6 @@ from scipy import optimize as scipy_optimize
 from traits.api import (
     Interface,
     HasStrictTraits,
-    HasTraits,
     provides,
     List,
     Float,
@@ -83,12 +82,12 @@ class WeightedOptimizer(HasStrictTraits):
 
 
 @provides(IOptimizer)
-class MockOptimizer(HasTraits):
-
+class MockOptimizer:
     def __init__(self, eval, weights, param, **kwargs):
-        self.value = 10
         self.weights = weights
+        self.dimension = len(self.weights)
+        self.margins = np.array([10.0 for _ in range(self.dimension)])
+        self.min_values = np.array([i for i in range(self.dimension)])
 
     def optimize(self):
-        result = [0 if weight != 0 else self.value for weight in self.weights]
-        return 0, result
+        return 0, self.min_values + self.weights * self.margins
