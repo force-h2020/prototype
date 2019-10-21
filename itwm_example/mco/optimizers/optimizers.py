@@ -18,6 +18,15 @@ from force_bdss.mco.i_evaluator import IEvaluator
 log = logging.getLogger(__name__)
 
 
+def opt(objective, initial_point, constraints):
+    """Partial func. Performs a scipy optimise with SLSQP method given the
+    objective function, the initial point, and a set of constraints."""
+
+    return scipy_optimize.minimize(
+        objective, initial_point, method="SLSQP", bounds=constraints
+    ).x
+
+
 class IOptimizer(Interface):
     def _score(self, *args, **kwargs):
         """ Objective function score with given parameters"""
@@ -70,12 +79,3 @@ class WeightedOptimizer(HasStrictTraits):
         log.info("KPIs at optimal point : {}".format(optimal_kpis))
 
         return optimal_point, optimal_kpis
-
-
-def opt(objective, initial_point, constraints):
-    """Partial func. Performs a scipy optimise with SLSQP method given the
-    objective function, the initial point, and a set of constraints."""
-
-    return scipy_optimize.minimize(
-        objective, initial_point, method="SLSQP", bounds=constraints
-    ).x
