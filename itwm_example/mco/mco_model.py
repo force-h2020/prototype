@@ -13,7 +13,7 @@ class MCOModel(BaseMCOModel):
 
     evaluation_mode = Enum("Internal", "Subprocess")
 
-    space_search_strategy = Enum("Uniform", "Dirichlet")
+    space_search_mode = Enum("Uniform", "Dirichlet")
 
     def default_traits_view(self):
         return View(
@@ -26,9 +26,9 @@ class MCOModel(BaseMCOModel):
         """ Generates space search distribution object, based on
         the user settings of the `space_search_strategy` trait."""
 
-        if self.space_search_strategy == "Uniform":
+        if self.space_search_mode == "Uniform":
             distribution = UniformSpaceSampler
-        elif self.space_search_strategy == "Dirichlet":
+        elif self.space_search_mode == "Dirichlet":
             distribution = DirichletSpaceSampler
         else:
             raise NotImplementedError

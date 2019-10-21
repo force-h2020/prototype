@@ -5,7 +5,14 @@ from traits.api import ABCHasStrictTraits, Bool, ListFloat
 from force_bdss.api import PositiveInt
 
 
-def convert_samples_pp_to_samples_total(space_dimension, nof_points):
+def resolution_to_sample_size(space_dimension, nof_points):
+    """ Calculates what is the exact number of space samples (vectors
+    of dimension `space_dimension`) we should pick, in order to have
+    an effective sampling resolution of `nof_points` per dimension.
+    This method unifies the number of samples from stochastic space
+    search models and the number of samples from the uniform-along-each-axis
+    sampling.
+    """
     samples_total = (
         np.math.factorial(space_dimension + nof_points - 2)
         / np.math.factorial(space_dimension - 1)
@@ -73,7 +80,7 @@ class DirichletSpaceSampler(SpaceSampler):
 
     alpha = ListFloat()
 
-    distribution_function = np.random.dirichlet
+    _distribution_function = np.random.dirichlet
 
     def __init__(self, dimension, resolution, alpha=None, **kwargs):
         super().__init__(dimension, resolution, **kwargs)
@@ -83,16 +90,16 @@ class DirichletSpaceSampler(SpaceSampler):
         else:
             _centering_coef = alpha
 
-        self.alpha = [_centering_coef for _ in range(self.dimension)]
+        self.alpha = [_centering_coef] * self.dimension
 
     def _get_sample_point(self):
-        return self.distribution_function(self.alpha).tolist()
+        return self._distribution_function(self.alpha).tolist()
 
     def generate_space_sample(self):
-        total_nof_points = convert_samples_pp_to_samples_total(
+        n_points = resolution_to_sample_size(
             self.dimension, self.resolution
         )
-        for _ in range(total_nof_points):
+        for _ in range(n_points):
             yield self._get_sample_point()
 
 

@@ -4,13 +4,13 @@ from itwm_example.mco.space_sampling.space_samplers import (
     SpaceSampler,
     DirichletSpaceSampler,
     UniformSpaceSampler,
-    convert_samples_pp_to_samples_total
+    resolution_to_sample_size
 )
 
 
 class TestSamplesConvert(unittest.TestCase):
     def test_convert(self):
-        samples_total = convert_samples_pp_to_samples_total(
+        samples_total = resolution_to_sample_size(
             space_dimension=3,
             nof_points=5
         )
@@ -34,15 +34,15 @@ class TestDirichletSpaceSampler(BaseTestSampler):
     def setUp(self):
         self.dimensions = [3, 1, 5]
         self.alphas = [1, 0.5, 10]
-        self.nof_points = [3, 10, 6]
+        self.n_points = [3, 10, 6]
 
     def generate_samplers(self):
         for dimension in self.dimensions:
-            for nof_points in self.nof_points:
+            for n_points in self.n_points:
                 for alpha in self.alphas:
                     yield DirichletSpaceSampler(
                         dimension,
-                        nof_points,
+                        n_points,
                         alpha=alpha
                     )
 
@@ -61,7 +61,7 @@ class TestDirichletSpaceSampler(BaseTestSampler):
             )
             self.assertEqual(
                 len(space_sample),
-                convert_samples_pp_to_samples_total(
+                resolution_to_sample_size(
                     sampler.dimension,
                     sampler.resolution
                 )

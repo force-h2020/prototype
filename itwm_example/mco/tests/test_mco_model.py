@@ -25,7 +25,7 @@ class TestMCOModel(unittest.TestCase):
             ("Dirichlet", DirichletSpaceSampler),
             ("Uniform", UniformSpaceSampler),
         ):
-            self.mco_model.space_search_strategy = strategy
+            self.mco_model.space_search_mode = strategy
             distribution = self.mco_model._space_search_distribution()
             self.assertIsInstance(distribution, klass)
             self.assertEqual(len(self.kpis), distribution.dimension)

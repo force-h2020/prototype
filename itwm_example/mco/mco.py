@@ -21,8 +21,16 @@ class MCO(BaseMCO):
     def _optimizer_default(self):
         return WeightedOptimizer
 
+    @staticmethod
+    def optimization_wrapper(evaluator):
+        def inner(weights):
+            evaluator.weights = list(weights)
+            return evaluator.optimize()
+
+        return inner
+
     def get_scaling_factors(
-        self, evaluator, kpis, parameters, scaling_method=None
+        self, optimizer, kpis, parameters, scaling_method=None
     ):
         """Calculates scaling factors for KPIs, defined in MCO.
         Scaling factors are calculated (as required) by the provided scaling
@@ -33,7 +41,7 @@ class MCO(BaseMCO):
 
         Parameters
         ----------
-        evaluator: IOptimizer
+        optimizer: IOptimizer
             Instance that provides optimization functionality
         kpis: List[KPISpecification]
             List of KPI objects to scale
@@ -46,20 +54,16 @@ class MCO(BaseMCO):
         if scaling_method is None:
             scaling_method = sen_scaling_method
 
-        evaluator = self.optimizer(evaluator, [1.0 for _ in kpis], parameters)
+        evaluator = self.optimizer(optimizer, [1.0 for _ in kpis], parameters)
 
         #: Get default scaling weights for each KPI variable
         default_scaling_factors = np.array([kpi.scale_factor for kpi in kpis])
 
-        #: Define a wrapper for the evaluator weights assignment and
+        #: Apply a wrapper for the evaluator weights assignment and
         #: call of the .optimize method.
-        def optimization_wrapper(weights):
-            evaluator.weights = weights.tolist()
-            return evaluator.optimize()
-
-        #: Calculate scaling factors defined by the `scaling_method`
+        #: Then, calculate scaling factors defined by the `scaling_method`
         scaling_factors = scaling_method(
-            len(evaluator.weights), optimization_wrapper
+            len(evaluator.weights), self.optimization_wrapper(evaluator)
         )
 
         #: Apply the scaling factors where necessary
@@ -98,6 +102,11 @@ class MCO(BaseMCO):
             single_point_evaluator, kpis, parameters
         )
 
+        optimizer = self.optimizer(
+            single_point_evaluator, [1.0 for _ in kpis], parameters
+        )
+        optimizer = self.optimization_wrapper(optimizer)
+
         for weights in model.weights_samples(with_zero_values=False):
 
             log.info("Doing MCO run with weights: {}".format(weights))
@@ -105,14 +114,10 @@ class MCO(BaseMCO):
             generator = zip(weights, scaling_factors)
             scaled_weights = [weight * scale for weight, scale in generator]
 
-            evaluator = self.optimizer(
-                single_point_evaluator, scaled_weights, parameters
-            )
+            optimal_point, optimal_kpis = optimizer(scaled_weights)
 
-            optimal_point, optimal_kpis = evaluator.optimize()
             # When there is new data, this operation informs the system that
             # new data has been received. It must be a dictionary as given.
-
             self.notify_new_point(
                 [DataValue(value=v) for v in optimal_point],
                 [DataValue(value=v) for v in optimal_kpis],
