@@ -6,6 +6,7 @@ from scipy import optimize as scipy_optimize
 from traits.api import (
     Interface,
     HasStrictTraits,
+    HasTraits,
     provides,
     List,
     Float,
@@ -79,3 +80,15 @@ class WeightedOptimizer(HasStrictTraits):
         log.info("KPIs at optimal point : {}".format(optimal_kpis))
 
         return optimal_point, optimal_kpis
+
+
+@provides(IOptimizer)
+class MockOptimizer(HasTraits):
+
+    def __init__(self, eval, weights, param, **kwargs):
+        self.value = 10
+        self.weights = weights
+
+    def optimize(self):
+        result = [0 if weight != 0 else self.value for weight in self.weights]
+        return 0, result

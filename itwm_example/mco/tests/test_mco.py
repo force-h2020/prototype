@@ -1,25 +1,11 @@
 from unittest import mock, TestCase
 
-from traits.api import provides, HasTraits
-
 from force_bdss.api import (
     KPISpecification, Workflow, DataValue, WorkflowEvaluator
 )
 
-from itwm_example.mco.mco import IOptimizer
+from itwm_example.mco.optimizers.optimizers import MockOptimizer
 from itwm_example.mco.mco_factory import MCOFactory
-
-
-@provides(IOptimizer)
-class MockOptimizer(HasTraits):
-
-    def __init__(self, eval, weights, param, **kwargs):
-        self.value = 10
-        self.weights = weights
-
-    def optimize(self):
-        result = [0 if weight != 0 else self.value for weight in self.weights]
-        return 0, result
 
 
 class TestMCO(TestCase):
