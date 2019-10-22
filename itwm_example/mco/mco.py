@@ -85,7 +85,7 @@ class MCO(BaseMCO):
         #: Get scaling factors and non-zero weight combinations for each KPI
         scaling_factors = self.get_scaling_factors(optimizer, kpis)
 
-        for weights in model.weights_samples(with_zero_values=False):
+        for weights in model.weights_samples():
 
             log.info("Doing MCO run with weights: {}".format(weights))
 
