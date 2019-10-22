@@ -79,7 +79,8 @@ class DirichletSpaceSampler(SpaceSampler):
     References
     -------
     [1] https://en.wikipedia.org/wiki/Dirichlet_distribution
-    [2] http://blog.bogatron.net/blog/2014/02/02/visualizing-dirichlet-distributions/
+    [2] http://blog.bogatron.net/blog/
+        2014/02/02/visualizing-dirichlet-distributions/
     """
 
     alpha = ListFloat()
