@@ -66,7 +66,6 @@ class TestUniformSpaceSampler(BaseTestSampler):
 
     def test_space_sample(self):
         self.assertEqual(
-            list(self.generate_values(3, 5, with_zero_values=True)),
             [
                 [1.0, 0.0, 0.0],
                 [0.75, 0.25, 0.0],
@@ -84,18 +83,18 @@ class TestUniformSpaceSampler(BaseTestSampler):
                 [0.0, 0.25, 0.75],
                 [0.0, 0.0, 1.0],
             ],
+            list(self.generate_values(3, 5, with_zero_values=True)),
         )
 
         self.assertEqual(
-            list(self.generate_values(1, 5, with_zero_values=True)), [[1.0]]
+            [[1.0]], list(self.generate_values(1, 5, with_zero_values=True))
         )
         self.assertEqual(
-            list(self.generate_values(2, 5, with_zero_values=True)),
             [[1.0, 0.0], [0.75, 0.25], [0.50, 0.50], [0.25, 0.75], [0.0, 1.0]],
+            list(self.generate_values(2, 5, with_zero_values=True)),
         )
 
         self.assertEqual(
-            list(self.generate_values(3, 9, with_zero_values=True)),
             [
                 [1.0, 0.0, 0.0],
                 [0.875, 0.125, 0.0],
@@ -143,11 +142,12 @@ class TestUniformSpaceSampler(BaseTestSampler):
                 [0.0, 0.125, 0.875],
                 [0.0, 0.0, 1.0],
             ],
+            list(self.generate_values(3, 9, with_zero_values=True)),
         )
 
         self.assertEqual(
-            list(self.generate_values(2, 5, with_zero_values=False)),
             [[0.75, 0.25], [0.50, 0.50], [0.25, 0.75]],
+            list(self.generate_values(2, 5, with_zero_values=False)),
         )
 
         self.assertEqual(

@@ -125,9 +125,6 @@ class UniformSpaceSampler(SpaceSampler):
 
     with_zero_values = Bool(False)
 
-    def __init__(self, dimension, resolution, **kwargs):
-        super().__init__(dimension, resolution, **kwargs)
-
     def generate_space_sample(self, **kwargs):
         yield from self._get_sample_point()
 
