@@ -23,9 +23,7 @@ class MCO(BaseMCO):
     def _optimizer_default(self):
         return WeightedOptimizer
 
-    def get_scaling_factors(
-        self, evaluator, kpis, parameters, scaling_method=None
-    ):
+    def get_scaling_factors(self, optimizer, kpis, scaling_method=None):
         """Calculates scaling factors for KPIs, defined in MCO.
         Scaling factors are calculated (as required) by the provided scaling
         method. In general, this provides normalization values for the possible
@@ -35,20 +33,16 @@ class MCO(BaseMCO):
 
         Parameters
         ----------
-        evaluator: WorkFlowEvaluator
+        optimizer: IOptimizer instance
             Instance that provides optimization functionality
         kpis: List[KPISpecification]
             List of KPI objects to scale
-        parameters: List[MCOParameters]
-            MCO parameters, required by the optimizer
         scaling_method: callable
             A method to scale KPI weights. Default set to the Sen's
             "Multi-Objective Programming Method"
         """
         if scaling_method is None:
             scaling_method = self.scaling_method
-
-        optimizer = self.optimizer(evaluator, parameters)
 
         #: Get default scaling weights for each KPI variable
         default_scaling_factors = np.array([kpi.scale_factor for kpi in kpis])
@@ -71,7 +65,6 @@ class MCO(BaseMCO):
     def run(self, evaluator):
 
         model = evaluator.mco_model
-        parameters = model.parameters
         kpis = model.kpis
 
         if model.evaluation_mode == "Subprocess":
@@ -81,20 +74,16 @@ class MCO(BaseMCO):
             # Note: a BaseMCOCommunicator must be present to pass in parameter
             # values and returning the KPI for a force_bdss run in 'evaluate'
             # mode
-            single_point_evaluator = SubprocessWorkflowEvaluator(
+            evaluator = SubprocessWorkflowEvaluator(
                 workflow=evaluator.workflow,
                 workflow_filepath=evaluator.workflow_filepath,
                 executable_path=sys.argv[0],
             )
-        else:
-            single_point_evaluator = evaluator
+
+        optimizer = self.optimizer(evaluator, model.parameters)
 
         #: Get scaling factors and non-zero weight combinations for each KPI
-        scaling_factors = self.get_scaling_factors(
-            single_point_evaluator, kpis, parameters
-        )
-
-        optimizer = self.optimizer(single_point_evaluator, parameters)
+        scaling_factors = self.get_scaling_factors(optimizer, kpis)
 
         for weights in model.weights_samples(with_zero_values=False):
 
