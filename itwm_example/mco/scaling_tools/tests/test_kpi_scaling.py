@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from itwm_example.mco.scaling_tools.kpi_scaling import sen_scaling_method
-from itwm_example.mco.optimizers.optimizers import MockOptimizer
+from itwm_example.mco.tests.mock_classes import MockOptimizer
 
 
 class TestSenScaling(TestCase):

@@ -7,8 +7,12 @@ from force_bdss.api import (
     WorkflowEvaluator,
 )
 
-from itwm_example.mco.optimizers.optimizers import MockOptimizer
+from itwm_example.mco.tests.mock_classes import MockOptimizer
 from itwm_example.mco.mco_factory import MCOFactory
+from itwm_example.mco.space_sampling.space_samplers import (
+    UniformSpaceSampler,
+    DirichletSpaceSampler,
+)
 
 
 class TestMCO(TestCase):
@@ -67,3 +71,15 @@ class TestMCO(TestCase):
         scaling_factors = self.mco.get_scaling_factors(optimizer, temp_kpis)
 
         self.assertEqual(scaling_factors, [0.1, 1.0])
+
+    def test__space_search_distribution(self):
+        for strategy, klass in (
+            ("Uniform", UniformSpaceSampler),
+            ("Dirichlet", DirichletSpaceSampler),
+            ("Uniform", UniformSpaceSampler),
+        ):
+            self.mco_model.space_search_mode = strategy
+            distribution = self.mco._space_search_distribution(self.mco_model)
+            self.assertIsInstance(distribution, klass)
+            self.assertEqual(len(self.kpis), distribution.dimension)
+            self.assertEqual(distribution.resolution, 7)

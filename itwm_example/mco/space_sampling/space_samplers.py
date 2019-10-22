@@ -5,7 +5,7 @@ from traits.api import ABCHasStrictTraits, Bool, ListFloat
 from force_bdss.api import PositiveInt
 
 
-def resolution_to_sample_size(space_dimension, nof_points):
+def resolution_to_sample_size(space_dimension, n_points):
     """ Calculates what is the exact number of space samples (vectors
     of dimension `space_dimension`) we should pick, in order to have
     an effective sampling resolution of `nof_points` per dimension.
@@ -14,9 +14,9 @@ def resolution_to_sample_size(space_dimension, nof_points):
     sampling.
     """
     samples_total = (
-        np.math.factorial(space_dimension + nof_points - 2)
+        np.math.factorial(space_dimension + n_points - 2)
         / np.math.factorial(space_dimension - 1)
-        / np.math.factorial(nof_points - 1)
+        / np.math.factorial(n_points - 1)
     )
     return int(samples_total)
 
@@ -69,7 +69,7 @@ class DirichletSpaceSampler(SpaceSampler):
     control how centered the distribution is, by changing
     `alpha`:
         - Samples are closer to bounds for alpha < 1,
-        - Sampels are concentrated in the middle of the
+        - Samples are concentrated in the middle of the
         search space for alpha > 1,
         - All samples have equal probability for alpha = 1
 
@@ -123,14 +123,10 @@ class UniformSpaceSampler(SpaceSampler):
     `resolution > dimension` in order for the generator to return any values.
     """
 
-    with_zero_values = Bool()
+    with_zero_values = Bool(False)
 
-    def __init__(
-        self, dimension, resolution, with_zero_values=False, **kwargs
-    ):
+    def __init__(self, dimension, resolution, **kwargs):
         super().__init__(dimension, resolution, **kwargs)
-
-        self.with_zero_values = with_zero_values
 
     def generate_space_sample(self, **kwargs):
         yield from self._get_sample_point()

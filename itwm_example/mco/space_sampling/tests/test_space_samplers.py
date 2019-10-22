@@ -11,7 +11,7 @@ from itwm_example.mco.space_sampling.space_samplers import (
 class TestSamplesConvert(unittest.TestCase):
     def test_convert(self):
         samples_total = resolution_to_sample_size(
-            space_dimension=3, nof_points=5
+            space_dimension=3, n_points=5
         )
         known_samples_total = 15
         self.assertEqual(samples_total, known_samples_total)

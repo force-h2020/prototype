@@ -10,6 +10,10 @@ from force_bdss.api import BaseMCO, DataValue
 from .subprocess_workflow_evaluator import SubprocessWorkflowEvaluator
 from .scaling_tools.kpi_scaling import sen_scaling_method
 from .optimizers.optimizers import IOptimizer, WeightedOptimizer
+from .space_sampling.space_samplers import (
+    UniformSpaceSampler,
+    DirichletSpaceSampler,
+)
 
 log = logging.getLogger(__name__)
 
@@ -62,6 +66,26 @@ class MCO(BaseMCO):
 
         return default_scaling_factors.tolist()
 
+    @staticmethod
+    def _space_search_distribution(model, **kwargs):
+        """ Generates space search distribution object, based on
+        the user settings of the `space_search_strategy` trait."""
+
+        if model.space_search_mode == "Uniform":
+            distribution = UniformSpaceSampler
+        elif model.space_search_mode == "Dirichlet":
+            distribution = DirichletSpaceSampler
+        else:
+            raise NotImplementedError
+        return distribution(len(model.kpis), model.num_points, **kwargs)
+
+    def weights_samples(self, model, **kwargs):
+        """ Generates necessary number of search space sample points
+        from the internal search strategy."""
+        return self._space_search_distribution(
+            model, **kwargs
+        ).generate_space_sample()
+
     def run(self, evaluator):
 
         model = evaluator.mco_model
@@ -85,7 +109,7 @@ class MCO(BaseMCO):
         #: Get scaling factors and non-zero weight combinations for each KPI
         scaling_factors = self.get_scaling_factors(optimizer, kpis)
 
-        for weights in model.weights_samples():
+        for weights in self.weights_samples(model):
 
             log.info("Doing MCO run with weights: {}".format(weights))
 
