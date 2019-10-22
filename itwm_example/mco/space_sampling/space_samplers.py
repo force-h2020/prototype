@@ -73,9 +73,13 @@ class DirichletSpaceSampler(SpaceSampler):
         search space for alpha > 1,
         - All samples have equal probability for alpha = 1
 
+    A nice visualization of the Dirichlet distribution can be
+    found at [2].
+
     References
     -------
     [1] https://en.wikipedia.org/wiki/Dirichlet_distribution
+    [2] http://blog.bogatron.net/blog/2014/02/02/visualizing-dirichlet-distributions/
     """
 
     alpha = ListFloat()
@@ -96,9 +100,7 @@ class DirichletSpaceSampler(SpaceSampler):
         return self._distribution_function(self.alpha).tolist()
 
     def generate_space_sample(self):
-        n_points = resolution_to_sample_size(
-            self.dimension, self.resolution
-        )
+        n_points = resolution_to_sample_size(self.dimension, self.resolution)
         for _ in range(n_points):
             yield self._get_sample_point()
 
