@@ -19,7 +19,7 @@ class MCOModel(BaseMCOModel):
         return View(
             Item("num_points"),
             Item("evaluation_mode"),
-            Item("space_search_strategy"),
+            Item("space_search_mode"),
         )
 
     def _space_search_distribution(self, **kwargs):
