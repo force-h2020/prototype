@@ -18,6 +18,8 @@ class MCO(BaseMCO):
 
     optimizer = Type(IOptimizer)
 
+    scaling_method = staticmethod(sen_scaling_method)
+
     def _optimizer_default(self):
         return WeightedOptimizer
 
@@ -33,7 +35,7 @@ class MCO(BaseMCO):
 
         Parameters
         ----------
-        _evaluator: WorkFlowEvaluator
+        evaluator: WorkFlowEvaluator
             Instance that provides optimization functionality
         kpis: List[KPISpecification]
             List of KPI objects to scale
@@ -44,7 +46,7 @@ class MCO(BaseMCO):
             "Multi-Objective Programming Method"
         """
         if scaling_method is None:
-            scaling_method = sen_scaling_method
+            scaling_method = self.scaling_method
 
         optimizer = self.optimizer(evaluator, parameters)
 
@@ -54,9 +56,7 @@ class MCO(BaseMCO):
         #: Apply a wrapper for the evaluator weights assignment and
         #: call of the .optimize method.
         #: Then, calculate scaling factors defined by the `scaling_method`
-        scaling_factors = scaling_method(
-            len(kpis), optimizer.optimize
-        )
+        scaling_factors = scaling_method(len(kpis), optimizer.optimize)
 
         #: Apply the scaling factors where necessary
         auto_scales = [kpi.auto_scale for kpi in kpis]
@@ -94,17 +94,16 @@ class MCO(BaseMCO):
             single_point_evaluator, kpis, parameters
         )
 
-        optimizer = self.optimizer(
-            single_point_evaluator, parameters
-        )
-        # optimizer = self.optimization_wrapper(optimizer)
+        optimizer = self.optimizer(single_point_evaluator, parameters)
 
         for weights in model.weights_samples(with_zero_values=False):
 
             log.info("Doing MCO run with weights: {}".format(weights))
 
-            generator = zip(weights, scaling_factors)
-            scaled_weights = [weight * scale for weight, scale in generator]
+            scaled_weights = [
+                weight * scale
+                for weight, scale in zip(weights, scaling_factors)
+            ]
 
             optimal_point, optimal_kpis = optimizer.optimize(scaled_weights)
 
