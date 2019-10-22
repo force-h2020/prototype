@@ -14,7 +14,7 @@ class TestSamplesConvert(unittest.TestCase):
             space_dimension=3, n_points=5
         )
         known_samples_total = 15
-        self.assertEqual(samples_total, known_samples_total)
+        self.assertEqual(known_samples_total, samples_total)
 
 
 class BaseTestSampler(unittest.TestCase):
@@ -44,7 +44,7 @@ class TestDirichletSpaceSampler(BaseTestSampler):
 
     def test__get_sample_point(self):
         for sampler in self.generate_samplers():
-            self.assertAlmostEqual(sum(sampler._get_sample_point()), 1.0)
+            self.assertAlmostEqual(1.0, sum(sampler._get_sample_point()))
 
     def test_generate_space_sample(self):
         for sampler in self.generate_samplers():
@@ -58,7 +58,7 @@ class TestDirichletSpaceSampler(BaseTestSampler):
             )
 
             for sample in space_sample:
-                self.assertAlmostEqual(sum(sample), 1.0)
+                self.assertAlmostEqual(1.0, sum(sample))
 
 
 class TestUniformSpaceSampler(BaseTestSampler):
@@ -151,7 +151,6 @@ class TestUniformSpaceSampler(BaseTestSampler):
         )
 
         self.assertEqual(
-            list(self.generate_values(3, 9, with_zero_values=False)),
             [
                 [0.75, 0.125, 0.125],
                 [0.625, 0.25, 0.125],
@@ -175,4 +174,5 @@ class TestUniformSpaceSampler(BaseTestSampler):
                 [0.125, 0.25, 0.625],
                 [0.125, 0.125, 0.75],
             ],
+            list(self.generate_values(3, 9, with_zero_values=False)),
         )

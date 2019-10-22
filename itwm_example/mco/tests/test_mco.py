@@ -60,7 +60,7 @@ class TestMCO(TestCase):
 
         scaling_factors = self.mco.get_scaling_factors(optimizer, self.kpis)
 
-        self.assertEqual(scaling_factors, [0.1, 0.1])
+        self.assertEqual([0.1, 0.1], scaling_factors)
 
     def test_auto_scale(self):
 
@@ -70,7 +70,7 @@ class TestMCO(TestCase):
 
         scaling_factors = self.mco.get_scaling_factors(optimizer, temp_kpis)
 
-        self.assertEqual(scaling_factors, [0.1, 1.0])
+        self.assertEqual([0.1, 1.0], scaling_factors)
 
     def test__space_search_distribution(self):
         for strategy, klass in (
@@ -82,4 +82,4 @@ class TestMCO(TestCase):
             distribution = self.mco._space_search_distribution(self.mco_model)
             self.assertIsInstance(distribution, klass)
             self.assertEqual(len(self.kpis), distribution.dimension)
-            self.assertEqual(distribution.resolution, 7)
+            self.assertEqual(7, distribution.resolution)
