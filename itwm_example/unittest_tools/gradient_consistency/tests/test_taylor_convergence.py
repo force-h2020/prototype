@@ -25,24 +25,24 @@ class TestTaylorTest(unittest.TestCase):
 
     def test_initialization(self):
         self.assertIs(
-            self.default_taylor_tool._function,
-            self.default_function
+            self.default_function,
+            self.default_taylor_tool._function
         )
         self.assertIs(
-            self.default_taylor_tool._gradient,
-            self.default_function_gradient
+            self.default_function_gradient,
+            self.default_taylor_tool._gradient
         )
-        self.assertEqual(self.default_taylor_tool._input_dimension, 2)
+        self.assertEqual(2, self.default_taylor_tool._input_dimension)
 
     def test_evaluate(self):
         test_point = [1, 2]
         self.assertEqual(
-            self.default_taylor_tool._evaluate_function(test_point),
-            self.default_function(test_point)
+            self.default_function(test_point),
+            self.default_taylor_tool._evaluate_function(test_point)
         )
         self.assertEqual(
-            self.default_taylor_tool._evaluate_gradient(test_point),
-            self.default_function_gradient(test_point)
+            self.default_function_gradient(test_point),
+            self.default_taylor_tool._evaluate_gradient(test_point)
         )
 
     def test_generate_directions(self):
