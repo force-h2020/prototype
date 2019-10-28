@@ -7,16 +7,26 @@ from itwm_example.unittest_tools.gradient_consistency.taylor_convergence \
     import TaylorTest
 
 
+def convert_to_data_values(values, slots):
+    return [
+        DataValue(type=slot.type, value=value)
+        for slot, value in zip(slots, values)
+    ]
+
+
 class BaseTestDataSource(unittest.TestCase):
     """ Base test class for a generic DataSource.
     """
     _data_source_index = None
-    test_case_values = None
-    test_case_objectives = None
+    test_case_values = []
+    test_case_objectives = []
     _objective_precision = 6
 
     def setUp(self):
         self.plugin = ExamplePlugin()
+        if self._data_source_index is None:
+            return
+
         self.factory = self.plugin.data_source_factories[
             self._data_source_index
         ]
@@ -26,7 +36,7 @@ class BaseTestDataSource(unittest.TestCase):
         self.input_slots, self.output_slots = self.slots
 
     def _evaluate_function(self, values):
-        data_values = self.convert_to_data_values(
+        data_values = convert_to_data_values(
             values,
             self.input_slots
         )
@@ -48,18 +58,11 @@ class BaseTestDataSource(unittest.TestCase):
         res: List[DataValues]
             `run` outputs
         """
-        data_values = self.convert_to_data_values(values, self.input_slots)
+        data_values = convert_to_data_values(values, self.input_slots)
         res = self.data_source.run(self.model, data_values)
         return res
 
-    @staticmethod
-    def convert_to_data_values(values, slots):
-        return [
-            DataValue(type=slot.type, value=value)
-            for slot, value in zip(slots, values)
-        ]
-
-    def base_test_basic_evaluation(self):
+    def test_basic_evaluation(self):
         """ Base test method for basic evaluation
         (see `basic_evaluation`)
         For the setup list of test case values, we verity
@@ -101,7 +104,7 @@ class BaseTestGradientDataSource(BaseTestDataSource):
             self.output_slots[1].type
         )
 
-    def base_test_basic_evaluation(self):
+    def test_basic_evaluation(self):
         """ Overrides the base test evaluation method,
         specifically to verify the objective value consistency
         _only_, within the precision.
@@ -128,7 +131,7 @@ class BaseTestGradientDataSource(BaseTestDataSource):
             )
 
     def _evaluate_gradient(self, values):
-        data_values = self.convert_to_data_values(
+        data_values = convert_to_data_values(
             values,
             self.input_slots
         )

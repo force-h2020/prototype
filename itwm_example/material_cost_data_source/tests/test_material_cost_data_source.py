@@ -13,10 +13,6 @@ class TestMaterialCostDataSource(BaseTestGradientDataSource):
             1.,
         ]
 
-    def test_basic_evaluation(self):
-        super().base_test_basic_evaluation()
-        pass
-
     def test_gradient_type(self):
         super().base_test_gradient_type()
         pass

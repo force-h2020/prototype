@@ -16,9 +16,6 @@ class TestProductionCostDataSource(BaseTestGradientDataSource):
             self.model.W
         ]
 
-    def test_basic_evaluation(self):
-        super().base_test_basic_evaluation()
-
     def test_gradient_type(self):
         super().base_test_gradient_type()
 

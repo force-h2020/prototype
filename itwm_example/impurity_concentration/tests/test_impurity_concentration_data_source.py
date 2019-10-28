@@ -33,8 +33,5 @@ class TestImpurityConcentrationDataSource(BaseTestGradientDataSource):
     def test_gradient_type(self):
         super().base_test_gradient_type()
 
-    def test_basic_evaluation(self):
-        super().base_test_basic_evaluation()
-
     def test_output_slots(self):
         super().base_test_output_slots(self.test_case_values[0])
