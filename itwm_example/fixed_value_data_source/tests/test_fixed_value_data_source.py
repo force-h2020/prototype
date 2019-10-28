@@ -7,7 +7,6 @@ class TestFixedValueDataSource(TemplateTestDataSource):
     _data_source_index = 0
     test_inputs = [[]]
 
-    def setUp(self):
-        super().setUp()
-
-        self.test_outputs = [[self.model.value]]
+    @property
+    def test_outputs(self):
+        return [[self.model.value]]

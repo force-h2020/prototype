@@ -7,10 +7,9 @@ class TestArrheniusParameters(TemplateTestDataSource):
     _data_source_index = 2
     test_inputs = [[]]
 
-    def setUp(self):
-        super().setUp()
-
-        self.test_outputs = [
+    @property
+    def test_outputs(self):
+        return [
             [
                 self.model.nu_main_reaction,
                 self.model.delta_H_main_reaction,
