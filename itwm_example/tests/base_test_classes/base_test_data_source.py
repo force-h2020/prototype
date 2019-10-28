@@ -14,7 +14,7 @@ def convert_to_data_values(values, slots):
     ]
 
 
-class BaseTestDataSource(unittest.TestCase):
+class TemplateTestDataSource(unittest.TestCase):
     """ Base test class for a generic DataSource.
     """
     _data_source_index = None
@@ -93,7 +93,7 @@ class BaseTestDataSource(unittest.TestCase):
         )
 
 
-class BaseTestGradientDataSource(BaseTestDataSource):
+class TemplateTestGradientDataSource(TemplateTestDataSource):
     """ Base test class for DataSource that implements
     a pair of (objective value, gradient) calculation
     at a runtime.

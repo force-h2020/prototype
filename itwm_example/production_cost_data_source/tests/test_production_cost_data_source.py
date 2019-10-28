@@ -1,8 +1,8 @@
 from itwm_example.tests.base_test_classes.base_test_data_source \
-    import BaseTestGradientDataSource
+    import TemplateTestGradientDataSource
 
 
-class TestProductionCostDataSource(BaseTestGradientDataSource):
+class TestProductionCostDataSource(TemplateTestGradientDataSource):
     def setUp(self):
         self._data_source_index = 1
         super().setUp()

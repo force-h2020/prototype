@@ -1,8 +1,8 @@
 from itwm_example.tests.base_test_classes.base_test_data_source \
-    import BaseTestDataSource
+    import TemplateTestDataSource
 
 
-class TestPureDensities(BaseTestDataSource):
+class TestPureDensities(TemplateTestDataSource):
     def setUp(self):
         self._data_source_index = 5
         super().setUp()
