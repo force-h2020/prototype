@@ -17,14 +17,16 @@ def convert_to_data_values(values, slots):
 class TemplateTestDataSource(unittest.TestCase):
     """ Base test class for a generic DataSource.
     """
+
     _data_source_index = None
-    test_case_values = []
-    test_case_objectives = []
+    test_inputs = []
+    test_outputs = []
     _objective_precision = 6
 
     def setUp(self):
         self.plugin = ExamplePlugin()
         if self._data_source_index is None:
+            self.input_slots, self.output_slots = None, None
             return
 
         self.factory = self.plugin.data_source_factories[
@@ -36,10 +38,7 @@ class TemplateTestDataSource(unittest.TestCase):
         self.input_slots, self.output_slots = self.slots
 
     def _evaluate_function(self, values):
-        data_values = convert_to_data_values(
-            values,
-            self.input_slots
-        )
+        data_values = convert_to_data_values(values, self.input_slots)
         res = self.data_source.run(self.model, data_values)
         return res[0].value
 
@@ -69,28 +68,23 @@ class TemplateTestDataSource(unittest.TestCase):
         that the `run` output is consistent with the known
         provided test case objectives.
         """
-        for i, values in enumerate(self.test_case_values):
-            res = self.basic_evaluation(values)
+        for input, output in zip(self.test_inputs, self.test_outputs):
+            res = self.basic_evaluation(input)
 
-            for element, objective in zip(
-                res,
-                self.test_case_objectives[i]
-            ):
+            for element, objective in zip(res, output):
                 self.assertAlmostEqual(
-                    element.value,
-                    objective,
-                    self._objective_precision
+                    element.value, objective, self._objective_precision
                 )
 
-    def base_test_output_slots(self, values):
+    def test_output_slots(self):
         """ Base test to verify the number of output slots
         is consistent with the `run` output in terms of the
         number of output values.
         """
-        self.assertEqual(
-            len(self.basic_evaluation(values)),
-            len(self.output_slots)
-        )
+        for input in self.test_inputs:
+            self.assertEqual(
+                len(self.basic_evaluation(input)), len(self.output_slots)
+            )
 
 
 class TemplateTestGradientDataSource(TemplateTestDataSource):
@@ -98,11 +92,13 @@ class TemplateTestGradientDataSource(TemplateTestDataSource):
     a pair of (objective value, gradient) calculation
     at a runtime.
     """
-    def base_test_gradient_type(self):
-        self.assertEqual(
-            self.output_slots[0].type + "_GRADIENT",
-            self.output_slots[1].type
-        )
+
+    def test_gradient_type(self):
+        if self.output_slots is not None:
+            self.assertEqual(
+                self.output_slots[0].type + "_GRADIENT",
+                self.output_slots[1].type,
+            )
 
     def test_basic_evaluation(self):
         """ Overrides the base test evaluation method,
@@ -110,44 +106,35 @@ class TemplateTestGradientDataSource(TemplateTestDataSource):
         _only_, within the precision.
         Gradients consistency are NOT tested here.
         """
-        for i, values in enumerate(self.test_case_values):
-            res = self.basic_evaluation(values)
+        for input, output in zip(self.test_inputs, self.test_outputs):
+            res = self.basic_evaluation(input)
             self.assertAlmostEqual(
-                res[0].value,
-                self.test_case_objectives[i],
-                self._objective_precision
+                res[0].value, output, self._objective_precision
             )
 
-    def base_test_param_to_gradient(self):
+    def test_param_to_gradient(self):
         """ Base test to verify the consistency between
         the number of input slots and the length of the
         output gradients, as this should be injective.
         """
-        for values in self.test_case_values:
+        for values in self.test_inputs:
             _, gradient = self.basic_evaluation(values)
-            self.assertEqual(
-                len(self.input_slots),
-                len(gradient.value)
-            )
+            self.assertEqual(len(self.input_slots), len(gradient.value))
 
     def _evaluate_gradient(self, values):
-        data_values = convert_to_data_values(
-            values,
-            self.input_slots
-        )
+        data_values = convert_to_data_values(values, self.input_slots)
         res = self.data_source.run(self.model, data_values)
         return res[1].value
 
-    def base_test_gradient_convergence(self):
+    def test_gradient_convergence(self):
         """ Base test for gradient consistency. Estimates the
         order of convergence for gradient versus known values.
         See implementation of `TaylorTest` for details.
         """
-        taylor_test = TaylorTest(
-            self._evaluate_function,
-            self._evaluate_gradient,
-            len(self.input_slots)
-        )
-        self.assertTrue(
-            taylor_test.is_correct_gradient(self.test_case_values[0])
-        )
+        for input in self.test_inputs:
+            taylor_test = TaylorTest(
+                self._evaluate_function,
+                self._evaluate_gradient,
+                len(self.input_slots),
+            )
+            self.assertTrue(taylor_test.is_correct_gradient(input))

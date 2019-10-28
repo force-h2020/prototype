@@ -7,10 +7,10 @@ class TestArrheniusParameters(TemplateTestDataSource):
         self._data_source_index = 2
         super().setUp()
 
-        self.test_case_values = [
+        self.test_inputs = [
             []
         ]
-        self.test_case_objectives = [
+        self.test_outputs = [
             [
                 self.model.nu_main_reaction,
                 self.model.delta_H_main_reaction,
@@ -18,6 +18,3 @@ class TestArrheniusParameters(TemplateTestDataSource):
                 self.model.delta_H_secondary_reaction
             ]
         ]
-
-    def test_output_slots(self):
-        super().base_test_output_slots(self.test_case_values[0])
