@@ -1,28 +1,14 @@
-from itwm_example.tests.base_test_classes.base_test_data_source \
-    import TemplateTestGradientDataSource
+from itwm_example.tests.base_test_classes.base_test_data_source import (
+    TemplateTestGradientDataSource,
+)
 
 
 class TestImpurityConcentrationDataSource(TemplateTestGradientDataSource):
-    def setUp(self):
-        self._data_source_index = 4
-        super().setUp()
-        self.test_inputs = [
-            [
-                0.5,
-                0.1,
-                335.0,
-                360.0,
-                0.02,
-                1.5,
-                0.02,
-                12.0,
-                1.0,
-                1.0,
-                1.0,
-                1.0,
-            ]
-        ]
-        self.test_outputs = [0.372027129767]
+    _data_source_index = 4
+    test_inputs = [
+        [0.5, 0.1, 335.0, 360.0, 0.02, 1.5, 0.02, 12.0, 1.0, 1.0, 1.0, 1.0]
+    ]
+    test_outputs = [0.372027129767]
 
     def test_slots_signature(self):
         self.assertEqual(12, len(self.input_slots))
