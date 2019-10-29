@@ -1,6 +1,5 @@
-from itwm_example.tests.base_test_classes.base_test_data_source import (
-    TemplateTestGradientDataSource,
-)
+from itwm_example.tests.template_test_classes.template_test_data_source \
+    import TemplateTestGradientDataSource
 
 
 class TestImpurityConcentrationDataSource(TemplateTestGradientDataSource):
