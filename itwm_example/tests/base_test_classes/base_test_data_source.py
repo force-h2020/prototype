@@ -1,3 +1,4 @@
+import inspect
 import unittest
 
 from force_bdss.api import DataValue
@@ -22,6 +23,21 @@ class TemplateTestDataSource(unittest.TestCase):
     test_inputs = []
     test_outputs = []
     _objective_precision = 6
+
+    @property
+    def _test_case_traceback(self):
+        """Provides a traceback string containing source file of
+        subclass, formatted for detection by IDE"""
+
+        test_case_class = type(self).__name__
+        source_file = inspect.getsourcefile(type(self))
+        line = inspect.getsourcelines(type(self))[1]
+
+        # Formatting of source file path and line
+        location = f'\n{source_file}:{line}'
+
+        # Return string with description of context
+        return f'\n\n{test_case_class} source file:{location}'
 
     def setUp(self):
         self.plugin = ExamplePlugin()
@@ -73,7 +89,8 @@ class TemplateTestDataSource(unittest.TestCase):
 
             for element, objective in zip(res, output):
                 self.assertAlmostEqual(
-                    element.value, objective, self._objective_precision
+                    element.value, objective, self._objective_precision,
+                    msg=self._test_case_traceback
                 )
 
     def test_output_slots(self):
@@ -83,7 +100,8 @@ class TemplateTestDataSource(unittest.TestCase):
         """
         for input in self.test_inputs:
             self.assertEqual(
-                len(self.basic_evaluation(input)), len(self.output_slots)
+                len(self.basic_evaluation(input)), len(self.output_slots),
+                msg=self._test_case_traceback
             )
 
 
@@ -109,7 +127,8 @@ class TemplateTestGradientDataSource(TemplateTestDataSource):
         for input, output in zip(self.test_inputs, self.test_outputs):
             res = self.basic_evaluation(input)
             self.assertAlmostEqual(
-                res[0].value, output, self._objective_precision
+                res[0].value, output, self._objective_precision,
+                msg=self._test_case_traceback
             )
 
     def test_param_to_gradient(self):
@@ -119,7 +138,9 @@ class TemplateTestGradientDataSource(TemplateTestDataSource):
         """
         for values in self.test_inputs:
             _, gradient = self.basic_evaluation(values)
-            self.assertEqual(len(self.input_slots), len(gradient.value))
+            self.assertEqual(
+                len(self.input_slots), len(gradient.value),
+                msg=self._test_case_traceback)
 
     def _evaluate_gradient(self, values):
         data_values = convert_to_data_values(values, self.input_slots)
@@ -137,4 +158,6 @@ class TemplateTestGradientDataSource(TemplateTestDataSource):
                 self._evaluate_gradient,
                 len(self.input_slots),
             )
-            self.assertTrue(taylor_test.is_correct_gradient(input))
+            self.assertTrue(
+                taylor_test.is_correct_gradient(input),
+                msg=self._test_case_traceback)
