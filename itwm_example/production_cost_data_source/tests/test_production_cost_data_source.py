@@ -1,32 +1,11 @@
-from itwm_example.tests.base_test_classes.base_test_data_source \
-    import BaseTestGradientDataSource
+from itwm_example.tests.template_test_classes.template_test_data_source \
+    import TemplateTestGradientDataSource
 
 
-class TestProductionCostDataSource(BaseTestGradientDataSource):
-    def setUp(self):
-        self._data_source_index = 1
-        super().setUp()
+class TestProductionCostDataSource(TemplateTestGradientDataSource):
+    _data_source_index = 1
+    test_inputs = [[290, 1], [291, 1]]
 
-        self.test_case_values = [
-            [290, 1],
-            [291, 1]
-        ]
-        self.test_case_objectives = [
-            0.,
-            self.model.W
-        ]
-
-    def test_basic_evaluation(self):
-        super().base_test_basic_evaluation()
-
-    def test_gradient_type(self):
-        super().base_test_gradient_type()
-
-    def test_param_to_gradient(self):
-        super().base_test_param_to_gradient()
-
-    def test_gradient_convergence(self):
-        super().base_test_gradient_convergence()
-
-    def test_output_slots(self):
-        super().base_test_output_slots(self.test_case_values[0])
+    @property
+    def test_outputs(self):
+        return [0.0, self.model.W]

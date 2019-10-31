@@ -1,23 +1,11 @@
-from itwm_example.tests.base_test_classes.base_test_data_source \
-    import BaseTestDataSource
+from itwm_example.tests.template_test_classes.template_test_data_source \
+    import TemplateTestDataSource
 
 
-class TestFixedValueDataSource(BaseTestDataSource):
-    def setUp(self):
-        self._data_source_index = 0
-        super().setUp()
+class TestFixedValueDataSource(TemplateTestDataSource):
+    _data_source_index = 0
+    test_inputs = [[]]
 
-        self.test_case_values = [
-            []
-        ]
-        self.test_case_objectives = [
-            [
-                self.model.value
-            ]
-        ]
-
-    def test_basic_evaluation(self):
-        super().base_test_basic_evaluation()
-
-    def test_output_slots(self):
-        super().base_test_output_slots(self.test_case_values[0])
+    @property
+    def test_outputs(self):
+        return [[self.model.value]]

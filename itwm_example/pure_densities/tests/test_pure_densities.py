@@ -1,25 +1,17 @@
-from itwm_example.tests.base_test_classes.base_test_data_source \
-    import BaseTestDataSource
+from itwm_example.tests.template_test_classes.template_test_data_source \
+    import TemplateTestDataSource
 
 
-class TestPureDensities(BaseTestDataSource):
-    def setUp(self):
-        self._data_source_index = 5
-        super().setUp()
+class TestPureDensities(TemplateTestDataSource):
+    _data_source_index = 5
+    test_inputs = [[]]
 
-        self.test_case_values = [
-            []
-        ]
-        self.test_case_objectives = [
+    @property
+    def test_outputs(self):
+        return [
             [
                 self.model.a_pure_density,
                 self.model.b_pure_density,
-                self.model.c_pure_density
+                self.model.c_pure_density,
             ]
         ]
-
-    def test_basic_evaluation(self):
-        super().base_test_basic_evaluation()
-
-    def test_output_slots(self):
-        super().base_test_output_slots(self.test_case_values[0])
