@@ -7,12 +7,7 @@ from force_bdss.api import (
     WorkflowEvaluator,
 )
 
-from itwm_example.mco.tests.mock_classes import MockOptimizer
 from itwm_example.mco.mco_factory import MCOFactory
-from itwm_example.mco.space_sampling.space_samplers import (
-    UniformSpaceSampler,
-    DirichletSpaceSampler,
-)
 
 
 class TestMCO(TestCase):
@@ -52,32 +47,3 @@ class TestMCO(TestCase):
         ) as mock_exec:
             evaluator._weighted_optimize([0.5, 0.5])
             self.assertEqual(7, mock_exec.call_count)
-
-    def test_scaling_factors(self):
-        optimizer = MockOptimizer(self.evaluator, self.parameters)
-
-        scaling_factors = self.mco.get_scaling_factors(optimizer, self.kpis)
-
-        self.assertEqual([0.1, 0.1], scaling_factors)
-
-    def test_auto_scale(self):
-
-        temp_kpis = [KPISpecification(), KPISpecification(auto_scale=False)]
-
-        optimizer = MockOptimizer(self.evaluator, self.parameters)
-
-        scaling_factors = self.mco.get_scaling_factors(optimizer, temp_kpis)
-
-        self.assertEqual([0.1, 1.0], scaling_factors)
-
-    def test__space_search_distribution(self):
-        for strategy, klass in (
-            ("Uniform", UniformSpaceSampler),
-            ("Dirichlet", DirichletSpaceSampler),
-            ("Uniform", UniformSpaceSampler),
-        ):
-            self.mco_model.space_search_mode = strategy
-            distribution = self.mco._space_search_distribution(self.mco_model)
-            self.assertIsInstance(distribution, klass)
-            self.assertEqual(len(self.kpis), distribution.dimension)
-            self.assertEqual(7, distribution.resolution)

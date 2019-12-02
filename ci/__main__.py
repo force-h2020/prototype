@@ -12,6 +12,7 @@ PIP_DEPS = [
     "git+https://github.com/facebookresearch/nevergrad@master#egg=nevergrad"
 ]
 
+
 @click.group()
 def cli():
     pass
