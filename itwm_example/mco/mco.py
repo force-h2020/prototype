@@ -9,7 +9,7 @@ from force_bdss.api import BaseMCO, DataValue
 
 from .subprocess_workflow_evaluator import SubprocessWorkflowEvaluator
 from .scaling_tools.kpi_scaling import sen_scaling_method
-from .optimizers.optimizers import IOptimizer, WeightedOptimizer
+from .optimizers.optimizers import IOptimizer, WeightedOptimizer, NevergradOptimizer
 from .space_sampling.space_samplers import (
     UniformSpaceSampler,
     DirichletSpaceSampler,
@@ -108,7 +108,6 @@ class MCO(BaseMCO):
 
         #: Get scaling factors and non-zero weight combinations for each KPI
         scaling_factors = self.get_scaling_factors(optimizer, kpis)
-
         for weights in self.weights_samples(model):
 
             log.info("Doing MCO run with weights: {}".format(weights))
@@ -126,4 +125,13 @@ class MCO(BaseMCO):
                 [DataValue(value=v) for v in optimal_point],
                 [DataValue(value=v) for v in optimal_kpis],
                 scaled_weights,
+            )
+
+        self.optimizer = NevergradOptimizer
+        optimizer = self.optimizer(evaluator, model)
+        for optimal_point, optimal_kpis in optimizer.optimize():
+            self.notify_new_point(
+                [DataValue(value=v) for v in optimal_point],
+                [DataValue(value=v) for v in optimal_kpis],
+                [1, 1, 1],
             )
