@@ -16,15 +16,6 @@ from itwm_example.mco.mco_model import MCOModel
 log = logging.getLogger(__name__)
 
 
-def opt(objective, initial_point, constraints):
-    """Partial func. Performs a scipy optimise with SLSQP method given the
-    objective function, the initial point, and a set of constraints."""
-
-    return scipy_optimize.minimize(
-        objective, initial_point, method="SLSQP", bounds=constraints
-    ).x
-
-
 class IOptimizer(Interface):
     def _score(self, *args, **kwargs):
         """ Objective function score with given parameters"""
@@ -35,8 +26,8 @@ class IOptimizer(Interface):
 
 @provides(IOptimizer)
 class WeightedOptimizer(HasStrictTraits):
-    """Performs an optimization given a set of weights for the individual
-    KPIs.
+    """Performs a scipy optimise with SLSQP method given a set of weights
+    for the individual KPIs.
     """
 
     single_point_evaluator = Instance(IEvaluator)
@@ -45,8 +36,7 @@ class WeightedOptimizer(HasStrictTraits):
 
     def __init__(self, single_point_evaluator, model):
         super().__init__(
-            single_point_evaluator=single_point_evaluator,
-            model=model,
+            single_point_evaluator=single_point_evaluator, model=model
         )
 
     def _score(self, point, weights):
@@ -58,17 +48,26 @@ class WeightedOptimizer(HasStrictTraits):
         return score
 
     def optimize(self, weights):
-        initial_point = [p.initial_value for p in self.model.parameters]
-        constraints = [(p.lower_bound, p.upper_bound) for p in self.model.parameters]
+        return self._weighted_optimize(weights)
 
-        weighted_score_func = partial(self._score, weights=weights)
+    def _weighted_optimize(self, weights):
+        initial_point = [p.initial_value for p in self.model.parameters]
+        bounds = [
+            (p.lower_bound, p.upper_bound) for p in self.model.parameters
+        ]
 
         log.info(
             "Running optimisation."
             + "Initial point: {}".format(initial_point)
-            + "Constraints: {}".format(constraints)
+            + "Bounds: {}".format(bounds)
         )
-        optimal_point = opt(weighted_score_func, initial_point, constraints)
+
+        weighted_score_func = partial(self._score, weights=weights)
+
+        optimization_result = scipy_optimize.minimize(
+            weighted_score_func, initial_point, method="SLSQP", bounds=bounds
+        )
+        optimal_point = optimization_result.x
         optimal_kpis = self.single_point_evaluator.evaluate(optimal_point)
 
         log.info(

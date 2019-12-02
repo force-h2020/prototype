@@ -42,8 +42,6 @@ class TestMCO(TestCase):
             self.mco.run(self.evaluator)
 
     def test_internal_weighted_evaluator(self):
-        parameters = self.mco_model.parameters
-
         evaluator = self.mco.optimizer(
             single_point_evaluator=self.evaluator, model=self.mco_model
         )
@@ -52,7 +50,7 @@ class TestMCO(TestCase):
         with mock.patch(
             "force_bdss.api.Workflow.execute", return_value=mock_kpi_return
         ) as mock_exec:
-            evaluator.optimize([0.5, 0.5])
+            evaluator._weighted_optimize([0.5, 0.5])
             self.assertEqual(7, mock_exec.call_count)
 
     def test_scaling_factors(self):
