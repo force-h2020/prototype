@@ -8,6 +8,9 @@ ADDITIONAL_CORE_DEPS = [
     "scipy>=1.2.1"
 ]
 
+PIP_DEPS = [
+    "git+https://github.com/facebookresearch/nevergrad@master#egg=nevergrad"
+]
 
 @click.group()
 def cli():
@@ -33,6 +36,11 @@ def install(python_version):
     check_call([
         "edm", "run", "-e", env_name, "--",
         "pip", "install", "-e", "."])
+
+    if len(PIP_DEPS):
+        check_call([
+            "edm", "run", "-e", env_name, "--",
+            "pip", "install"] + PIP_DEPS)
 
 
 @cli.command(help="Run the tests")
@@ -72,7 +80,7 @@ def docs(python_version):
 
 
 def get_env_name(python_version):
-    return "force-py{}".format(remove_dot(python_version))
+    return "force-nevergrad{}".format(remove_dot(python_version))
 
 
 def remove_dot(python_version):
