@@ -104,7 +104,7 @@ class MCO(BaseMCO):
                 executable_path=sys.argv[0],
             )
 
-        optimizer = self.optimizer(evaluator, model.parameters)
+        optimizer = self.optimizer(evaluator, model)
 
         #: Get scaling factors and non-zero weight combinations for each KPI
         scaling_factors = self.get_scaling_factors(optimizer, kpis)

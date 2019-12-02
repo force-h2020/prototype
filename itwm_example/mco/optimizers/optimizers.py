@@ -41,12 +41,12 @@ class WeightedOptimizer(HasStrictTraits):
 
     single_point_evaluator = Instance(IEvaluator)
 
-    parameters = List(BaseMCOParameter)
+    model = Instance(MCOModel)
 
-    def __init__(self, single_point_evaluator, parameters):
+    def __init__(self, single_point_evaluator, model):
         super().__init__(
             single_point_evaluator=single_point_evaluator,
-            parameters=parameters,
+            model=model,
         )
 
     def _score(self, point, weights):
@@ -58,8 +58,8 @@ class WeightedOptimizer(HasStrictTraits):
         return score
 
     def optimize(self, weights):
-        initial_point = [p.initial_value for p in self.parameters]
-        constraints = [(p.lower_bound, p.upper_bound) for p in self.parameters]
+        initial_point = [p.initial_value for p in self.model.parameters]
+        constraints = [(p.lower_bound, p.upper_bound) for p in self.model.parameters]
 
         weighted_score_func = partial(self._score, weights=weights)
 
@@ -82,8 +82,6 @@ class WeightedOptimizer(HasStrictTraits):
 @provides(IOptimizer)
 class NevergradOptimizer(HasStrictTraits):
     single_point_evaluator = Instance(IEvaluator)
-
-    parameters = List(BaseMCOParameter)
 
     model = Instance(MCOModel)
 

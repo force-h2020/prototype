@@ -45,7 +45,7 @@ class TestMCO(TestCase):
         parameters = self.mco_model.parameters
 
         evaluator = self.mco.optimizer(
-            single_point_evaluator=self.evaluator, parameters=parameters
+            single_point_evaluator=self.evaluator, model=self.mco_model
         )
         mock_kpi_return = [DataValue(value=2), DataValue(value=3)]
 
