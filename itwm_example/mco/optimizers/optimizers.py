@@ -29,6 +29,9 @@ class IOptimizer(Interface):
     def optimize(self):
         """ Perform an optimization procedure"""
 
+    def __getstate__(self):
+        """ Serialization of the optimizer state"""
+
 
 @provides(IOptimizer)
 class WeightedOptimizer(HasTraits):
