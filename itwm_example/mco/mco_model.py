@@ -48,6 +48,10 @@ class MCOModel(BaseMCOModel):
     @on_trait_change("optimizer_mode")
     def update_optimizer(self):
         klass = self._optimizer_from_mode()
+        # In order to prevent collisions in "algorithms" Enum object, we pop
+        # it out and therefore always have the default value of "algorithms"
+        # on switch
+        self.optimizer_data.pop("algorithms", None)
         self.optimizer = klass(
             kpis=self.kpis, parameters=self.parameters, **self.optimizer_data
         )
@@ -63,5 +67,4 @@ class MCOModel(BaseMCOModel):
     def __getstate__(self):
         state = super().__getstate__()
         state["optimizer_data"] = self.optimizer.__getstate__()
-        # state.pop("optimizer")
         return state

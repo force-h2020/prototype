@@ -55,12 +55,6 @@ class WeightedOptimizer(HasTraits):
     #: Space search distribution for weight points sampling
     space_search_mode = Enum("Uniform", "Dirichlet")
 
-    def __init__(self, *args, **kwargs):
-        _algorithm = kwargs.pop("algorithms", None)
-        if _algorithm and _algorithm not in ["SLSQP", "TNC"]:
-            kwargs["algorithms"] = self.algorithms
-        super().__init__(*args, **kwargs)
-
     def default_traits_view(self):
         return View(
             Group(
@@ -195,12 +189,6 @@ class NevergradOptimizer(HasTraits):
 
     #: Optimization budget defines the allowed number of objective calls
     budget = PositiveInt(100)
-
-    def __init__(self, *args, **kwargs):
-        _algorithm = kwargs.pop("algorithms", None)
-        if _algorithm and _algorithm not in ng.optimizers.registry.keys():
-            kwargs["algorithms"] = self.algorithms
-        super().__init__(*args, **kwargs)
 
     def _algorithms_default(self):
         return "TwoPointsDE"
