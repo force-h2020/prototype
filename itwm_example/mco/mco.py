@@ -1,25 +1,15 @@
 import logging
 import sys
 
-from traits.api import Enum
-
 from force_bdss.api import BaseMCO, DataValue
 
 from .subprocess_workflow_evaluator import SubprocessWorkflowEvaluator
-from .optimizers.optimizers import (
-    WeightedOptimizer,
-    NevergradOptimizer,
-)
+
 
 log = logging.getLogger(__name__)
 
 
 class MCO(BaseMCO):
-
-    optimizer = Enum(WeightedOptimizer, NevergradOptimizer)
-
-    def _optimizer_default(self):
-        return WeightedOptimizer
 
     def run(self, evaluator):
 
@@ -37,8 +27,8 @@ class MCO(BaseMCO):
                 workflow_filepath=evaluator.workflow_filepath,
                 executable_path=sys.argv[0],
             )
-
-        optimizer = self.optimizer(evaluator, model)
+        optimizer = model.optimizer
+        optimizer.single_point_evaluator = evaluator
 
         for (
             optimal_point,
