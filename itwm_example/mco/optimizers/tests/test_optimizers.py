@@ -8,7 +8,10 @@ from itwm_example.mco.space_sampling.space_samplers import (
     DirichletSpaceSampler,
 )
 from itwm_example.mco.tests.mock_classes import MockOptimizer
-from itwm_example.mco.optimizers.optimizers import WeightedOptimizer
+from itwm_example.mco.optimizers.optimizers import (
+    WeightedOptimizer,
+    NevergradOptimizer,
+)
 
 
 class TestWeightedOptimizer(TestCase):
@@ -76,3 +79,29 @@ class TestWeightedOptimizer(TestCase):
             },
             state,
         )
+
+
+class TestNevergradOptimizer(TestCase):
+    def setUp(self):
+        self.plugin = {"id": "pid", "name": "Plugin"}
+        self.factory = MCOFactory(self.plugin)
+        self.mco_model = self.factory.create_model()
+        self.mco_model.optimizer_mode = "NeverGrad"
+
+        self.kpis = [KPISpecification(), KPISpecification()]
+        self.parameters = [1, 1, 1, 1]
+
+        self.mco_model.kpis = self.kpis
+        self.mco_model.parameters = [
+            self.factory.parameter_factories[0].create_model()
+            for _ in self.parameters
+        ]
+
+        self.optimizer = self.mco_model.optimizer
+
+    def test_init(self):
+        self.assertIsInstance(self.optimizer, NevergradOptimizer)
+        self.assertEqual("Nevergrad", self.optimizer.name)
+        self.assertIs(self.optimizer.single_point_evaluator, None)
+        self.assertEqual("TwoPointsDE", self.optimizer.algorithms)
+        self.assertEqual(100, self.optimizer.budget)

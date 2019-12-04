@@ -81,7 +81,7 @@ def docs(python_version):
 
 
 def get_env_name(python_version):
-    return "force-nevergrad{}".format(remove_dot(python_version))
+    return "force-py{}".format(remove_dot(python_version))
 
 
 def remove_dot(python_version):
