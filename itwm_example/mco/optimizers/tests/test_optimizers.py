@@ -1,5 +1,7 @@
 from unittest import TestCase
 
+import nevergrad as ng
+
 from force_bdss.api import KPISpecification
 
 from itwm_example.mco.mco_factory import MCOFactory
@@ -105,3 +107,26 @@ class TestNevergradOptimizer(TestCase):
         self.assertIs(self.optimizer.single_point_evaluator, None)
         self.assertEqual("TwoPointsDE", self.optimizer.algorithms)
         self.assertEqual(100, self.optimizer.budget)
+
+    def test__create_instrumentation(self):
+        instrumentation = self.optimizer._create_instrumentation()
+        self.assertIsInstance(instrumentation, ng.Instrumentation)
+        self.assertEqual(
+            len(self.mco_model.parameters), len(instrumentation.args)
+        )
+        for i, parameter in enumerate(self.mco_model.parameters):
+            self.assertListEqual(
+                [parameter.upper_bound],
+                list(instrumentation.args[i].transforms[0].a_max),
+            )
+            self.assertListEqual(
+                [parameter.lower_bound],
+                list(instrumentation.args[i].transforms[0].a_min),
+            )
+
+    def test__create_kpi_bounds(self):
+        self.optimizer.kpis[0].scale_factor = 10
+        bounds = self.optimizer._create_kpi_bounds()
+        self.assertEqual(len(self.optimizer.kpis), len(bounds))
+        for kpi, kpi_bound in zip(self.optimizer.kpis, bounds):
+            self.assertEqual(kpi.scale_factor, kpi_bound)

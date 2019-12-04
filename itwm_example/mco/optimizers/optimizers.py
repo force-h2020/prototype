@@ -198,26 +198,35 @@ class NevergradOptimizer(HasTraits):
             Item("name", style="readonly"), Item("algorithms"), Item("budget")
         )
 
-    def _score(self, point):
-        return self.single_point_evaluator.evaluate(point)
-
-    def optimize(self):
+    def _create_instrumentation(self, parameters=None):
+        if parameters is None:
+            parameters = self.parameters
         instrumentation = [
             ng.var.Scalar().bounded(p.lower_bound, p.upper_bound)
-            for p in self.parameters
+            for p in parameters
         ]
-        instrumentation = ng.Instrumentation(*instrumentation)
+        return ng.Instrumentation(*instrumentation)
 
-        upper_bounds = np.zeros(len(self.kpis))
-        for i, kpi in enumerate(self.kpis):
+    def _create_kpi_bounds(self, kpis=None):
+        if kpis is None:
+            kpis = self.kpis
+        upper_bounds = np.zeros(len(kpis))
+        for i, kpi in enumerate(kpis):
             try:
                 upper_bounds[i] = kpi.scale_factor
             except AttributeError:
                 upper_bounds[i] = 100
+        return upper_bounds
 
+    def _score(self, point):
+        return self.single_point_evaluator.evaluate(point)
+
+    def optimize(self):
+        upper_bounds = self._create_kpi_bounds()
         f = MultiobjectiveFunction(
             multiobjective_function=self._score, upper_bounds=upper_bounds
         )
+        instrumentation = self._create_instrumentation()
         ng_optimizer = ng.optimizers.registry[self.algorithms](
             instrumentation=instrumentation, budget=self.budget
         )
