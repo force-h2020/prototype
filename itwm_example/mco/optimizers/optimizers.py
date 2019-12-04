@@ -6,17 +6,13 @@ from scipy import optimize as scipy_optimize
 import nevergrad as ng
 from nevergrad.functions import MultiobjectiveFunction
 
-from traits.api import (
-    Interface,
-    HasTraits,
-    HasStrictTraits,
-    provides,
-    Instance,
-)
+from traits.api import Interface, HasTraits, provides, Instance, Unicode, Enum
+from traitsui.api import View, Item, Group
 
+from force_bdss.io.workflow_writer import pop_dunder_recursive
 from force_bdss.mco.i_evaluator import IEvaluator
+from force_bdss.api import PositiveInt
 
-from itwm_example.mco.mco_model import MCOModel
 from itwm_example.mco.scaling_tools.kpi_scaling import sen_scaling_method
 from itwm_example.mco.space_sampling.space_samplers import (
     UniformSpaceSampler,
@@ -40,23 +36,41 @@ class WeightedOptimizer(HasTraits):
     for the individual KPIs.
     """
 
+    #: Optimizer name
+    name = Unicode("Weighted_Optimizer")
+
     single_point_evaluator = Instance(IEvaluator)
 
-    model = Instance(MCOModel)
+    #: Algorithms available to work with
+    algorithms = Enum("SLSQP", "TNC")
 
     scaling_method = staticmethod(sen_scaling_method)
 
-    def __init__(self, single_point_evaluator, model):
-        super().__init__(
-            single_point_evaluator=single_point_evaluator, model=model
+    #: Search grid resolution per KPI
+    num_points = PositiveInt(7)
+
+    #: Space search distribution for weight points sampling
+    space_search_mode = Enum("Uniform", "Dirichlet")
+
+    def __init__(self, *args, **kwargs):
+        _algorithm = kwargs.pop("algorithms", None)
+        if _algorithm and _algorithm not in ["SLSQP", "TNC"]:
+            kwargs["algorithms"] = self.algorithms
+        super().__init__(*args, **kwargs)
+
+    def default_traits_view(self):
+        return View(
+            Group(
+                Item("name", style="readonly"),
+                Item("algorithms"),
+                Item("num_points"),
+                Item("space_search_mode"),
+            )
         )
 
     def _score(self, point, weights):
-
         score = np.dot(weights, self.single_point_evaluator.evaluate(point))
-
         log.info("Weighted score: {}".format(score))
-
         return score
 
     def get_scaling_factors(self, scaling_method=None):
@@ -76,18 +90,20 @@ class WeightedOptimizer(HasTraits):
         if scaling_method is None:
             scaling_method = self.scaling_method
 
-        kpis = self.model.kpis
-
         #: Get default scaling weights for each KPI variable
-        default_scaling_factors = np.array([kpi.scale_factor for kpi in kpis])
+        default_scaling_factors = np.array(
+            [kpi.scale_factor for kpi in self.kpis]
+        )
 
         #: Apply a wrapper for the evaluator weights assignment and
         #: call of the .optimize method.
         #: Then, calculate scaling factors defined by the `scaling_method`
-        scaling_factors = scaling_method(len(kpis), self._weighted_optimize)
+        scaling_factors = scaling_method(
+            len(self.kpis), self._weighted_optimize
+        )
 
         #: Apply the scaling factors where necessary
-        auto_scales = [kpi.auto_scale for kpi in kpis]
+        auto_scales = [kpi.auto_scale for kpi in self.kpis]
         default_scaling_factors[auto_scales] = scaling_factors[auto_scales]
 
         log.info(
@@ -100,15 +116,13 @@ class WeightedOptimizer(HasTraits):
         """ Generates space search distribution object, based on
         the user settings of the `space_search_strategy` trait."""
 
-        if self.model.space_search_mode == "Uniform":
+        if self.space_search_mode == "Uniform":
             distribution = UniformSpaceSampler
-        elif self.model.space_search_mode == "Dirichlet":
+        elif self.space_search_mode == "Dirichlet":
             distribution = DirichletSpaceSampler
         else:
             raise NotImplementedError
-        return distribution(
-            len(self.model.kpis), self.model.num_points, **kwargs
-        )
+        return distribution(len(self.kpis), self.num_points, **kwargs)
 
     def weights_samples(self, **kwargs):
         """ Generates necessary number of search space sample points
@@ -135,10 +149,8 @@ class WeightedOptimizer(HasTraits):
             yield optimal_point, optimal_kpis, scaled_weights
 
     def _weighted_optimize(self, weights):
-        initial_point = [p.initial_value for p in self.model.parameters]
-        bounds = [
-            (p.lower_bound, p.upper_bound) for p in self.model.parameters
-        ]
+        initial_point = [p.initial_value for p in self.parameters]
+        bounds = [(p.lower_bound, p.upper_bound) for p in self.parameters]
 
         log.info(
             "Running optimisation."
@@ -161,16 +173,38 @@ class WeightedOptimizer(HasTraits):
 
         return optimal_point, optimal_kpis
 
+    def __getstate__(self):
+        state_data = pop_dunder_recursive(super().__getstate__())
+        state_data.pop("kpis")
+        state_data.pop("parameters")
+        return state_data
+
 
 @provides(IOptimizer)
-class NevergradOptimizer(HasStrictTraits):
+class NevergradOptimizer(HasTraits):
     single_point_evaluator = Instance(IEvaluator)
 
-    model = Instance(MCOModel)
+    #: Optimizer name
+    name = Unicode("Nevergrad")
 
-    def __init__(self, single_point_evaluator, model):
-        super().__init__(
-            single_point_evaluator=single_point_evaluator, model=model
+    #: Algorithms available to work with
+    algorithms = Enum(*ng.optimizers.registry.keys())
+
+    #: Optimization budget defines the allowed number of objective calls
+    budget = PositiveInt(100)
+
+    def __init__(self, *args, **kwargs):
+        _algorithm = kwargs.pop("algorithms", None)
+        if _algorithm and _algorithm not in ng.optimizers.registry.keys():
+            kwargs["algorithms"] = self.algorithms
+        super().__init__(*args, **kwargs)
+
+    def _algorithms_default(self):
+        return "TwoPointsDE"
+
+    def default_traits_view(self):
+        return View(
+            Item("name", style="readonly"), Item("algorithms"), Item("budget")
         )
 
     def _score(self, point):
@@ -179,20 +213,34 @@ class NevergradOptimizer(HasStrictTraits):
     def optimize(self):
         instrumentation = [
             ng.var.Scalar().bounded(p.lower_bound, p.upper_bound)
-            for p in self.model.parameters
+            for p in self.parameters
         ]
         instrumentation = ng.Instrumentation(*instrumentation)
+
+        upper_bounds = np.zeros(len(self.kpis))
+        for i, kpi in enumerate(self.kpis):
+            try:
+                upper_bounds[i] = kpi.scale_factor
+            except AttributeError:
+                upper_bounds[i] = 100
+
         f = MultiobjectiveFunction(
-            multiobjective_function=self._score,
-            upper_bounds=[100] * len(self.model.kpis),  # [0.4, 50, 5000]
+            multiobjective_function=self._score, upper_bounds=upper_bounds
         )
-        budget = 200
-        ng_optimizer = ng.optimizers.registry["TwoPointsDE"](
-            instrumentation=instrumentation, budget=budget
+        ng_optimizer = ng.optimizers.registry[self.algorithms](
+            instrumentation=instrumentation, budget=self.budget
         )
         for _ in range(ng_optimizer.budget):
             x = ng_optimizer.ask()
             value = f.multiobjective_function(x.args)
             volume = f.compute_aggregate_loss(value, *x.args, **x.kwargs)
             ng_optimizer.tell(x, volume)
-            yield x.args, value
+
+        for point, value in f._points:
+            yield point[0], value, [1] * len(self.kpis)
+
+    def __getstate__(self):
+        state_data = pop_dunder_recursive(super().__getstate__())
+        state_data.pop("kpis")
+        state_data.pop("parameters")
+        return state_data
