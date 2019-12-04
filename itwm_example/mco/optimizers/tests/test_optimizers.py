@@ -3,7 +3,6 @@ from unittest import TestCase
 from force_bdss.api import KPISpecification
 
 from itwm_example.mco.mco_factory import MCOFactory
-from itwm_example.mco.optimizers.optimizers import WeightedOptimizer
 from itwm_example.mco.space_sampling.space_samplers import (
     UniformSpaceSampler,
     DirichletSpaceSampler,
@@ -26,7 +25,7 @@ class TestWeightedOptimizer(TestCase):
             for _ in self.parameters
         ]
 
-        self.optimizer = WeightedOptimizer(None, self.mco_model)
+        self.optimizer = self.mco_model.optimizer
 
     def test__space_search_distribution(self):
         for strategy, klass in (
@@ -34,7 +33,7 @@ class TestWeightedOptimizer(TestCase):
             ("Dirichlet", DirichletSpaceSampler),
             ("Uniform", UniformSpaceSampler),
         ):
-            self.mco_model.space_search_mode = strategy
+            self.optimizer.space_search_mode = strategy
             distribution = self.optimizer._space_search_distribution()
             self.assertIsInstance(distribution, klass)
             self.assertEqual(len(self.kpis), distribution.dimension)

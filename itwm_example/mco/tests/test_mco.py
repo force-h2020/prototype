@@ -37,13 +37,15 @@ class TestMCO(TestCase):
             self.mco.run(self.evaluator)
 
     def test_internal_weighted_evaluator(self):
-        evaluator = self.mco.optimizer(
-            single_point_evaluator=self.evaluator, model=self.mco_model
-        )
+        self.mco_model.optimizer.single_point_evaluator = self.evaluator
         mock_kpi_return = [DataValue(value=2), DataValue(value=3)]
 
         with mock.patch(
             "force_bdss.api.Workflow.execute", return_value=mock_kpi_return
         ) as mock_exec:
-            evaluator._weighted_optimize([0.5, 0.5])
+            self.mco_model.optimizer._weighted_optimize([0.5, 0.5])
             self.assertEqual(7, mock_exec.call_count)
+
+    def test_change_optimizer(self):
+        self.mco_model.optimizer_mode = "NeverGrad"
+        self.mco_model.optimizer_mode = "Weighted"
