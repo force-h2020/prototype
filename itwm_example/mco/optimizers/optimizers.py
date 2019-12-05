@@ -23,6 +23,8 @@ log = logging.getLogger(__name__)
 
 
 class IOptimizer(Interface):
+    """" Generic optimizer interface."""
+
     def _score(self, *args, **kwargs):
         """ Objective function score with given parameters"""
 
@@ -129,6 +131,13 @@ class WeightedOptimizer(HasTraits):
         ).generate_space_sample()
 
     def optimize(self):
+        """ Generates optimization results with weighted optimization.
+
+        Yields
+        ----------
+        optimization result: tuple(np.array, np.array, list)
+            Point of evaluation, objective value, dummy list of weights
+        """
         #: Get scaling factors and non-zero weight combinations for each KPI
         scaling_factors = self.get_scaling_factors()
         for weights in self.weights_samples():
@@ -146,6 +155,19 @@ class WeightedOptimizer(HasTraits):
             yield optimal_point, optimal_kpis, scaled_weights
 
     def _weighted_optimize(self, weights):
+        """ Performs single scipy.minimize operation on the convolution of
+        the multiobjective function with `weights`.
+
+        Parameters
+        ----------
+        weights: List[Float]
+            Weights for each KPI objective
+
+        Returns
+        ----------
+        optimization result: tuple(np.array, np.array)
+            Point of evaluation, and objective values
+        """
         initial_point = [p.initial_value for p in self.parameters]
         bounds = [(p.lower_bound, p.upper_bound) for p in self.parameters]
 
@@ -199,6 +221,18 @@ class NevergradOptimizer(HasTraits):
         )
 
     def _create_instrumentation(self, parameters=None):
+        """ Assemble nevergrad.Instrumentation object from `parameters`.
+        Currently, only `Scalar` parameters are generated.
+
+        Parameters
+        ----------
+        parameters: List(BaseMCOParameter)
+            parameter objects containing lower and upper numerical bounds
+
+        Returns
+        ----------
+        instrumentation: ng.Instrumentation
+        """
         if parameters is None:
             parameters = self.parameters
         instrumentation = [
@@ -208,6 +242,21 @@ class NevergradOptimizer(HasTraits):
         return ng.Instrumentation(*instrumentation)
 
     def _create_kpi_bounds(self, kpis=None):
+        """ Assemble optimization bounds on KPIs, provided by
+        `scaled_factor` attributes.
+        Note: Ideally, a different kpi attribute should be
+        responsible for the bounds.
+
+        Parameters
+        ----------
+        kpis: List(KPISpecification)
+            kpi objects containing upper numerical bounds
+
+        Returns
+        ----------
+        upper_bounds: np.array
+            kpis upper bounds
+        """
         if kpis is None:
             kpis = self.kpis
         upper_bounds = np.zeros(len(kpis))
@@ -219,9 +268,19 @@ class NevergradOptimizer(HasTraits):
         return upper_bounds
 
     def _score(self, point):
-        return self.single_point_evaluator.evaluate(point)
+        score = self.single_point_evaluator.evaluate(point)
+        log.info("Objective score: {}".format(score))
+        return score
 
     def optimize(self):
+        """ Constructs objects required by the nevergrad engine to
+        perform optimization.
+
+        Yields
+        ----------
+        optimization result: tuple(np.array, np.array, list)
+            Point of evaluation, objective value, dummy list of weights
+        """
         upper_bounds = self._create_kpi_bounds()
         f = MultiobjectiveFunction(
             multiobjective_function=self._score, upper_bounds=upper_bounds
