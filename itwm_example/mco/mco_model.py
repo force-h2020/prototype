@@ -20,12 +20,19 @@ class MCOModel(BaseMCOModel):
     optimizer_data = Dict()
 
     def __init__(self, *args, **kwargs):
+        # We pop out the optimizer data to avoid inconsistent data
+        # assignment to the default optimizer instace, which is created
+        # during super().__init__
         optimizer_mode = kwargs.pop("optimizer_mode", None)
+        optimizer_data = kwargs.pop("optimizer_data", None)
+
         super().__init__(*args, **kwargs)
-        # Optimizer is created once the "optimizer_mode" is specified.
+        # Optimizer is created with proper "optimizer_mode" (not default).
         # It should only be created _after_ the parameters and KPIs
         # have been specified. We instantiate the optimizer after all
         # other attributes have been assigned.
+        if optimizer_data is not None:
+            self.optimizer_data = optimizer_data
         if optimizer_mode is not None:
             self.optimizer_mode = optimizer_mode
 
@@ -56,6 +63,7 @@ class MCOModel(BaseMCOModel):
         # it out and therefore always have the default value of "algorithms"
         # on switch
         self.optimizer_data.pop("algorithms", None)
+        self.optimizer_data.pop("name", None)
         self.optimizer = klass(
             kpis=self.kpis, parameters=self.parameters, **self.optimizer_data
         )
