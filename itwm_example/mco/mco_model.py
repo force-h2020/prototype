@@ -22,6 +22,10 @@ class MCOModel(BaseMCOModel):
     def __init__(self, *args, **kwargs):
         optimizer_mode = kwargs.pop("optimizer_mode", None)
         super().__init__(*args, **kwargs)
+        # Optimizer is created once the "optimizer_mode" is specified.
+        # It should only be created _after_ the parameters and KPIs
+        # have been specified. We instantiate the optimizer after all
+        # other attributes have been assigned.
         if optimizer_mode is not None:
             self.optimizer_mode = optimizer_mode
 

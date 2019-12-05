@@ -50,6 +50,30 @@ class TestMCO(TestCase):
             self.mco_model.optimizer._weighted_optimize([0.5, 0.5])
             self.assertEqual(7, mock_exec.call_count)
 
+    def test_nevergrad_optimizer(self):
+        self.mco_model.optimizer_mode = "NeverGrad"
+        self.mco_model.optimizer.single_point_evaluator = self.evaluator
+        mock_kpi_return = [DataValue(value=0.1), DataValue(value=0.2)]
+
+        with mock.patch(
+            "force_bdss.api.Workflow.execute", return_value=mock_kpi_return
+        ) as mock_exec:
+            for point, value, _ in self.mco_model.optimizer.optimize():
+                self.assertListEqual([0.1, 0.2], list(value))
+            self.assertEqual(
+                self.mco_model.optimizer.budget, mock_exec.call_count
+            )
+
+        mock_kpi_return = [DataValue(value=2), DataValue(value=3)]
+
+        with mock.patch(
+            "force_bdss.api.Workflow.execute", return_value=mock_kpi_return
+        ) as mock_exec:
+            self.assertEqual(0, len(list(self.mco_model.optimizer.optimize())))
+            self.assertEqual(
+                self.mco_model.optimizer.budget, mock_exec.call_count
+            )
+
     def test_default_optimizer(self):
         self.assertIsInstance(self.mco_model.optimizer, WeightedOptimizer)
 
