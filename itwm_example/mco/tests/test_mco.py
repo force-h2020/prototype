@@ -32,6 +32,57 @@ class TestMCO(TestCase):
         self.evaluator = WorkflowEvaluator(workflow=Workflow())
         self.evaluator.workflow.mco = self.mco_model
 
+    def test_init_model(self):
+        model = self.factory.create_model()
+        self.assertEqual([], model.parameters)
+        self.assertEqual([], model.kpis)
+        self.assertEqual("Weighted", model.optimizer_mode)
+        self.assertIsInstance(model.optimizer, WeightedOptimizer)
+        self.assertListEqual(model.parameters, model.optimizer.parameters)
+        self.assertListEqual(model.kpis, model.optimizer.kpis)
+        self.assertEqual("SLSQP", model.optimizer.algorithms)
+
+        kpis = [KPISpecification(), KPISpecification()]
+        parameters = [
+            self.factory.parameter_factories[0].create_model()
+            for _ in [1, 1, 1, 1]
+        ]
+        optimizer_data = {"algorithms": "TNC", "num_points": 10}
+        model = self.factory.create_model(
+            {
+                "kpis": kpis,
+                "parameters": parameters,
+                "optimizer_data": optimizer_data,
+            }
+        )
+        self.assertListEqual(parameters, model.parameters)
+        self.assertListEqual(kpis, model.kpis)
+        self.assertEqual("Weighted", model.optimizer_mode)
+        self.assertIsInstance(model.optimizer, WeightedOptimizer)
+        self.assertListEqual(model.parameters, model.optimizer.parameters)
+        self.assertListEqual(model.kpis, model.optimizer.kpis)
+        self.assertEqual("TNC", model.optimizer.algorithms)
+        self.assertEqual(10, model.optimizer.num_points)
+
+        optimizer_mode = "NeverGrad"
+        optimizer_data = {"algorithms": "RandomSearch", "budget": 1000}
+        model = self.factory.create_model(
+            {
+                "kpis": kpis,
+                "parameters": parameters,
+                "optimizer_mode": optimizer_mode,
+                "optimizer_data": optimizer_data,
+            }
+        )
+        self.assertListEqual(parameters, model.parameters)
+        self.assertListEqual(kpis, model.kpis)
+        self.assertEqual("NeverGrad", model.optimizer_mode)
+        self.assertIsInstance(model.optimizer, NevergradOptimizer)
+        self.assertListEqual(model.parameters, model.optimizer.parameters)
+        self.assertListEqual(model.kpis, model.optimizer.kpis)
+        self.assertEqual("RandomSearch", model.optimizer.algorithms)
+        self.assertEqual(1000, model.optimizer.budget)
+
     def test_basic_eval(self):
         mock_kpi_return = [DataValue(value=2), DataValue(value=3)]
 
