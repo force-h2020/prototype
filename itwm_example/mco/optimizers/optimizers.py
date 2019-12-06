@@ -286,6 +286,7 @@ class NevergradOptimizer(HasTraits):
             multiobjective_function=self._score, upper_bounds=upper_bounds
         )
         instrumentation = self._create_instrumentation()
+        instrumentation.random_state.seed(12)
         ng_optimizer = ng.optimizers.registry[self.algorithms](
             instrumentation=instrumentation, budget=self.budget
         )
