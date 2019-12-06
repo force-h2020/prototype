@@ -18,9 +18,9 @@ class MCO(BaseMCO):
         if model.evaluation_mode == "Subprocess":
             # Here we create an instance of our WorkflowEvaluator subclass
             # that allows for evaluation of a state in the workflow via calling
-            # force_bdss on a new subprocess running in 'evaluate' mode.
+            # `force_bdss` on a new subprocess running in 'evaluate' mode.
             # Note: a BaseMCOCommunicator must be present to pass in parameter
-            # values and returning the KPI for a force_bdss run in 'evaluate'
+            # values and returning the KPI for a `force_bdss` run in 'evaluate'
             # mode
             evaluator = SubprocessWorkflowEvaluator(
                 workflow=evaluator.workflow,
