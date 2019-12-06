@@ -21,9 +21,8 @@ class MCOModel(BaseMCOModel):
 
     def __init__(self, *args, **kwargs):
         # We pop out the optimizer data to avoid inconsistent data
-        # assignment to the default optimizer instace, which is created
+        # assignment to the default optimizer instance, which is created
         # during super().__init__
-        optimizer_mode = kwargs.pop("optimizer_mode", None)
         optimizer_data = kwargs.pop("optimizer_data", None)
 
         super().__init__(*args, **kwargs)
@@ -33,8 +32,7 @@ class MCOModel(BaseMCOModel):
         # other attributes have been assigned.
         if optimizer_data is not None:
             self.optimizer_data = optimizer_data
-        if optimizer_mode is not None:
-            self.optimizer_mode = optimizer_mode
+        self.optimizer = self._optimizer_default()
 
     def default_traits_view(self):
         return View(
@@ -44,6 +42,7 @@ class MCOModel(BaseMCOModel):
         )
 
     def _optimizer_from_mode(self):
+        klass = None
         if self.optimizer_mode == "Weighted":
             klass = WeightedOptimizer
         elif self.optimizer_mode == "NeverGrad":
@@ -61,7 +60,7 @@ class MCOModel(BaseMCOModel):
         klass = self._optimizer_from_mode()
         # In order to prevent collisions in "algorithms" Enum object, we pop
         # it out and therefore always have the default value of "algorithms"
-        # on switch
+        # and "name" on switch
         self.optimizer_data.pop("algorithms", None)
         self.optimizer_data.pop("name", None)
         self.optimizer = klass(
