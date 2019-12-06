@@ -8,6 +8,12 @@ ADDITIONAL_CORE_DEPS = [
     "scipy>=1.2.1"
 ]
 
+_nevergrad_stable_commit = "ba2c0217a043178adf9fe9f4bd52bbbfce97bfaa"
+PIP_DEPS = [
+    "git+https://github.com/facebookresearch/nevergrad.git@" +
+    _nevergrad_stable_commit
+]
+
 
 @click.group()
 def cli():
@@ -33,6 +39,11 @@ def install(python_version):
     check_call([
         "edm", "run", "-e", env_name, "--",
         "pip", "install", "-e", "."])
+
+    if len(PIP_DEPS):
+        check_call([
+            "edm", "run", "-e", env_name, "--",
+            "pip", "install"] + PIP_DEPS)
 
 
 @cli.command(help="Run the tests")
