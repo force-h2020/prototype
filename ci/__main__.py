@@ -8,8 +8,10 @@ ADDITIONAL_CORE_DEPS = [
     "scipy>=1.2.1"
 ]
 
+_nevergrad_stable_commit = "ba2c0217a043178adf9fe9f4bd52bbbfce97bfaa"
 PIP_DEPS = [
-    "git+https://github.com/facebookresearch/nevergrad@master#egg=nevergrad"
+    "git+https://github.com/facebookresearch/nevergrad.git@" +
+    _nevergrad_stable_commit
 ]
 
 
