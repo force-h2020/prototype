@@ -3,7 +3,7 @@ from force_bdss.api import BaseMCOFactory
 from .mco_communicator import MCOCommunicator
 from .mco_model import MCOModel
 from .mco import MCO
-from .parameters import RangedMCOParameterFactory
+from .parameters import ITWMRangedMCOParameterFactory
 
 
 class MCOFactory(BaseMCOFactory):
@@ -28,5 +28,5 @@ class MCOFactory(BaseMCOFactory):
     #: Factory classes of the parameters the MCO supports.
     def get_parameter_factory_classes(self):
         return [
-            RangedMCOParameterFactory
+            ITWMRangedMCOParameterFactory
         ]
