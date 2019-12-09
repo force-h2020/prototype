@@ -108,8 +108,14 @@ class TestNevergradOptimizer(TestCase):
         self.assertEqual("TwoPointsDE", self.optimizer.algorithms)
         self.assertEqual(100, self.optimizer.budget)
 
+    def test__create_instrumentation_variable(self):
+        scalar_variable = self.optimizer._create_instrumentation_variable(
+            self.mco_model.parameters[0]
+        )
+        self.assertIsInstance(scalar_variable, ng.var.Scalar)
+
     def test__create_instrumentation(self):
-        instrumentation = self.optimizer._create_instrumentation()
+        instrumentation = self.optimizer._assemble_instrumentation()
         self.assertIsInstance(instrumentation, ng.Instrumentation)
         self.assertEqual(
             len(self.mco_model.parameters), len(instrumentation.args)

@@ -220,9 +220,17 @@ class NevergradOptimizer(HasTraits):
             Item("name", style="readonly"), Item("algorithms"), Item("budget")
         )
 
-    def _create_instrumentation(self, parameters=None):
-        """ Assemble nevergrad.Instrumentation object from `parameters`.
-        Currently, only `Scalar` parameters are generated.
+    def _create_instrumentation_variable(self, parameter):
+        """ Create nevergrad.variable from `MCOParameter`."""
+        if hasattr(parameter, "lower_bound") and hasattr(
+            parameter, "upper_bound"
+        ):
+            return ng.var.Scalar().bounded(
+                parameter.lower_bound, parameter.upper_bound
+            )
+
+    def _assemble_instrumentation(self, parameters=None):
+        """ Assemble nevergrad.Instrumentation object from `parameters` list.
 
         Parameters
         ----------
@@ -235,9 +243,9 @@ class NevergradOptimizer(HasTraits):
         """
         if parameters is None:
             parameters = self.parameters
+
         instrumentation = [
-            ng.var.Scalar().bounded(p.lower_bound, p.upper_bound)
-            for p in parameters
+            self._create_instrumentation_variable(p) for p in parameters
         ]
         return ng.Instrumentation(*instrumentation)
 
@@ -285,7 +293,7 @@ class NevergradOptimizer(HasTraits):
         f = MultiobjectiveFunction(
             multiobjective_function=self._score, upper_bounds=upper_bounds
         )
-        instrumentation = self._create_instrumentation()
+        instrumentation = self._assemble_instrumentation()
         instrumentation.random_state.seed(12)
         ng_optimizer = ng.optimizers.registry[self.algorithms](
             instrumentation=instrumentation, budget=self.budget
