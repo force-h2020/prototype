@@ -22,6 +22,10 @@ from itwm_example.mco.space_sampling.space_samplers import (
 log = logging.getLogger(__name__)
 
 
+class NevergradTypeError(Exception):
+    pass
+
+
 class IOptimizer(Interface):
     """" Generic optimizer interface."""
 
@@ -227,6 +231,19 @@ class NevergradOptimizer(HasTraits):
         ):
             return ng.var.Scalar().bounded(
                 parameter.lower_bound, parameter.upper_bound
+            )
+        elif hasattr(parameter, "value"):
+            return ng.var._Constant(value=parameter.value)
+        elif hasattr(parameter, "levels"):
+            return ng.var.OrderedDiscrete(possibilities=parameter.sample_values)
+        elif hasattr(parameter, "categories"):
+            return ng.var.SoftmaxCategorical(
+                possibilities=parameter.sample_values, deterministic=True
+            )
+        else:
+            raise NevergradTypeError(
+                f"Can not convert {parameter} to any of"
+                "supported Nevergrad types"
             )
 
     def _assemble_instrumentation(self, parameters=None):

@@ -1,8 +1,15 @@
-from unittest import TestCase
+from unittest import TestCase, mock
 
 import nevergrad as ng
+from nevergrad.instrumentation.transforms import ArctanBound
 
 from force_bdss.api import KPISpecification
+from force_bdss.mco.parameters.mco_parameters import (
+    FixedMCOParameterFactory,
+    RangedMCOParameterFactory,
+    ListedMCOParameterFactory,
+    CategoricalMCOParameterFactory,
+)
 
 from itwm_example.mco.mco_factory import MCOFactory
 from itwm_example.mco.space_sampling.space_samplers import (
@@ -13,6 +20,7 @@ from itwm_example.mco.tests.mock_classes import MockOptimizer
 from itwm_example.mco.optimizers.optimizers import (
     WeightedOptimizer,
     NevergradOptimizer,
+    NevergradTypeError,
 )
 
 
@@ -113,6 +121,48 @@ class TestNevergradOptimizer(TestCase):
             self.mco_model.parameters[0]
         )
         self.assertIsInstance(scalar_variable, ng.var.Scalar)
+        self.assertEqual(1, len(scalar_variable.transforms))
+        self.assertEqual(100.0, scalar_variable.transforms[0].a_max[0])
+        self.assertEqual(0.1, scalar_variable.transforms[0].a_min[0])
+        self.assertIsInstance(scalar_variable.transforms[0], ArctanBound)
+
+        mock_factory = mock.Mock(
+            spec=self.factory,
+            plugin_id="pid",
+            plugin_name="Plugin",
+            id="mcoid",
+        )
+        fixed_variable = FixedMCOParameterFactory(mock_factory).create_model(
+            data_values={"value": 42}
+        )
+        fixed_variable = self.optimizer._create_instrumentation_variable(
+            fixed_variable
+        )
+        self.assertIsInstance(fixed_variable, ng.var._Constant)
+        self.assertEqual(42, fixed_variable.value)
+
+        listed_variable = ListedMCOParameterFactory(mock_factory).create_model(
+            data_values={"levels": [2.0, 1.0, 0.0]}
+        )
+        listed_variable = self.optimizer._create_instrumentation_variable(
+            listed_variable
+        )
+        self.assertIsInstance(listed_variable, ng.var.OrderedDiscrete)
+        self.assertListEqual([0.0, 1.0, 2.0], listed_variable.possibilities)
+
+        categorical_variable = CategoricalMCOParameterFactory(
+            mock_factory
+        ).create_model(data_values={"categories": ["2.0", "1.0", "0.0"]})
+        categorical_variable = self.optimizer._create_instrumentation_variable(
+            categorical_variable
+        )
+        self.assertIsInstance(categorical_variable, ng.var.SoftmaxCategorical)
+        self.assertListEqual(
+            ["2.0", "1.0", "0.0"], categorical_variable.possibilities
+        )
+
+        with self.assertRaises(NevergradTypeError):
+            self.optimizer._create_instrumentation_variable(1)
 
     def test__create_instrumentation(self):
         instrumentation = self.optimizer._assemble_instrumentation()
