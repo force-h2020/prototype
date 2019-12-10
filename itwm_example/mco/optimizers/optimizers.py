@@ -305,6 +305,27 @@ class NevergradOptimizer(HasTraits):
                 upper_bounds[i] = 100
         return upper_bounds
 
+    def _swap_minmax_kpivalues(self, values):
+        """ Inverts the array of KPI values whenever the corresponding
+         KPI is subject to maximization instead of minimization.
+
+        Parameters
+        ----------
+        values: List[int, float], np.array
+            KPI values to invert for minimization mode
+
+        Returns
+        --------
+        substituted_values: np.array
+            New KPI values, with the elements corresponding to
+            maximization are inverted by _a -> -_a
+        """
+        substituted_values = np.array(values)
+        for i in range(len(values)):
+            if self.kpis[i].objective == "MAXIMISE":
+                substituted_values[i] *= -1.0
+        return substituted_values
+
     def _score(self, point):
         score = self.single_point_evaluator.evaluate(point)
         log.info("Objective score: {}".format(score))
@@ -331,10 +352,15 @@ class NevergradOptimizer(HasTraits):
         for _ in range(ng_optimizer.budget):
             x = ng_optimizer.ask()
             value = f.multiobjective_function(x.args)
-            volume = f.compute_aggregate_loss(value, *x.args, **x.kwargs)
+            volume = f.compute_aggregate_loss(
+                self._swap_minmax_kpivalues(value), *x.args, **x.kwargs
+            )
             ng_optimizer.tell(x, volume)
 
+            # yield x.args, value, [1] * len(self.kpis)
+
         for point, value in f._points:
+            value = self._swap_minmax_kpivalues(value)
             yield point[0], value, [1] * len(self.kpis)
 
     def __getstate__(self):

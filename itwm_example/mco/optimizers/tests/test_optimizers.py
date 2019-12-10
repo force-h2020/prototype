@@ -189,3 +189,15 @@ class TestNevergradOptimizer(TestCase):
         self.assertEqual(len(self.optimizer.kpis), len(bounds))
         for kpi, kpi_bound in zip(self.optimizer.kpis, bounds):
             self.assertEqual(kpi.scale_factor, kpi_bound)
+
+    def test__swap_minmax_kpivalues(self):
+        temp_kpis = [
+            KPISpecification(),
+            KPISpecification(objective="MAXIMISE"),
+        ]
+        self.mco_model.kpis = temp_kpis
+        values = [10.0, 20.0]
+        inv_values = self.mco_model.optimizer._swap_minmax_kpivalues(
+            values
+        )
+        self.assertListEqual(list(inv_values), [10.0, -20.0])
