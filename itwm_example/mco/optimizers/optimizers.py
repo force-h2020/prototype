@@ -214,14 +214,18 @@ class NevergradOptimizer(HasTraits):
     algorithms = Enum(*ng.optimizers.registry.keys())
 
     #: Optimization budget defines the allowed number of objective calls
-    budget = PositiveInt(500)
+    n_objective_calls = PositiveInt(500)
 
     def _algorithms_default(self):
         return "TwoPointsDE"
 
     def default_traits_view(self):
         return View(
-            Item("name", style="readonly"), Item("algorithms"), Item("budget")
+            Item("name", style="readonly"),
+            Item("algorithms"),
+            Item(
+                "n_objective_calls", label="Allowed number of objective calls"
+            ),
         )
 
     def _create_instrumentation_variable(self, parameter):
@@ -347,7 +351,7 @@ class NevergradOptimizer(HasTraits):
         instrumentation = self._assemble_instrumentation()
         instrumentation.random_state.seed(12)
         ng_optimizer = ng.optimizers.registry[self.algorithms](
-            instrumentation=instrumentation, budget=self.budget
+            instrumentation=instrumentation, budget=self.n_objective_calls
         )
         for _ in range(ng_optimizer.budget):
             x = ng_optimizer.ask()

@@ -114,7 +114,7 @@ class TestNevergradOptimizer(TestCase):
         self.assertEqual("Nevergrad", self.optimizer.name)
         self.assertIs(self.optimizer.single_point_evaluator, None)
         self.assertEqual("TwoPointsDE", self.optimizer.algorithms)
-        self.assertEqual(500, self.optimizer.budget)
+        self.assertEqual(500, self.optimizer.n_objective_calls)
 
     def test__create_instrumentation_variable(self):
         mock_factory = mock.Mock(

@@ -112,7 +112,8 @@ class TestMCO(TestCase):
             for point, value, _ in self.mco_model.optimizer.optimize():
                 self.assertListEqual([0.1, 0.2], list(value))
             self.assertEqual(
-                self.mco_model.optimizer.budget, mock_exec.call_count
+                self.mco_model.optimizer.n_objective_calls,
+                mock_exec.call_count,
             )
 
         mock_kpi_return = [DataValue(value=2), DataValue(value=3)]
@@ -122,7 +123,8 @@ class TestMCO(TestCase):
         ) as mock_exec:
             self.assertEqual(0, len(list(self.mco_model.optimizer.optimize())))
             self.assertEqual(
-                self.mco_model.optimizer.budget, mock_exec.call_count
+                self.mco_model.optimizer.n_objective_calls,
+                mock_exec.call_count,
             )
 
     def test_default_optimizer(self):
