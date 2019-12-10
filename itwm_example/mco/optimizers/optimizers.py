@@ -225,7 +225,20 @@ class NevergradOptimizer(HasTraits):
         )
 
     def _create_instrumentation_variable(self, parameter):
-        """ Create nevergrad.variable from `MCOParameter`."""
+        """ Create nevergrad.variable from `MCOParameter`. Different
+        MCOParameter subclasses have different signature attributes.
+        The mapping between MCOParameters and nevergrad types is bijective.
+
+        Parameters
+        ----------
+        parameter: BaseMCOParameter
+            object to convert to nevergrad type
+
+        Returns
+        ----------
+        nevergrad_parameter: nevergrad.Variable
+            nevergrad variable of corresponding type
+        """
         if hasattr(parameter, "lower_bound") and hasattr(
             parameter, "upper_bound"
         ):
