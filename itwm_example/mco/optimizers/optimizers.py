@@ -214,7 +214,7 @@ class NevergradOptimizer(HasTraits):
     algorithms = Enum(*ng.optimizers.registry.keys())
 
     #: Optimization budget defines the allowed number of objective calls
-    budget = PositiveInt(100)
+    budget = PositiveInt(500)
 
     def _algorithms_default(self):
         return "TwoPointsDE"
