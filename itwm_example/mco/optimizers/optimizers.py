@@ -256,7 +256,7 @@ class NevergradOptimizer(HasTraits):
         else:
             raise NevergradTypeError(
                 f"Can not convert {parameter} to any of"
-                "supported Nevergrad types"
+                " supported Nevergrad types"
             )
 
     def _assemble_instrumentation(self, parameters=None):
