@@ -117,15 +117,6 @@ class TestNevergradOptimizer(TestCase):
         self.assertEqual(100, self.optimizer.budget)
 
     def test__create_instrumentation_variable(self):
-        scalar_variable = self.optimizer._create_instrumentation_variable(
-            self.mco_model.parameters[0]
-        )
-        self.assertIsInstance(scalar_variable, ng.var.Scalar)
-        self.assertEqual(1, len(scalar_variable.transforms))
-        self.assertEqual(100.0, scalar_variable.transforms[0].a_max[0])
-        self.assertEqual(0.1, scalar_variable.transforms[0].a_min[0])
-        self.assertIsInstance(scalar_variable.transforms[0], ArctanBound)
-
         mock_factory = mock.Mock(
             spec=self.factory,
             plugin_id="pid",
@@ -140,6 +131,18 @@ class TestNevergradOptimizer(TestCase):
         )
         self.assertIsInstance(fixed_variable, ng.var._Constant)
         self.assertEqual(42, fixed_variable.value)
+
+        ranged_variable = RangedMCOParameterFactory(mock_factory).create_model(
+            data_values={"lower_bound": -1.0, "upper_bound": 3.14}
+        )
+        ranged_variable = self.optimizer._create_instrumentation_variable(
+            ranged_variable
+        )
+        self.assertIsInstance(ranged_variable, ng.var.Scalar)
+        self.assertEqual(1, len(ranged_variable.transforms))
+        self.assertEqual(3.14, ranged_variable.transforms[0].a_max[0])
+        self.assertEqual(-1.0, ranged_variable.transforms[0].a_min[0])
+        self.assertIsInstance(ranged_variable.transforms[0], ArctanBound)
 
         listed_variable = ListedMCOParameterFactory(mock_factory).create_model(
             data_values={"levels": [2.0, 1.0, 0.0]}

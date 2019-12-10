@@ -235,7 +235,7 @@ class NevergradOptimizer(HasTraits):
         elif hasattr(parameter, "value"):
             return ng.var._Constant(value=parameter.value)
         elif hasattr(parameter, "levels"):
-            return ng.var.OrderedDiscrete(possibilities=parameter.sample_values)
+            return ng.var.OrderedDiscrete(parameter.sample_values)
         elif hasattr(parameter, "categories"):
             return ng.var.SoftmaxCategorical(
                 possibilities=parameter.sample_values, deterministic=True
