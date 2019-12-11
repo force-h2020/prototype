@@ -6,7 +6,15 @@ from scipy import optimize as scipy_optimize
 import nevergrad as ng
 from nevergrad.functions import MultiobjectiveFunction
 
-from traits.api import Interface, HasTraits, provides, Instance, Unicode, Enum
+from traits.api import (
+    Interface,
+    HasTraits,
+    provides,
+    Instance,
+    Unicode,
+    Enum,
+    Bool,
+)
 from traitsui.api import View, Item, Group
 
 from force_bdss.io.workflow_writer import pop_dunder_recursive
@@ -216,6 +224,9 @@ class NevergradOptimizer(HasTraits):
     #: Optimization budget defines the allowed number of objective calls
     n_objective_calls = PositiveInt(500)
 
+    #: Yield all data points or only the Pareto-optimal
+    verbose_run = Bool(False)
+
     def _algorithms_default(self):
         return "TwoPointsDE"
 
@@ -226,6 +237,7 @@ class NevergradOptimizer(HasTraits):
             Item(
                 "n_objective_calls", label="Allowed number of objective calls"
             ),
+            Item("verbose_run", label="Display objective values at runtime"),
         )
 
     def _create_instrumentation_variable(self, parameter):
@@ -361,11 +373,13 @@ class NevergradOptimizer(HasTraits):
             )
             ng_optimizer.tell(x, volume)
 
-            # yield x.args, value, [1] * len(self.kpis)
+            if self.verbose_run:
+                yield x.args, value, [1] * len(self.kpis)
 
-        for point, value in f._points:
-            value = self._swap_minmax_kpivalues(value)
-            yield point[0], value, [1] * len(self.kpis)
+        if not self.verbose_run:
+            for point, value in f._points:
+                value = self._swap_minmax_kpivalues(value)
+                yield point[0], value, [1] * len(self.kpis)
 
     def __getstate__(self):
         state_data = pop_dunder_recursive(super().__getstate__())
