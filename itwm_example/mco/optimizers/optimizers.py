@@ -258,6 +258,13 @@ class NevergradOptimizer(HasTraits):
         if hasattr(parameter, "lower_bound") and hasattr(
             parameter, "upper_bound"
         ):
+            # The affine transformation with `slope` before `bounded` cab be
+            # used to normalize the distribution of points in internal space.
+            # This allows better exploration of the boundary regions. This
+            # feature is still in research mode, and presumably must be for
+            # the user to play with. Implementation would be:
+            # >>> affine_slope = 1.0
+            # >>> var = ng.var.Scalar().affined(affine_slope, 0).bounded(...)
             return ng.var.Scalar().bounded(
                 parameter.lower_bound, parameter.upper_bound
             )
