@@ -222,7 +222,7 @@ class NevergradOptimizer(HasTraits):
     algorithms = Enum(*ng.optimizers.registry.keys())
 
     #: Optimization budget defines the allowed number of objective calls
-    n_objective_calls = PositiveInt(500)
+    budget = PositiveInt(500)
 
     #: Yield all data points or only the Pareto-optimal
     verbose_run = Bool(False)
@@ -235,7 +235,7 @@ class NevergradOptimizer(HasTraits):
             Item("name", style="readonly"),
             Item("algorithms"),
             Item(
-                "n_objective_calls", label="Allowed number of objective calls"
+                "budget", label="Allowed number of objective calls"
             ),
             Item("verbose_run", label="Display objective values at runtime"),
         )
@@ -370,7 +370,7 @@ class NevergradOptimizer(HasTraits):
         instrumentation = self._assemble_instrumentation()
         instrumentation.random_state.seed(12)
         ng_optimizer = ng.optimizers.registry[self.algorithms](
-            instrumentation=instrumentation, budget=self.n_objective_calls
+            instrumentation=instrumentation, budget=self.budget
         )
         for _ in range(ng_optimizer.budget):
             x = ng_optimizer.ask()
