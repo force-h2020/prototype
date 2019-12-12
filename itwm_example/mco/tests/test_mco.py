@@ -112,19 +112,35 @@ class TestMCO(TestCase):
             for point, value, _ in self.mco_model.optimizer.optimize():
                 self.assertListEqual([0.1, 0.2], list(value))
             self.assertEqual(
-                self.mco_model.optimizer.budget,
-                mock_exec.call_count,
+                self.mco_model.optimizer.budget, mock_exec.call_count
             )
 
-        mock_kpi_return = [DataValue(value=2), DataValue(value=3)]
+        # Testing verbose_run = False mode
+        with mock.patch(
+            "force_bdss.api.Workflow.execute", return_value=mock_kpi_return
+        ):
+            optimizer_return = list(self.mco_model.optimizer.optimize())
+            self.assertEqual(1, len(optimizer_return))
 
+        # Testing verbose_run = True mode
+        self.mco_model.optimizer.verbose_run = True
+        with mock.patch(
+            "force_bdss.api.Workflow.execute", return_value=mock_kpi_return
+        ):
+            optimizer_return = list(self.mco_model.optimizer.optimize())
+            self.assertEqual(
+                self.mco_model.optimizer.budget, len(optimizer_return)
+            )
+
+        # Testing infeasible KPI values that are out of KPI bounds
+        mock_kpi_return = [DataValue(value=2), DataValue(value=3)]
+        self.mco_model.optimizer.verbose_run = False
         with mock.patch(
             "force_bdss.api.Workflow.execute", return_value=mock_kpi_return
         ) as mock_exec:
             self.assertEqual(0, len(list(self.mco_model.optimizer.optimize())))
             self.assertEqual(
-                self.mco_model.optimizer.budget,
-                mock_exec.call_count,
+                self.mco_model.optimizer.budget, mock_exec.call_count
             )
 
     def test_default_optimizer(self):
