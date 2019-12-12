@@ -6,7 +6,15 @@ from scipy import optimize as scipy_optimize
 import nevergrad as ng
 from nevergrad.functions import MultiobjectiveFunction
 
-from traits.api import Interface, HasTraits, provides, Instance, Unicode, Enum
+from traits.api import (
+    Interface,
+    HasTraits,
+    provides,
+    Instance,
+    Unicode,
+    Enum,
+    Bool,
+)
 from traitsui.api import View, Item, Group
 
 from force_bdss.io.workflow_writer import pop_dunder_recursive
@@ -20,6 +28,10 @@ from itwm_example.mco.space_sampling.space_samplers import (
 )
 
 log = logging.getLogger(__name__)
+
+
+class NevergradTypeError(Exception):
+    pass
 
 
 class IOptimizer(Interface):
@@ -210,19 +222,68 @@ class NevergradOptimizer(HasTraits):
     algorithms = Enum(*ng.optimizers.registry.keys())
 
     #: Optimization budget defines the allowed number of objective calls
-    budget = PositiveInt(100)
+    budget = PositiveInt(500)
+
+    #: Yield all data points or only the Pareto-optimal
+    verbose_run = Bool(False)
 
     def _algorithms_default(self):
         return "TwoPointsDE"
 
     def default_traits_view(self):
         return View(
-            Item("name", style="readonly"), Item("algorithms"), Item("budget")
+            Item("name", style="readonly"),
+            Item("algorithms"),
+            Item(
+                "budget", label="Allowed number of objective calls"
+            ),
+            Item("verbose_run", label="Display objective values at runtime"),
         )
 
-    def _create_instrumentation(self, parameters=None):
-        """ Assemble nevergrad.Instrumentation object from `parameters`.
-        Currently, only `Scalar` parameters are generated.
+    def _create_instrumentation_variable(self, parameter):
+        """ Create nevergrad.variable from `MCOParameter`. Different
+        MCOParameter subclasses have different signature attributes.
+        The mapping between MCOParameters and nevergrad types is bijective.
+
+        Parameters
+        ----------
+        parameter: BaseMCOParameter
+            object to convert to nevergrad type
+
+        Returns
+        ----------
+        nevergrad_parameter: nevergrad.Variable
+            nevergrad variable of corresponding type
+        """
+        if hasattr(parameter, "lower_bound") and hasattr(
+            parameter, "upper_bound"
+        ):
+            # The affine transformation with `slope` before `bounded` cab be
+            # used to normalize the distribution of points in internal space.
+            # This allows better exploration of the boundary regions. This
+            # feature is still in research mode, and presumably must be for
+            # the user to play with. Implementation would be:
+            # >>> affine_slope = 1.0
+            # >>> var = ng.var.Scalar().affined(affine_slope, 0).bounded(...)
+            return ng.var.Scalar().bounded(
+                parameter.lower_bound, parameter.upper_bound
+            )
+        elif hasattr(parameter, "value"):
+            return ng.var._Constant(value=parameter.value)
+        elif hasattr(parameter, "levels"):
+            return ng.var.OrderedDiscrete(parameter.sample_values)
+        elif hasattr(parameter, "categories"):
+            return ng.var.SoftmaxCategorical(
+                possibilities=parameter.sample_values, deterministic=True
+            )
+        else:
+            raise NevergradTypeError(
+                f"Can not convert {parameter} to any of"
+                " supported Nevergrad types"
+            )
+
+    def _assemble_instrumentation(self, parameters=None):
+        """ Assemble nevergrad.Instrumentation object from `parameters` list.
 
         Parameters
         ----------
@@ -235,9 +296,9 @@ class NevergradOptimizer(HasTraits):
         """
         if parameters is None:
             parameters = self.parameters
+
         instrumentation = [
-            ng.var.Scalar().bounded(p.lower_bound, p.upper_bound)
-            for p in parameters
+            self._create_instrumentation_variable(p) for p in parameters
         ]
         return ng.Instrumentation(*instrumentation)
 
@@ -267,6 +328,27 @@ class NevergradOptimizer(HasTraits):
                 upper_bounds[i] = 100
         return upper_bounds
 
+    def _swap_minmax_kpivalues(self, values):
+        """ Inverts the array of KPI values whenever the corresponding
+         KPI is subject to maximization instead of minimization.
+
+        Parameters
+        ----------
+        values: List[int, float], np.array
+            KPI values to invert for minimization mode
+
+        Returns
+        --------
+        substituted_values: np.array
+            New KPI values, with the elements corresponding to
+            maximization are inverted by _a -> -_a
+        """
+        substituted_values = np.array(values)
+        for i in range(len(values)):
+            if self.kpis[i].objective == "MAXIMISE":
+                substituted_values[i] *= -1.0
+        return substituted_values
+
     def _score(self, point):
         score = self.single_point_evaluator.evaluate(point)
         log.info("Objective score: {}".format(score))
@@ -285,7 +367,7 @@ class NevergradOptimizer(HasTraits):
         f = MultiobjectiveFunction(
             multiobjective_function=self._score, upper_bounds=upper_bounds
         )
-        instrumentation = self._create_instrumentation()
+        instrumentation = self._assemble_instrumentation()
         instrumentation.random_state.seed(12)
         ng_optimizer = ng.optimizers.registry[self.algorithms](
             instrumentation=instrumentation, budget=self.budget
@@ -293,11 +375,18 @@ class NevergradOptimizer(HasTraits):
         for _ in range(ng_optimizer.budget):
             x = ng_optimizer.ask()
             value = f.multiobjective_function(x.args)
-            volume = f.compute_aggregate_loss(value, *x.args, **x.kwargs)
+            volume = f.compute_aggregate_loss(
+                self._swap_minmax_kpivalues(value), *x.args, **x.kwargs
+            )
             ng_optimizer.tell(x, volume)
 
-        for point, value in f._points:
-            yield point[0], value, [1] * len(self.kpis)
+            if self.verbose_run:
+                yield x.args, value, [1] * len(self.kpis)
+
+        if not self.verbose_run:
+            for point, value in f._points:
+                value = self._swap_minmax_kpivalues(value)
+                yield point[0], value, [1] * len(self.kpis)
 
     def __getstate__(self):
         state_data = pop_dunder_recursive(super().__getstate__())
