@@ -55,7 +55,7 @@ class TestWeightedMCO(TestCase, UnittestTools):
         self.assertEqual(7, self.model.num_points)
         self.assertEqual(True, self.model.verbose_run)
         self.assertEqual("Uniform", self.model.space_search_mode)
-        self.assertEqual("Direct", self.model.evaluation_mode)
+        self.assertEqual("Internal", self.model.evaluation_mode)
 
     def test_simple_run(self):
         mco = self.factory.create_optimizer()
