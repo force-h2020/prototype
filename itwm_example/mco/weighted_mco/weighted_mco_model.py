@@ -22,10 +22,11 @@ class WeightedMCOModel(BaseMCOModel):
 
     #: 'Subprocess' mode performs evaluation of a state in the workflow via
     #: calling force_bdss on a new subprocess with SubprocessWorkflowEvaluator
-    evaluation_mode = Enum("Direct", "Subprocess")
+    evaluation_mode = Enum("Internal", "Subprocess")
 
     def default_traits_view(self):
         return View(
+            Item("evaluation_mode"),
             Item("algorithms"),
             Item("num_points", label="Weights grid resolution per KPI"),
             Item("space_search_mode"),

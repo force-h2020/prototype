@@ -34,6 +34,7 @@ class WeightedMCO(BaseMCO):
             parameters=model.parameters,
             num_points=model.num_points,
             algorithms=model.algorithms,
+            space_search_mode=model.space_search_mode,
             single_point_evaluator=evaluator,
             verbose_run=model.verbose_run,
         )
