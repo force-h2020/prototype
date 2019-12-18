@@ -8,9 +8,7 @@ from force_bdss.api import (
     Workflow,
     DataValue,
     RangedMCOParameterFactory,
-    RangedMCOParameter,
     FixedMCOParameterFactory,
-    FixedMCOParameter,
 )
 
 from itwm_example.mco.weighted_mco.weighted_mco_factory import (
