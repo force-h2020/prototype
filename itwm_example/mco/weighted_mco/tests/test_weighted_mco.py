@@ -21,7 +21,7 @@ from itwm_example.mco.weighted_mco.weighted_mco import WeightedMCO
 from itwm_example.example_plugin import ExamplePlugin
 
 
-class TestMCO(TestCase, UnittestTools):
+class TestWeightedMCO(TestCase, UnittestTools):
     def setUp(self):
         self.plugin = ExamplePlugin()
         self.factory = self.plugin.mco_factories[1]
@@ -63,19 +63,19 @@ class TestMCO(TestCase, UnittestTools):
         mco = self.factory.create_optimizer()
         model = self.factory.create_model()
         model.parameters = self.parameters
-        model.kpis = [KPISpecification(), KPISpecification()]
+        model.kpis = [
+            KPISpecification(auto_scale=False),
+            KPISpecification(auto_scale=False),
+        ]
 
         evaluator = WorkflowEvaluator(
             workflow=Workflow(), workflow_filepath="whatever"
         )
         evaluator.workflow.mco = model
         kpis = [DataValue(value=1), DataValue(value=2)]
-        with self.assertTraitChanges(mco, "event", count=5):
+        with self.assertTraitChanges(mco, "event", count=model.num_points - 2):
             with mock.patch(
                 "force_bdss.api.Workflow.execute", return_value=kpis
             ) as mock_exec:
                 mco.run(evaluator)
-                self.assertEqual(
-                    8049,
-                    mock_exec.call_count,
-                )
+                self.assertEqual(49, mock_exec.call_count)
