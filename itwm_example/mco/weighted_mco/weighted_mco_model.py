@@ -20,7 +20,8 @@ class WeightedMCOModel(BaseMCOModel):
     #: Space search distribution for weight points sampling
     space_search_mode = Enum("Uniform", "Dirichlet")
 
-    #:
+    #: 'Subprocess' mode performs evaluation of a state in the workflow via
+    #: calling force_bdss on a new subprocess with SubprocessWorkflowEvaluator
     evaluation_mode = Enum("Direct", "Subprocess")
 
     def default_traits_view(self):
