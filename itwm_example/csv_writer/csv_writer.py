@@ -1,29 +1,24 @@
-from traits.api import Instance
-
-import csv
-
-from force_bdss.api import (
-    BaseNotificationListener,
-    MCOProgressEvent
-)
-from itwm_example.csv_writer.csv_writer_model import CSVWriterModel
+from force_bdss.api import BaseCSVWriter, BaseCSVWriterFactory
 
 
-class CSVWriter(BaseNotificationListener):
-    model = Instance(CSVWriterModel)
+class CSVWriter(BaseCSVWriter):
+    def parse_progress_event(self, event):
+        event_datavalues = super().parse_progress_event(event)
+        event_datavalues.extend(event.weights)
+        return event_datavalues
 
-    def deliver(self, event):
-        if isinstance(event, MCOProgressEvent):
-            with open(self.model.path, 'a') as f:
-                writer = csv.writer(f)
-                row = ["%.10f" % dv.value for dv in event.optimal_point]
-                for dv, weight in zip(event.optimal_kpis, event.weights):
-                    row.extend([dv.value, weight])
-                writer.writerow(row)
+    def parse_start_event(self, event):
+        header = super().parse_start_event(event)
+        header.extend([f"{name} weight" for name in event.kpi_names])
+        return header
 
-    def initialize(self, model):
-        self.model = model
 
-        # truncate the file
-        with open(self.model.path, 'wb'):
-            pass
+class CSVWriterFactory(BaseCSVWriterFactory):
+    def get_identifier(self):
+        return "csv_writer"
+
+    def get_name(self):
+        return "CSV Writer"
+
+    def get_listener_class(self):
+        return CSVWriter
