@@ -73,43 +73,42 @@ def objective(inputs):
 
 @jit
 def preliminary_transformation(inputs):
-    V_a_tilde = inputs[0]
-    C_conc_e = inputs[1]
+    v_a_tilde = inputs[0]
+    c_conc_e = inputs[1]
     temperature = inputs[2]
     reaction_time = inputs[3]
     arrhenius_nu_main_reaction = inputs[4]
-    arrhenius_delta_H_main_reaction = inputs[5]
+    arrhenius_delta_h_main_reaction = inputs[5]
     arrhenius_nu_secondary_reaction = inputs[6]
-    arrhenius_delta_H_secondary_reaction = inputs[7]
+    arrhenius_delta_h_secondary_reaction = inputs[7]
     reactor_volume = inputs[8]
-    A_density = inputs[9]
-    B_density = inputs[10]
-    C_density = inputs[11]
+    density_a = inputs[9]
+    density_b = inputs[10]
+    density_c = inputs[11]
 
     constant_r = 8.3144598e-3
     k_ps_1 = arrhenius_nu_main_reaction * jnp.exp(
-        -arrhenius_delta_H_main_reaction / constant_r / temperature
+        -arrhenius_delta_h_main_reaction / constant_r / temperature
     )
     k_ps_2 = arrhenius_nu_secondary_reaction * jnp.exp(
-        -arrhenius_delta_H_secondary_reaction / constant_r / temperature
+        -arrhenius_delta_h_secondary_reaction / constant_r / temperature
     )
 
-    X = jnp.array(
+    return jnp.array(
         [
-            A_density
-            * (1 - C_conc_e / C_density)
-            * V_a_tilde
+            density_a
+            * (1 - c_conc_e / density_c)
+            * v_a_tilde
             / reactor_volume,
-            B_density * (reactor_volume - V_a_tilde) / reactor_volume,
+            density_b * (reactor_volume - v_a_tilde) / reactor_volume,
             0.0,
             0.0,
-            C_conc_e * V_a_tilde / reactor_volume,
+            c_conc_e * v_a_tilde / reactor_volume,
             k_ps_1,
             k_ps_2,
             reaction_time,
         ]
     )
-    return X
 
 
 def analytical_solution(input):
@@ -126,23 +125,34 @@ def analytical_solution(input):
     return input[:5] + update
 
 
-def concentration_alpha(A0, B0, k, t):
-    epsilon = jnp.abs((A0 - B0) * k * t)
+def concentration_alpha(concentration_a, concentration_b, k, t):
+    epsilon = jnp.abs((concentration_a - concentration_b) * k * t)
     if epsilon > 8.0e-2:
-        multiplier = jnp.exp((B0 - A0) * k * t)
-        result = A0 * B0 * (multiplier - 1.0) / (B0 * multiplier - A0)
+        multiplier = jnp.exp((concentration_b - concentration_a) * k * t)
+        result = (
+            concentration_a
+            * concentration_b
+            * (multiplier - 1.0)
+            / (concentration_b * multiplier - concentration_a)
+        )
     else:
-        sum1ab = alpha_internal_sum(A0, B0, k, t)
-        sum1ba = alpha_internal_sum(B0, A0, k, t)
-        result = (A0 * B0 * sum1ab) / (1.0 + (B0 * sum1ab))
-        result += (A0 * B0 * sum1ba) / (1.0 + (A0 * sum1ba))
+        sum1ab = alpha_internal_sum(concentration_a, concentration_b, k, t)
+        sum1ba = alpha_internal_sum(concentration_b, concentration_a, k, t)
+        result = (concentration_a * concentration_b * sum1ab) / (
+            1.0 + (concentration_b * sum1ab)
+        )
+        result += (concentration_a * concentration_b * sum1ba) / (
+            1.0 + (concentration_a * sum1ba)
+        )
         result /= 2.0
     return result
 
 
 @jit
-def alpha_internal_sum(A0, B0, k, t):
+def alpha_internal_sum(concentration_a, concentration_b, k, t):
     exponent = jnp.array([1.0, 2.0, 3.0, 4.0, 5.0])
     denominator = jnp.array([1.0, 2.0, 6.0, 24.0, 120.0])
-    result = ((B0 - A0) ** (exponent - 1)) * (k * t) ** exponent
+    result = ((concentration_b - concentration_a) ** (exponent - 1)) * (
+        k * t
+    ) ** exponent
     return jnp.sum(result / denominator)
