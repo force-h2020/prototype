@@ -27,18 +27,14 @@ class TaylorTest:
     """
 
     def __init__(
-            self,
-            function,
-            gradient,
-            input_dimension,
-            slope_tolerance=1.e-2
+        self, function, gradient, input_dimension, slope_tolerance=5.0e-2
     ):
         self._function = function
         self._gradient = gradient
         self._input_dimension = input_dimension
         self.slope_tolerance = slope_tolerance
 
-        self._default_step_size = 1.e-6
+        self._default_step_size = 1.0e-6
         self._default_nof_evaluations = 5
 
     def _evaluate_function(self, point):
@@ -49,7 +45,7 @@ class TaylorTest:
 
     def _single_component_vector(self, index):
         vector = np.zeros(self._input_dimension)
-        vector[index] = 1.
+        vector[index] = 1.0
         return vector
 
     @staticmethod
@@ -117,16 +113,11 @@ class TaylorTest:
         """
         if length is None:
             length = self._default_nof_evaluations
-        perturbations = (
-            (i + 1) * step_size for i in range(length)
-        )
+        perturbations = ((i + 1) * step_size for i in range(length))
         return perturbations
 
     def _calculate_taylor_remainders(
-            self,
-            init_point,
-            direction,
-            step_size=None
+        self, init_point, direction, step_size=None
     ):
         """ Runs a series of function evaluation at the given point,
         perturbing the evaluation point in the provided direction.
@@ -156,14 +147,13 @@ class TaylorTest:
         # Calculate the unperturbed solution and gradient
         default_value = self._evaluate_function(init_point)
         perturbation_norm = np.dot(
-            direction,
-            self._evaluate_gradient(init_point)
+            direction, self._evaluate_gradient(init_point)
         )
         taylor_remainders = np.zeros(self._default_nof_evaluations)
         shifts = np.zeros(self._default_nof_evaluations)
 
         for i, shift in enumerate(
-                self._generate_uniform_perturbations(step_size)
+            self._generate_uniform_perturbations(step_size)
         ):
             perturbed_point = init_point.copy()
             perturbed_point += shift * direction
@@ -171,11 +161,12 @@ class TaylorTest:
             perturbed_value = self._evaluate_function(perturbed_point)
             # In order to avoid encountering np.log(0) case, the values of
             # `y` is shifted by an acceptable (machine precision) amount.
-            taylor_remainders[i] = abs(
-                    perturbed_value
-                    - default_value
-                    - shift * perturbation_norm
-            ) + np.finfo(np.float64).eps
+            taylor_remainders[i] = (
+                abs(
+                    perturbed_value - default_value - shift * perturbation_norm
+                )
+                + np.finfo(np.float64).eps
+            )
             shifts[i] = shift
 
         return shifts, taylor_remainders
@@ -201,10 +192,7 @@ class TaylorTest:
         initial_point = np.asarray(initial_point, dtype=np.float64)
 
         for i, direction in enumerate(self._test_directions()):
-            x, y = self._calculate_taylor_remainders(
-                initial_point,
-                direction
-            )
+            x, y = self._calculate_taylor_remainders(initial_point, direction)
             slope = self._fit_power_law(x, y)
             if return_data:
                 yield slope, (x, y)
@@ -221,7 +209,7 @@ class TaylorTest:
         bool:
             If all of the tests are successful
         """
-        _remainder_precision = 1.e-14
+        _remainder_precision = 1.0e-13
         slopes = self.run_taylor_test(inintial_point, return_data=True)
         for slope, data in slopes:
             if all(data[1] < _remainder_precision):
