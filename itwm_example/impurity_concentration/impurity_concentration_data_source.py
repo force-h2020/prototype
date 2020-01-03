@@ -1,6 +1,6 @@
 from jax.config import config
 import jax.numpy as jnp
-from jax import grad
+from jax import grad, jit
 import numpy as np
 
 from force_bdss.api import DataValue, Slot, BaseDataSource
@@ -71,6 +71,7 @@ def objective(inputs):
     return jnp.dot(jnp.array([1.0, 1.0, 0.0, 1.0, 1.0]), result_vector)
 
 
+@jit
 def preliminary_transformation(inputs):
     V_a_tilde = inputs[0]
     C_conc_e = inputs[1]
@@ -112,7 +113,7 @@ def preliminary_transformation(inputs):
 
 
 def analytical_solution(input):
-    a = _alpha(input[0], input[1], input[5] + input[6], input[7])
+    a = concentration_alpha(input[0], input[1], input[5] + input[6], input[7])
     update = jnp.array(
         [
             -a,
@@ -125,21 +126,22 @@ def analytical_solution(input):
     return input[:5] + update
 
 
-def _alpha(A0, B0, k, t):
+def concentration_alpha(A0, B0, k, t):
     epsilon = jnp.abs((A0 - B0) * k * t)
     if epsilon > 8.0e-2:
         multiplier = jnp.exp((B0 - A0) * k * t)
         result = A0 * B0 * (multiplier - 1.0) / (B0 * multiplier - A0)
     else:
-        sum1ab = _sum1(A0, B0, k, t)
-        sum1ba = _sum1(B0, A0, k, t)
+        sum1ab = alpha_internal_sum(A0, B0, k, t)
+        sum1ba = alpha_internal_sum(B0, A0, k, t)
         result = (A0 * B0 * sum1ab) / (1.0 + (B0 * sum1ab))
         result += (A0 * B0 * sum1ba) / (1.0 + (A0 * sum1ba))
         result /= 2.0
     return result
 
 
-def _sum1(A0, B0, k, t):
+@jit
+def alpha_internal_sum(A0, B0, k, t):
     exponent = jnp.array([1.0, 2.0, 3.0, 4.0, 5.0])
     denominator = jnp.array([1.0, 2.0, 6.0, 24.0, 120.0])
     result = ((B0 - A0) ** (exponent - 1)) * (k * t) ** exponent
