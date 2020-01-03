@@ -13,10 +13,12 @@ class ImpurityConcentrationDataSource(BaseDataSource):
 
         input_data = [p.value for p in parameters]
 
-        gradient = grad(objective)
-
-        objective_value = np.asarray(objective(input_data), dtype=np.float64)
-        gradient_value = np.asarray(gradient(input_data), dtype=np.float64)
+        objective_value = np.asarray(
+            self.objective(input_data), dtype=np.float64
+        )
+        gradient_value = np.asarray(
+            self.gradient(input_data), dtype=np.float64
+        )
 
         return [
             DataValue(value=objective_value, type="CONCENTRATION"),
@@ -62,13 +64,15 @@ class ImpurityConcentrationDataSource(BaseDataSource):
             ),
         )
 
+    def objective(self, inputs):
+        transformed_inputs = preliminary_transformation(inputs)
 
-def objective(inputs):
-    transformed_inputs = preliminary_transformation(inputs)
+        result_vector = analytical_solution(transformed_inputs)
 
-    result_vector = analytical_solution(transformed_inputs)
+        return jnp.dot(jnp.array([1.0, 1.0, 0.0, 1.0, 1.0]), result_vector)
 
-    return jnp.dot(jnp.array([1.0, 1.0, 0.0, 1.0, 1.0]), result_vector)
+    def gradient(self, inputs):
+        return grad(self.objective)(inputs)
 
 
 @jit
