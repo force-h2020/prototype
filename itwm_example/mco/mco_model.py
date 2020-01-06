@@ -7,6 +7,7 @@ from .optimizers.optimizers import (
     WeightedOptimizer,
     NevergradOptimizer,
 )
+from .driver_enents import ITWMMCOStartEvent
 
 
 class MCOModel(BaseMCOModel):
@@ -79,3 +80,10 @@ class MCOModel(BaseMCOModel):
         state = super().__getstate__()
         state["optimizer_data"] = self.optimizer.__getstate__()
         return state
+
+    def create_start_event(self):
+        event = ITWMMCOStartEvent(
+            parameter_names=list(p.name for p in self.parameters),
+            kpi_names=list(kpi.name for kpi in self.kpis),
+        )
+        return event
