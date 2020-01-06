@@ -1,14 +1,10 @@
 from unittest import TestCase
 
-from force_bdss.api import (
-    BaseCSVWriterModel,
-    DataValue,
-    MCOProgressEvent,
-    MCOStartEvent,
-)
+from force_bdss.api import BaseCSVWriterModel, DataValue, MCOProgressEvent
 
 from itwm_example.csv_writer.csv_writer import CSVWriter, CSVWriterFactory
 from itwm_example.example_plugin import ExamplePlugin
+from itwm_example.mco.driver_enents import ITWMMCOStartEvent
 
 
 class TestCSVWriter(TestCase):
@@ -56,7 +52,7 @@ class TestCSVWriter(TestCase):
         )
 
     def test_parse_start_event(self):
-        event = MCOStartEvent(
+        event = ITWMMCOStartEvent(
             parameter_names=[p.name for p in self.parameters],
             kpi_names=[k.name for k in self.kpis],
         )
