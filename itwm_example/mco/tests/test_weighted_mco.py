@@ -7,7 +7,6 @@ from force_bdss.api import (
     KPISpecification,
     Workflow,
     DataValue,
-    RangedMCOParameterFactory,
     FixedMCOParameterFactory,
 )
 
@@ -15,6 +14,10 @@ from itwm_example.mco.weighted_mco_factory import WeightedMCOFactory
 from itwm_example.mco.weighted_mco_model import WeightedMCOModel
 from itwm_example.mco.weighted_mco import WeightedMCO
 from itwm_example.example_plugin import ExamplePlugin
+from itwm_example.mco.parameters import (
+    ITWMRangedMCOParameterFactory,
+    ITWMRangedMCOParameter,
+)
 
 
 class TestWeightedMCO(TestCase, UnittestTools):
@@ -26,9 +29,12 @@ class TestWeightedMCO(TestCase, UnittestTools):
 
         self.kpis = [KPISpecification(), KPISpecification()]
         self.parameters = [1, 1, 1, 1]
+        self.itwm_parameters_factory = ITWMRangedMCOParameterFactory(
+            self.factory
+        )
 
         self.parameters = [
-            RangedMCOParameterFactory(self.factory).create_model(
+            self.itwm_parameters_factory.create_model(
                 {"lower_bound": 0.0, "upper_bound": 1.0}
             )
             for _ in self.parameters
@@ -41,12 +47,30 @@ class TestWeightedMCO(TestCase, UnittestTools):
         self.assertIs(self.factory.model_class, WeightedMCOModel)
         self.assertIs(self.factory.optimizer_class, WeightedMCO)
         self.assertEqual(
-            [FixedMCOParameterFactory, RangedMCOParameterFactory],
+            [FixedMCOParameterFactory, ITWMRangedMCOParameterFactory],
             self.factory.parameter_factory_classes,
         )
         self.assertEqual(
             "Weighted Multi Criteria optimizer", self.factory.name
         )
+
+    def test_mco_parameters(self):
+        self.assertIs(
+            self.factory.parameter_factory_classes[1],
+            ITWMRangedMCOParameterFactory,
+        )
+        self.assertIn(
+            " Initial value is assigned by `Parameter.initial_value`.",
+            self.itwm_parameters_factory.description,
+        )
+        self.assertIs(
+            self.itwm_parameters_factory.get_model_class(),
+            ITWMRangedMCOParameter,
+        )
+
+        for parameter in self.parameters:
+            self.assertIsInstance(parameter, ITWMRangedMCOParameter)
+            self.assertEqual(0.0, parameter.initial_value)
 
     def test_mco_model(self):
         self.assertEqual("SLSQP", self.model.algorithms)

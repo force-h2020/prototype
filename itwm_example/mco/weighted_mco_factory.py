@@ -1,12 +1,12 @@
 from force_bdss.api import (
     BaseMCOFactory,
     FixedMCOParameterFactory,
-    RangedMCOParameterFactory,
 )
 
 from itwm_example.mco.mco_communicator import MCOCommunicator
 from .weighted_mco_model import WeightedMCOModel
 from .weighted_mco import WeightedMCO
+from .parameters import ITWMRangedMCOParameterFactory
 
 
 class WeightedMCOFactory(BaseMCOFactory):
@@ -30,4 +30,4 @@ class WeightedMCOFactory(BaseMCOFactory):
 
     #: Factory classes of the parameters the MCO supports.
     def get_parameter_factory_classes(self):
-        return [FixedMCOParameterFactory, RangedMCOParameterFactory]
+        return [FixedMCOParameterFactory, ITWMRangedMCOParameterFactory]
