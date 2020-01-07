@@ -12,6 +12,7 @@ from itwm_example.mco.optimizers.optimizers import (
     WeightedOptimizer,
     NevergradOptimizer,
 )
+from itwm_example.mco.driver_enents import ITWMMCOStartEvent
 
 
 class TestMCO(TestCase):
@@ -188,3 +189,9 @@ class TestMCO(TestCase):
         self.assertEqual("NeverGrad", state["optimizer_mode"])
         self.assertEqual("Nevergrad", state["optimizer_data"]["name"])
         self.assertEqual("TwoPointsDE", state["optimizer_data"]["algorithms"])
+
+    def test_mcomodel_start_event(self):
+        event = self.mco_model.create_start_event()
+        self.assertIsInstance(event, ITWMMCOStartEvent)
+        self.assertListEqual(["", ""], event.kpi_names)
+        self.assertListEqual(["", "", "", ""], event.parameter_names)

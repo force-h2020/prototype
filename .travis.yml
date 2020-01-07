@@ -10,7 +10,10 @@ before_install:
     - export PATH=${HOME}/edm/bin:${PATH}
     - edm install --version 3.5 -y click setuptools
     - git clone git://github.com/force-h2020/force-bdss.git
-    - pushd force-bdss && git checkout dev/core-optimizer-engines && edm run -- python -m ci build-env && edm run -- python -m ci install && popd
+    - pushd force-bdss && git checkout dev/core-optimizer-engines
+    - edm run -- python -m ci build-env
+    - edm run -- python -m ci install
+    - popd
 script:
     - edm run -- python -m ci install
     - edm run -- python -m ci flake8
