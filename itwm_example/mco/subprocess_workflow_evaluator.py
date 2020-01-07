@@ -36,7 +36,7 @@ class SubprocessWorkflowEvaluator(WorkflowEvaluator):
             env=env,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
+            stderr=subprocess.PIPE,
         )
 
         log.info("Sending values: {}".format(user_input))
@@ -58,11 +58,13 @@ class SubprocessWorkflowEvaluator(WorkflowEvaluator):
         # parameter values. A BaseMCOCommunicator will be needed to be
         # defined in the workflow to receive the data and send back values
         # corresponding to each KPI via the command line.
-        command = [self.executable_path,
-                   "--logfile",
-                   "bdss.log",
-                   "--evaluate",
-                   self.workflow_filepath]
+        command = [
+            self.executable_path,
+            "--logfile",
+            "bdss.log",
+            "--evaluate",
+            self.workflow_filepath,
+        ]
 
         # Converts the parameter values to a string to send via
         # subprocess
@@ -98,10 +100,11 @@ class SubprocessWorkflowEvaluator(WorkflowEvaluator):
 
         except Exception:
             message = (
-                'SubprocessWorkflowEvaluator failed '
-                'to run. This is likely due to an error in the '
-                'BaseMCOCommunicator assigned to {}.'.format(
-                    self.mco_model.factory.__class__)
+                "SubprocessWorkflowEvaluator failed "
+                "to run. This is likely due to an error in the "
+                "BaseMCOCommunicator assigned to {}.".format(
+                    self.mco_model.factory.__class__
+                )
             )
             log.exception(message)
             raise RuntimeError(message)
