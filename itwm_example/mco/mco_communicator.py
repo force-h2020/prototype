@@ -1,8 +1,6 @@
 import sys
 
-from force_bdss.api import (
-    BaseMCOCommunicator,
-    DataValue)
+from force_bdss.api import BaseMCOCommunicator, DataValue
 
 
 class MCOCommunicator(BaseMCOCommunicator):
@@ -14,6 +12,7 @@ class MCOCommunicator(BaseMCOCommunicator):
     and stdout, which is what dakota does when invoking an external program
     to perform a single point evaluation.
     """
+
     def receive_from_mco(self, model):
         """Receives data from the MCO (e.g. dakota) by reading from
         standard input the sequence of numbers that are this execution's
@@ -34,8 +33,8 @@ class MCOCommunicator(BaseMCOCommunicator):
         # In any case, you must return a list of DataValue objects.
         return [
             DataValue(type=type_, name=name, value=value)
-            for type_, name, value in zip(
-                value_types, value_names, values)]
+            for type_, name, value in zip(value_types, value_names, values)
+        ]
 
     def send_to_mco(self, model, data_values):
         """This method does the reverse. Once the single point evaluation

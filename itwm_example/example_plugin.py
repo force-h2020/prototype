@@ -1,9 +1,9 @@
-from itwm_example.mco.mco_factory import MCOFactory
+from itwm_example.mco.weighted_mco_factory import WeightedMCOFactory
 from itwm_example.pure_densities.pure_densities_factory import \
     PureDensitiesFactory
 
 from force_bdss.api import BaseExtensionPlugin, plugin_id
-from itwm_example.csv_writer.csv_writer_factory import CSVWriterFactory
+from itwm_example.csv_writer.csv_writer import CSVWriterFactory
 from itwm_example.fixed_value_data_source.fixed_value_data_source_factory \
     import \
     FixedValueDataSourceFactory
@@ -38,7 +38,7 @@ class ExamplePlugin(BaseExtensionPlugin):
 
     def get_factory_classes(self):
         return [
-            MCOFactory,
+            WeightedMCOFactory,
             FixedValueDataSourceFactory,
             ProductionCostDataSourceFactory,
             ArrheniusParametersFactory,
