@@ -5,15 +5,9 @@ from subprocess import check_call
 DEFAULT_PYTHON_VERSION = "3.6"
 PYTHON_VERSIONS = ["3.6"]
 
-ADDITIONAL_CORE_DEPS = [
-    "scipy>=1.2.1"
-]
+ADDITIONAL_CORE_DEPS = ["scipy>=1.2.1"]
 
-_nevergrad_stable_commit = "ba2c0217a043178adf9fe9f4bd52bbbfce97bfaa"
-PIP_DEPS = [
-    "git+https://github.com/facebookresearch/nevergrad.git@" +
-    _nevergrad_stable_commit
-]
+PIP_DEPS = []
 
 
 @click.group()
@@ -22,29 +16,30 @@ def cli():
 
 
 python_version_option = click.option(
-    '--python-version',
+    "--python-version",
     default=DEFAULT_PYTHON_VERSION,
     type=click.Choice(PYTHON_VERSIONS),
     show_default=True,
-    help="Python version for the environment")
+    help="Python version for the environment",
+)
 
 
 @cli.command(name="install", help="Install the plugin and its dependencies")
 @python_version_option
 def install(python_version):
     env_name = get_env_name(python_version)
-    check_call([
-        "edm", "install", "-e", env_name,
-        "--yes"] + ADDITIONAL_CORE_DEPS)
+    check_call(
+        ["edm", "install", "-e", env_name, "--yes"] + ADDITIONAL_CORE_DEPS
+    )
 
-    check_call([
-        "edm", "run", "-e", env_name, "--",
-        "pip", "install", "-e", "."])
+    check_call(
+        ["edm", "run", "-e", env_name, "--", "pip", "install", "-e", "."]
+    )
 
     if len(PIP_DEPS):
-        check_call([
-            "edm", "run", "-e", env_name, "--",
-            "pip", "install"] + PIP_DEPS)
+        check_call(
+            ["edm", "run", "-e", env_name, "--", "pip", "install"] + PIP_DEPS
+        )
 
 
 @cli.command(help="Run the tests")
@@ -52,10 +47,19 @@ def install(python_version):
 def test(python_version):
     env_name = get_env_name(python_version)
 
-    check_call([
-        "edm", "run", "-e", env_name, "--", "python", "-m", "unittest",
-        "discover"
-    ])
+    check_call(
+        [
+            "edm",
+            "run",
+            "-e",
+            env_name,
+            "--",
+            "python",
+            "-m",
+            "unittest",
+            "discover",
+        ]
+    )
 
 
 @cli.command(help="Run flake")
@@ -72,7 +76,8 @@ def coverage(python_version):
     env_name = get_env_name(python_version)
 
     returncode = edm_run(
-        env_name, ["coverage", "run", "-m", "unittest", "discover"])
+        env_name, ["coverage", "run", "-m", "unittest", "discover"]
+    )
     if returncode:
         raise click.ClickException("There were test failures.")
 
@@ -82,7 +87,8 @@ def coverage(python_version):
 
     if returncode:
         raise click.ClickException(
-            "There were errors while installing and running codecov.")
+            "There were errors while installing and running codecov."
+        )
 
 
 @cli.command(help="Builds the documentation")
@@ -98,11 +104,11 @@ def get_env_name(python_version):
 
 
 def remove_dot(python_version):
-    return "".join(python_version.split('.'))
+    return "".join(python_version.split("."))
 
 
 def edm_run(env_name, cmd, cwd=None):
-    return subprocess.call(["edm", "run", "-e", env_name, "--"]+cmd, cwd=cwd)
+    return subprocess.call(["edm", "run", "-e", env_name, "--"] + cmd, cwd=cwd)
 
 
 if __name__ == "__main__":
