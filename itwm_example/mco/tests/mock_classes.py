@@ -1,11 +1,6 @@
 import numpy as np
 
-from traits.api import provides
 
-from itwm_example.mco.optimizers.optimizers import IOptimizer
-
-
-@provides(IOptimizer)
 class MockOptimizer:
     def __init__(self, eval, param, **kwargs):
         self.dimension = 2

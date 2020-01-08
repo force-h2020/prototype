@@ -1,4 +1,4 @@
-from itwm_example.mco.mco_factory import MCOFactory
+from itwm_example.mco.weighted_mco_factory import WeightedMCOFactory
 from itwm_example.pure_densities.pure_densities_factory import \
     PureDensitiesFactory
 
@@ -38,7 +38,7 @@ class ExamplePlugin(BaseExtensionPlugin):
 
     def get_factory_classes(self):
         return [
-            MCOFactory,
+            WeightedMCOFactory,
             FixedValueDataSourceFactory,
             ProductionCostDataSourceFactory,
             ArrheniusParametersFactory,

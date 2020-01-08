@@ -1,16 +1,17 @@
 import logging
 import sys
 
-from force_bdss.api import BaseMCO, DataValue
+from force_bdss.api import BaseMCO, DataValue, WeightedOptimizerEngine
 
-from .subprocess_workflow_evaluator import SubprocessWorkflowEvaluator
+from itwm_example.mco.subprocess_workflow_evaluator import (
+    SubprocessWorkflowEvaluator,
+)
 
 
 log = logging.getLogger(__name__)
 
 
-class MCO(BaseMCO):
-
+class WeightedMCO(BaseMCO):
     def run(self, evaluator):
 
         model = evaluator.mco_model
@@ -27,8 +28,16 @@ class MCO(BaseMCO):
                 workflow_filepath=evaluator.workflow_filepath,
                 executable_path=sys.argv[0],
             )
-        optimizer = model.optimizer
-        optimizer.single_point_evaluator = evaluator
+
+        optimizer = WeightedOptimizerEngine(
+            kpis=model.kpis,
+            parameters=model.parameters,
+            num_points=model.num_points,
+            algorithms=model.algorithms,
+            space_search_mode=model.space_search_mode,
+            single_point_evaluator=evaluator,
+            verbose_run=model.verbose_run,
+        )
 
         for (
             optimal_point,
