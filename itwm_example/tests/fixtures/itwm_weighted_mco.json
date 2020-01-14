@@ -1,7 +1,7 @@
 {
     "version": "1",
     "workflow": {
-        "mco": {
+        "mco_model": {
             "id": "force.bdss.itwm.plugin.example.v0.factory.weighted_mco",
             "model_data": {
                 "evaluation_mode": "Internal",
