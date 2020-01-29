@@ -8,6 +8,10 @@ from force_bdss.api import (
     DataValue,
     FixedMCOParameterFactory,
 )
+from force_bdss.core_driver_events import (
+    WeightedMCOStartEvent,
+    WeightedMCOProgressEvent
+)
 
 from itwm_example.mco.weighted_mco_factory import WeightedMCOFactory
 from itwm_example.mco.weighted_mco_model import WeightedMCOModel
@@ -77,6 +81,10 @@ class TestWeightedMCO(TestCase, UnittestTools):
         self.assertEqual(True, self.model.verbose_run)
         self.assertEqual("Uniform", self.model.space_search_mode)
         self.assertEqual("Internal", self.model.evaluation_mode)
+        self.assertIsInstance(
+            self.model._start_event_type(), WeightedMCOStartEvent)
+        self.assertIsInstance(
+            self.model._progress_event_type(), WeightedMCOProgressEvent)
 
     def test_simple_run(self):
         mco = self.factory.create_optimizer()
