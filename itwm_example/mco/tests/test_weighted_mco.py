@@ -3,7 +3,6 @@ from unittest import TestCase, mock
 from traits.testing.unittest_tools import UnittestTools
 
 from force_bdss.api import (
-    WorkflowEvaluator,
     KPISpecification,
     Workflow,
     DataValue,
@@ -88,12 +87,12 @@ class TestWeightedMCO(TestCase, UnittestTools):
             KPISpecification(auto_scale=False),
         ]
 
-        evaluator = WorkflowEvaluator(
-            workflow=Workflow(), workflow_filepath="whatever"
-        )
-        evaluator.workflow.mco_model = model
+        evaluator = Workflow()
+        evaluator.mco_model = model
         kpis = [DataValue(value=1), DataValue(value=2)]
-        with self.assertTraitChanges(mco, "event", count=model.num_points - 2):
+        with self.assertTraitChanges(evaluator.mco_model,
+                                     "event",
+                                     count=model.num_points - 2):
             with mock.patch(
                 "force_bdss.api.Workflow.execute", return_value=kpis
             ) as mock_exec:

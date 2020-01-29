@@ -29,8 +29,8 @@ class WeightedMCO(BaseMCO):
 
             # When there is new data, this operation informs the system that
             # new data has been received. It must be a dictionary as given.
-            self.notify_new_point(
+            evaluator.mco_model.notify_progress_event(
                 [DataValue(value=v) for v in optimal_point],
                 [DataValue(value=v) for v in optimal_kpis],
-                scaled_weights,
+                weights=scaled_weights,
             )

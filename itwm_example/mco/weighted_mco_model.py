@@ -2,6 +2,10 @@ from traits.api import Enum, Bool
 from traitsui.api import View, Item
 
 from force_bdss.api import BaseMCOModel, PositiveInt, WeightedOptimizerEngine
+from force_bdss.core_driver_events import (
+    WeightedMCOStartEvent,
+    WeightedMCOProgressEvent
+)
 
 
 class WeightedMCOModel(BaseMCOModel):
@@ -32,3 +36,9 @@ class WeightedMCOModel(BaseMCOModel):
             Item("space_search_mode"),
             Item("verbose_run"),
         )
+
+    def __start_event_type_default(self):
+        return WeightedMCOStartEvent
+
+    def __progress_event_type_default(self):
+        return WeightedMCOProgressEvent
