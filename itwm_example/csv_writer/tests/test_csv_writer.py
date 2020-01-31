@@ -1,11 +1,15 @@
 from unittest import TestCase
 
-from force_bdss.api import BaseCSVWriterModel, DataValue, BaseCSVWriter
-from force_bdss.core_driver_events import WeightedMCOProgressEvent
+from force_bdss.api import (
+    BaseCSVWriterModel,
+    DataValue,
+    BaseCSVWriter,
+    WeightedMCOProgressEvent
+)
 
 from itwm_example.csv_writer.csv_writer import CSVWriterFactory
 from itwm_example.example_plugin import ExamplePlugin
-from itwm_example.mco.driver_enents import ITWMMCOStartEvent
+from itwm_example.mco.driver_events import ITWMMCOStartEvent
 
 
 class TestCSVWriter(TestCase):

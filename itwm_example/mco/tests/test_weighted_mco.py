@@ -7,8 +7,6 @@ from force_bdss.api import (
     Workflow,
     DataValue,
     FixedMCOParameterFactory,
-)
-from force_bdss.core_driver_events import (
     WeightedMCOStartEvent,
     WeightedMCOProgressEvent
 )
