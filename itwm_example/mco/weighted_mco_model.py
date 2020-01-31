@@ -1,8 +1,10 @@
 from traits.api import Enum, Bool
 from traitsui.api import View, Item
 
-from force_bdss.api import BaseMCOModel, PositiveInt, WeightedOptimizerEngine
-from force_bdss.core_driver_events import (
+from force_bdss.api import (
+    BaseMCOModel,
+    PositiveInt,
+    WeightedOptimizerEngine,
     WeightedMCOStartEvent,
     WeightedMCOProgressEvent
 )
