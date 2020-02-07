@@ -16,9 +16,10 @@ class MCOwrapper:
         self.obj = Objectives(self.R, self.C)
         self.constraints = Constraints(self.R)
         self.ini = Initializer()
-        constr = self.constraints.get_linear_constraints()
         obj_f = lambda y: self.obj.obj_calc(y)[0]
         obj_jac = lambda y: self.obj.obj_calc(y)[1]
+        #edit constraints and run initializer again
+        constr = self.constraints.get_editor_constraints()
         X0 = self.ini.get_init_data_kin_model(self.R, self.C)
         p_db_access = Process_db_access(R)
         self.C_supplier = p_db_access.get_C_supplier()
