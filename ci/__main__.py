@@ -12,6 +12,7 @@ PIP_DEPS = [
     "jaxlib==0.1.39"
 ]
 
+
 @click.group()
 def cli():
     pass
@@ -39,6 +40,12 @@ def install(python_version):
     )
 
     if len(PIP_DEPS):
+        check_call(
+            [
+                "edm", "run", "-e", env_name, "--",
+                "pip", "install", "--upgrade", "pip"
+             ]
+        )
         check_call(
             ["edm", "run", "-e", env_name, "--", "pip", "install"] + PIP_DEPS
         )
