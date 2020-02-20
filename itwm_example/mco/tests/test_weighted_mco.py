@@ -14,7 +14,7 @@ from force_bdss.api import (
 from itwm_example.mco.weighted_mco_factory import WeightedMCOFactory
 from itwm_example.mco.weighted_mco_model import WeightedMCOModel
 from itwm_example.mco.weighted_mco import WeightedMCO
-from itwm_example.example_plugin import ExamplePlugin
+from itwm_example.itwm_example_plugin import ITWMExamplePlugin
 from itwm_example.mco.parameters import (
     ITWMRangedMCOParameterFactory,
     ITWMRangedMCOParameter,
@@ -23,7 +23,7 @@ from itwm_example.mco.parameters import (
 
 class TestWeightedMCO(TestCase, UnittestTools):
     def setUp(self):
-        self.plugin = ExamplePlugin()
+        self.plugin = ITWMExamplePlugin()
         self.factory = self.plugin.mco_factories[0]
         self.mco = self.factory.create_optimizer()
         self.model = self.factory.create_model()
