@@ -9,7 +9,7 @@ ADDITIONAL_CORE_DEPS = ["scipy>=1.2.1"]
 
 PIP_DEPS = [
     "jax",
-    "jaxlib"
+    "jaxlib==0.1.39"
 ]
 
 @click.group()
