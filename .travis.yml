@@ -43,7 +43,6 @@ script:
     - edm run -- python -m ci install
     - edm run -- python -m ci flake8
     - edm run -- python -m ci test
-    - edm run -- python -m ci docs
 after_success:
     - if [[ ${TRAVIS_OS_NAME} == "linux" ]] ; then edm run -- python -m ci coverage; fi
     - if [[ ${TRAVIS_OS_NAME} == "linux" ]] ; then edm run -- pip install codecov; fi
