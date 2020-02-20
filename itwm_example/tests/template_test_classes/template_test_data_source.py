@@ -3,7 +3,7 @@ import unittest
 
 from force_bdss.api import DataValue
 
-from itwm_example.example_plugin import ExamplePlugin
+from itwm_example.itwm_example_plugin import ITWMExamplePlugin
 from itwm_example.unittest_tools.gradient_consistency.taylor_convergence \
     import TaylorTest
 
@@ -40,7 +40,7 @@ class TemplateTestDataSource(unittest.TestCase):
         return f'\n\n{test_case_class} source file:{location}'
 
     def setUp(self):
-        self.plugin = ExamplePlugin()
+        self.plugin = ITWMExamplePlugin()
         if self._data_source_index is None:
             self.input_slots, self.output_slots = None, None
             return
