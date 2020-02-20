@@ -76,6 +76,7 @@ Maintenance and code organization
   bootstrap environment
 * Travis CI now runs 2 jobs: Linux Ubuntu Bionic and MacOS (#76)
 * Better handling of ClickExceptions in CI (#305)
+* Updated dependency to force_bdss version 0.4.0 (#79)
 
 Version 0.2.0
 -------------
