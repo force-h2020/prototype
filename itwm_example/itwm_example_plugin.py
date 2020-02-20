@@ -22,7 +22,7 @@ from itwm_example.arrhenius_parameters.arrhenius_parameters_factory import \
 PLUGIN_VERSION = 0
 
 
-class ExamplePlugin(BaseExtensionPlugin):
+class ITWMExamplePlugin(BaseExtensionPlugin):
     id = plugin_id("itwm", "example", PLUGIN_VERSION)
 
     def get_name(self):

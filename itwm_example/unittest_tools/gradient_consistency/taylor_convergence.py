@@ -3,10 +3,13 @@ import numpy as np
 
 
 class TaylorTest:
-    """ Gradient consistency test.
+    """Gradient consistency test.
     Estimates and verifies the order of the Taylor remainder
     convergence for a provided (function, function_gradient)
     object.
+
+    Notes
+    -----
 
     Consider a `function` and a `gradient_f` functions.
     The aim is to verify the consistency of the estimated
@@ -14,16 +17,25 @@ class TaylorTest:
     true derivative of `function`.
     Note, that the Taylor expansion of the function near a
     point `x` in the direction of `v` is:
+
+    .. math::
         f(x + v) = f(x) + f'(x) * v + O(|v^2|)
+
     or, equivalently,
+
+    .. math::
         f(x + v) - f(x) - f'(x) * v = O(|v^2|)
+
     Then, given that the approximation `gradient_f` is correct,
     the following should hold:
+
+    .. math::
         f(x + v) - f(x) - `gradient_f`(x) * v = O(|v^2|)
+
     We estimate the right hand side term, and if it is growing
-    slower than O(|v^2|), the approximation is wrong.
-    This automatically implies that the `gradient_x` implemen-
-    tation is wrong.
+    slower than `O(|v^2|)`, the approximation is wrong.
+    This automatically implies that the `gradient_x`
+    implementation is wrong.
     """
 
     def __init__(
