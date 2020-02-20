@@ -1,10 +1,15 @@
 from unittest import TestCase
 
-from force_bdss.api import BaseCSVWriterModel, DataValue, MCOProgressEvent
+from force_bdss.api import (
+    BaseCSVWriterModel,
+    DataValue,
+    BaseCSVWriter,
+    WeightedMCOProgressEvent
+)
 
-from itwm_example.csv_writer.csv_writer import CSVWriter, CSVWriterFactory
+from itwm_example.csv_writer.csv_writer import CSVWriterFactory
 from itwm_example.example_plugin import ExamplePlugin
-from itwm_example.mco.driver_enents import ITWMMCOStartEvent
+from itwm_example.mco.driver_events import ITWMMCOStartEvent
 
 
 class TestCSVWriter(TestCase):
@@ -28,26 +33,27 @@ class TestCSVWriter(TestCase):
     def test_factory(self):
         self.assertEqual("csv_writer", self.factory.get_identifier())
         self.assertEqual("CSV Writer", self.factory.get_name())
-        self.assertIs(self.factory.listener_class, CSVWriter)
+        self.assertIs(self.factory.listener_class, BaseCSVWriter)
         self.assertIs(self.factory.model_class, BaseCSVWriterModel)
         self.assertIsInstance(self.factory, CSVWriterFactory)
 
     def test_parse_progress_event(self):
-        event = MCOProgressEvent(
-            optimal_point=self.parameters, optimal_kpis=self.kpis
+        event = WeightedMCOProgressEvent(
+            optimal_point=self.parameters,
+            optimal_kpis=self.kpis
         )
         self.assertListEqual(
-            [1.0, 5.0, 5.7, 10],
+            [1.0, 5.0, 5.7, 0.5, 10, 0.5],
             self.notification_listener.parse_progress_event(event),
         )
 
-        event = MCOProgressEvent(
+        event = WeightedMCOProgressEvent(
             optimal_point=self.parameters,
             optimal_kpis=self.kpis,
-            weights=[1, 2, 3],
+            weights=[1, 2],
         )
         self.assertListEqual(
-            [1.0, 5.0, 5.7, 10, 1, 2, 3],
+            [1.0, 5.0, 5.7, 1, 10, 2],
             self.notification_listener.parse_progress_event(event),
         )
 
