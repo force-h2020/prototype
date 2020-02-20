@@ -27,8 +27,8 @@ cache:
       - "$HOME/.cache"
       - "$HOME/.ccache"
 before_install:
-    - if [[ ${TRAVIS_OS_NAME} == "linux" ]] ; then ccache -s
-    - if [[ ${TRAVIS_OS_NAME} == "linux" ]] ; then export PATH=/usr/lib/ccache:${PATH}
+    - if [[ ${TRAVIS_OS_NAME} == "linux" ]] ; then ccache -s ; fi
+    - if [[ ${TRAVIS_OS_NAME} == "linux" ]] ; then export PATH=/usr/lib/ccache:${PATH} ; fi
     - export EDM_INSTALLER=${EDM_INSTALLER_PREFIX}${EDM_FULL}${EDM_INSTALLER_SUFFIX}
     - wget https://package-data.enthought.com/edm/${EDM_OS}/${EDM_X_Y}/${EDM_INSTALLER}
     - if [[ ${TRAVIS_OS_NAME} == "linux" ]] ; then bash ./${EDM_INSTALLER} -b -f -p $HOME ; fi
