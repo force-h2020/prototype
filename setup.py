@@ -27,7 +27,7 @@ setup(
     entry_points={
         "force.bdss.extensions": [
             "itwm_example = "
-            "itwm_example.example_plugin:ExamplePlugin",
+            "itwm_example.itwm_example_plugin:ITWMExamplePlugin",
         ]
     },
     packages=find_packages(),

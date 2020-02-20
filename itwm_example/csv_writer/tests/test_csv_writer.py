@@ -8,13 +8,13 @@ from force_bdss.api import (
 )
 
 from itwm_example.csv_writer.csv_writer import CSVWriterFactory
-from itwm_example.example_plugin import ExamplePlugin
+from itwm_example.itwm_example_plugin import ITWMExamplePlugin
 from itwm_example.mco.driver_events import ITWMMCOStartEvent
 
 
 class TestCSVWriter(TestCase):
     def setUp(self):
-        self.plugin = ExamplePlugin()
+        self.plugin = ITWMExamplePlugin()
         self.factory = self.plugin.notification_listener_factories[0]
         self.notification_listener = self.factory.create_listener()
         self.model = self.factory.create_model()
