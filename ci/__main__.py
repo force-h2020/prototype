@@ -41,12 +41,6 @@ def install(python_version):
 
     if len(PIP_DEPS):
         check_call(
-            [
-                "edm", "run", "-e", env_name, "--",
-                "pip", "install", "--upgrade", "pip"
-             ]
-        )
-        check_call(
             ["edm", "run", "-e", env_name, "--", "pip", "install"] + PIP_DEPS
         )
 
