@@ -1,7 +1,7 @@
 {
     "version": "1",
     "workflow": {
-        "mco_model": {
+        "mco": {
             "id": "force.bdss.nevergrad.plugin.wrapper.v0.factory.nevergrad_mco",
             "model_data": {
                 "budget": 200,
