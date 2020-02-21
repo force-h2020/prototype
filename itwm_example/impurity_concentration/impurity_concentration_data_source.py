@@ -77,6 +77,10 @@ class ImpurityConcentrationDataSource(BaseDataSource):
 
 @jit
 def preliminary_transformation(inputs):
+    """ The preliminary transformation of the input chemical parameters.
+    The transformations are described in section 3.1. 'The reaction
+    model', equations (3.1, 3.7).
+    """
     v_a_tilde = inputs[0]
     c_conc_e = inputs[1]
     temperature = inputs[2]
