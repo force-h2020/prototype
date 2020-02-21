@@ -94,6 +94,16 @@ def preliminary_transformation(inputs):
     density_b = inputs[10]
     density_c = inputs[11]
 
+    # Volume concentrations in the reactor (see equations 3.1)
+    initial_conc_a = (
+        density_a * (1 - c_conc_e / density_c) * v_a_tilde / reactor_volume
+    )
+    initial_conc_b = density_b * (reactor_volume - v_a_tilde) / reactor_volume
+    initial_conc_c = c_conc_e * v_a_tilde / reactor_volume
+    initial_conc_p = 0.0
+    initial_conc_s = 0.0
+
+    # Materials related (see equations 3.7)
     constant_r = 8.3144598e-3
     k_ps_1 = arrhenius_nu_main_reaction * jnp.exp(
         -arrhenius_delta_h_main_reaction / constant_r / temperature
@@ -104,14 +114,11 @@ def preliminary_transformation(inputs):
 
     return jnp.array(
         [
-            density_a
-            * (1 - c_conc_e / density_c)
-            * v_a_tilde
-            / reactor_volume,
-            density_b * (reactor_volume - v_a_tilde) / reactor_volume,
-            0.0,
-            0.0,
-            c_conc_e * v_a_tilde / reactor_volume,
+            initial_conc_a,
+            initial_conc_b,
+            initial_conc_p,
+            initial_conc_s,
+            initial_conc_c,
             k_ps_1,
             k_ps_2,
             reaction_time,
@@ -120,6 +127,11 @@ def preliminary_transformation(inputs):
 
 
 def analytical_solution(input):
+    """ Analytical solution of the kinetic reaction model (see section 3.1,
+    equation (3.6)). The solution is provided by equation (3.9).
+    The analytical solution updates the initial concentrations of the
+    chemicals at t = 0 by the values, defined by alpha(t).
+    """
     a = concentration_alpha(input[0], input[1], input[5] + input[6], input[7])
     update = jnp.array(
         [
@@ -134,6 +146,11 @@ def analytical_solution(input):
 
 
 def concentration_alpha(concentration_a, concentration_b, k, t):
+    """ Calculates the concentrations change (denoted by alpha(t).
+    The analytical solution is provided by the equation (3.9) and
+    (3.10). The later one is a continuous approximation of the actual
+    analytical solution.
+    """
     epsilon = jnp.abs((concentration_a - concentration_b) * k * t)
     if epsilon > 8.0e-2:
         multiplier = jnp.exp((concentration_b - concentration_a) * k * t)
@@ -158,6 +175,8 @@ def concentration_alpha(concentration_a, concentration_b, k, t):
 
 @jit
 def alpha_internal_sum(concentration_a, concentration_b, k, t):
+    """ Auxiliary method to calculate the sum introduced in equation (3.10).
+    """
     exponent = jnp.array([1.0, 2.0, 3.0, 4.0, 5.0])
     denominator = jnp.array([1.0, 2.0, 6.0, 24.0, 120.0])
     result = ((concentration_b - concentration_a) ** (exponent - 1)) * (
