@@ -13,10 +13,8 @@ from kivy.uix.scrollview import ScrollView
 #Interactable Import
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
-#Function Import
-from pyparsing import ParseException
-from function_parser import parseFunction, evaluateStack
-import math
+#sympy
+from sympy import sympify, symbols
 #kvlib
 from kvlib import EditableLabel
 
@@ -76,12 +74,10 @@ Builder.load_string('''
     Label:
         text: root.identifier
         size_hint_x: root.layout[0]
-        on_text: root.updateID(self.text)
     Label:
         text: root.description
         text_size: self.width, None
         size_hint_x: root.layout[1]
-        on_text: root.updateDesc(self.text)
     TextInput:
         text: root.function
         multiline: False
@@ -118,66 +114,57 @@ class FunctionApp(App):
         root.add_widget(BottomRow())
         return root
     
-    def validate(self, function):
+    #sympifies the given function and checks if all contained symbols are initialized variables or
+    #sub functions. checks for direct recursive calls
+    def validate(self, func, var_set, func_set):
         out = ["default", ""]
-        fn  = ["sin", "cos", "tan", "exp", "abs", "trunc", "round", "sgn", "ln", "log2", "log10"]
-        var_set = self.varWrapper.getVariables()
-        func_set = self.functionWrapper.getFunctionIDs()
-        try:
-            out[0] = parseFunction(function.function)
-        except ParseException:
-            out[1] = str(function.description) + " contains an error"
-        else:
-        #no parsing error --> check if there are no direct recursive calls and unknown identifier  
-        #--> parsing is correct 
-            if(out[0] == ["default"]): return out
-            for op in out[0]:
-                if op == 'unary -':
-                    continue
-                if op in "+-*/^":
-                    continue
-                elif op == "PI":
-                    continue
-                elif op == "E":
-                    continue
-                elif op == "default":
-                    continue
-                elif op in fn:
-                    continue
-                elif op in func_set:
-                    if (op == function.identifier): return [["invalid"], str(function.description) + " contains a direct recursive call"]
-                    else: continue
-                elif op in var_set:
-                    continue
-                elif op[0].isalpha():
-                    return [["invalid"], str(function.description) + "contains unknown identifier '%s'" % op]    
-                else:
-                    continue
+        if func_set[func] == "default": return out # @default this enables "default" as valid input
+        function = sympify(func_set[func])
+        for var in function.free_symbols:
+            if var in var_set: continue
+            elif var == func: 
+                func_desc = self.functionWrapper.getFunctionWidgets()[func].getDescription() 
+                out[1] = func_desc + " contains a direct recursive call" 
+                return out
+            elif var in func_set: continue
+            else: 
+                func_desc = self.functionWrapper.getFunctionWidgets()[func].getDescription() 
+                out[1] = func_desc + " contains unknown identifier: " + str(var) 
+                return out
+        out[0] = function
         return out
-        
+
+    #validates all functions and checks for recursive functions calls + error handling 
     def validateAll(self):
         output = []
         errors = []
-        for func in self.functionWrapper.getFunctions():
-            out = self.validate(func)
-            output.append(out[0])
+        var_set = self.varWrapper.getVariables()
+        func_set = self.functionWrapper.getFunctions()
+        temp = {}
+        for func in func_set:
+            out = self.validate(func, var_set, func_set)
+            temp.update({func: out[0]})
             if(out[1] != ""):
                 errors.append(out[1])
-        #Test Eval to check if max-recursion depth is exceded
-        var_set = self.varWrapper.getVariables()
-        func_IDs = self.functionWrapper.getFunctionIDs()
-        func_set = {}
-        for i in range(len(func_IDs)):
-            func_set.update({func_IDs[i] : output[i]})
-        #print(output)
-        for i in range(len(output)):
-            func = output[i]
-            try: 
-                if(func[0] == "default" or func[0] == "invalid"): continue
-                evaluateStack(func[:], var_set, func_set)
-            except Exception as e:
-                name = self.functionWrapper.getFunctions()[i].getDescription()
-                errors.append(str(name) + " failed evaluation test: " + str(e))
+        func_set = temp # func_set now contains sympified functions which can be test evaluated
+        
+        for func in func_set:
+            function = func_set[func]
+            #try to substitute all subfunctions
+            try:
+                if(function == "default"): continue
+                recursion_counter = 0
+                max_recursion_depth = 10000
+                while len(function.free_symbols.intersection(func_set)) != 0:
+                    sub_func = function.free_symbols.intersection(func_set).pop()
+                    function = function.subs(sub_func, func_set[sub_func])
+                    recursion_counter += 1
+                    if recursion_counter > max_recursion_depth: raise RecursionError()
+            except RecursionError:
+                func_desc = self.functionWrapper.getFunctionWidgets()[func].getDescription()
+                message = func_desc + " exceeded the max-recursion depth, there might be a recursive call." 
+                errors.append(message)       
+        
         #Error handling
         if(len(errors)!=0): 
             if(len(errors) == 1): content = "There is 1 problem: \n"
@@ -189,37 +176,44 @@ class FunctionApp(App):
             size_hint=(None, None), size=(400, 300))
             popup.open()
             return False
-        self.output = output
+
+        #remove sub-functions from func_set + func derivatives
+        self.output = {}
+        for func in func_set:
+            if self.functionWrapper.getFunctionWidgets()[func].isEditable(): continue
+            function = func_set[func]
+            if function == "default": 
+                #TODO: default handle when derivatives are implemented
+                self.output.update({func: "default"})
+                continue
+            #remove sub-functions, already checked for recursion errors 
+            while len(function.free_symbols.intersection(func_set)) != 0:
+                    sub_func = function.free_symbols.intersection(func_set).pop()
+                    function = function.subs(sub_func, func_set[sub_func])
+            # func derivatives with KPIs
+            # create output + add original function
+            func_out = {}
+            func_out.update({func: function})
+            for var in function.free_symbols:
+                if(not var_set[var]):
+                    func_out.update({var: function.diff(var)})
+            self.output.update({func: func_out})
         return True
     
+    #adds a new editable function #TODO: no name duplications
     def addFunction(self):
         self.functionWrapper.addEditableFunction("id","desc","1")
     
+    #runs the application and returns its output
     def run_with_output(self, editorInput, defaultOutput):
         self.input = editorInput
         self.output = defaultOutput
         self.run()
         return self.output
 
+    #stops the program and saves its output if no function contains an error
     def stop_with_output(self):
         if self.validateAll():
-            #replace function-calls
-            func_IDs = self.functionWrapper.getFunctionIDs()
-            for i in range(len(self.output)):
-                func = self.output[i]
-                for ID in func_IDs:
-                    while(ID in func):
-                        print(func, ID)
-                        index = func.index(ID)
-                        func = func[:index] + self.output[func_IDs.index(ID)] + func[index+1:]
-                self.output[i] = func
-            #remove non-relevant functions
-            out = []
-            functions = self.functionWrapper.getFunctions()
-            for i in range(len(self.output)):
-                if(not functions[i].isEditable()):
-                    out.append({"name": functions[i].getDescription(), "function": self.output[i]})
-            self.output = out
             self.stop()
 
 #Widgets
@@ -246,15 +240,15 @@ class FunctionWrapperWidget(ScrollView):
         self.view.add_widget(self.functionWidgets[len(self.functionWidgets)-1])
         
     def getFunctions(self):
-        output = []
+        output = {}
         for func in self.functionWidgets:
-            output.append(func)
+            output.update({symbols(func.getID()): func.getFunction()})
         return output
     
-    def getFunctionIDs(self):
-        output = []
+    def getFunctionWidgets(self):
+        output = {}
         for func in self.functionWidgets:
-            output.append(func.getID())
+            output.update({symbols(func.getID()): func})
         return output
 
 class FunctionWidgetBase(BoxLayout):
@@ -278,13 +272,7 @@ class FunctionWidgetBase(BoxLayout):
 
     def getFunction(self):
         return self.function
-
-    def updateID(self, newID):
-        self.identifier = newID
-
-    def updateDesc(self, newDesc):
-        self.description = newDesc
-
+    
     def updateFunction(self, newFunction):
         self.function = newFunction
 
@@ -295,6 +283,13 @@ class FunctionWidgetBase(BoxLayout):
         pass
 
 class EditableFunctionWidget(FunctionWidgetBase):
+    def updateID(self, newID):
+        #TODO: no name duplication
+        self.identifier = newID
+
+    def updateDesc(self, newDesc):
+        self.description = newDesc
+
     def isEditable(self):
         return True
 
@@ -308,13 +303,13 @@ class VarWrapperWidget(StackLayout):
     def __init__(self, variables, **kwargs):
         super().__init__(**kwargs)
         for key, value in variables.items():
-            self.variableWidgets.append(VarWidget(name=key, description=value, size_hint_y=1/len(variables)))
+            self.variableWidgets.append(VarWidget(key, value[0], value[1], size_hint_y=1/len(variables)))
             self.add_widget(self.variableWidgets[len(self.variableWidgets)-1])
     
     def getVariables(self):
         output = {}
         for var in self.variableWidgets:
-            output.update({var.getVariable():1})
+            output.update({symbols(var.getVariable()): var.isFixedValue})
         return output
             
 
@@ -322,10 +317,11 @@ class VarWidget(BoxLayout):
     name = StringProperty()
     description = StringProperty()
 
-    def __init__(self, name, description, **kwargs):
+    def __init__(self, name, description, isFixedValue, **kwargs):
         super().__init__(**kwargs)
         self.name = name
         self.description = description
+        self.isFixedValue = isFixedValue
 
     def getVariable(self):
         return self.name
@@ -336,21 +332,23 @@ class BottomRow(BoxLayout): pass
 
 ######### Main  #########
 if __name__ == '__main__':
+    #functions: key: id, value[0]: description, value[1]: function, value[2]: isEditable
     functions = {"pc" : ["Production Cost","tau * (T - 290)^2 * W", False],
                  "mc" : ["Material Cost" , "mcA + mcB", False],
                  "mcA" : ["Mat cost A" , "(cost_p * (C_e / C_sup -1)^2 + const_A) * V_a", True],
                  "mcB" : ["Mat cost B" , "(V_r - V_a) * cost_B", True],
                  "imp" : ["Impurity Concentration" , "default", False]}
-    var = {"V0" : "volume",
-           "C_e" : "impurity of A",
-           "tau" : "reaction time",
-           "T" : "temperature",
-           "W" : "heating cost",
-           "C_sup" : "description",
-           "cost_p" : "description",
-           "const_A" : "description",
-           "cost_B" : "description",
-           "V_r" : "reactor volume",
-           "V_a" : "volume of A"}
+    #variables: key: id, value[0]: description, value[1]: isFixedParameter
+    var = {"V0" : ("volume",False),
+           "C_e" : ("impurity of A",False),
+           "tau" : ("reaction time",False),
+           "T" : ("temperature",False),
+           "W" : ("heating cost",True),
+           "C_sup" : ("description",True),
+           "cost_p" : ("description",True),
+           "const_A" : ("description",True),
+           "cost_B" : ("description",True),
+           "V_r" : ("reactor volume",True),
+           "V_a" : ("volume of A",True)}
     editorInput = [functions, var]
     print(FunctionApp().run_with_output(editorInput, "Default"))
