@@ -65,6 +65,11 @@ class ImpurityConcentrationDataSource(BaseDataSource):
         )
 
     def objective(self, inputs):
+        """ This method formulates the impurity concentration objective as
+        a series of input transformations. All the transformations as
+        `jax.numpy` operations, that can be differentiated automatically
+        using `jax`.
+        """
         transformed_inputs = preliminary_transformation(inputs)
 
         result_vector = analytical_solution(transformed_inputs)
@@ -72,6 +77,10 @@ class ImpurityConcentrationDataSource(BaseDataSource):
         return jnp.dot(jnp.array([1.0, 1.0, 0.0, 1.0, 1.0]), result_vector)
 
     def gradient(self, inputs):
+        """ This method calculates the gradient of the `self.objective`
+        function using the `jax` built-in `grad` method. We evaluate the
+        gradient vector at the `inputs`.
+        """
         return grad(self.objective)(inputs)
 
 
