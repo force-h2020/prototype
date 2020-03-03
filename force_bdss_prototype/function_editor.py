@@ -118,7 +118,7 @@ class FunctionApp(App):
     #sub functions. checks for direct recursive calls
     def validate(self, func, var_set, func_set):
         out = ["default", ""]
-        if func_set[func] == "default": return out # @default this enables "default" as valid input
+        #if func_set[func] == "default": return out # @default this enables "default" as valid input
         function = sympify(func_set[func])
         for var in function.free_symbols:
             if var in var_set: continue
@@ -186,10 +186,10 @@ class FunctionApp(App):
         for func in func_set:
             if self.functionWrapper.getFunctionWidgets()[func].isEditable(): continue
             function = func_set[func]
-            if function == "default": 
-                #TODO: default handle when derivatives are implemented
-                self.output.update({func: "default"})
-                continue
+            # if function == "default": #@default
+            #     #TODO: default handle when derivatives are implemented
+            #     self.output.update({func: "default"})
+            #     continue
             #remove sub-functions, already checked for recursion errors 
             while len(function.free_symbols.intersection(func_set)) != 0:
                     sub_func = function.free_symbols.intersection(func_set).pop()
