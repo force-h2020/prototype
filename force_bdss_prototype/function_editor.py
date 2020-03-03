@@ -177,9 +177,11 @@ class FunctionApp(App):
             return False
 
         #remove sub-functions from func_set + func derivatives
-        self.output = {}
         x_set = self.varWrapper.getXDimension()
         y_set = self.varWrapper.getYDimension()
+
+        XO = []
+        YO = []
 
         for func in func_set:
             if self.functionWrapper.getFunctionWidgets()[func].isEditable(): continue
@@ -195,23 +197,37 @@ class FunctionApp(App):
             # func derivatives with KPIs
             # create output + add original function
 
-            func_out = []
             #determine if function is part of X-dimension
             inX = False
             for var in function.free_symbols:
-                if var in x_set:
+                if var in x_set and not var in y_set:
                     inX = True
-                
-            if(inX):
-                for x in x_set:
-                    func_out.append(function.diff(x))
-                #TODO: find better solution for T & tau which are both in X & y    
-                func_out.append(function.diff(symbols("T")))
-                func_out.append(function.diff(symbols("tau")))            
+
+            if inX:
+                XO.append(function)
             else:
-                for y in y_set:
-                    func_out.append(function.diff(y))
-            self.output.update({func: (function ,Matrix(func_out))})            
+                YO.append(function)
+
+        grad_x_XO = []
+        grad_y_YO = []
+
+        for func in XO:
+            temp = x_set[:]
+            i = 0
+            for x in x_set:
+                temp[i] = func.diff(x) 
+                i += 1
+            grad_x_XO += [temp]
+
+        for func in YO:
+            temp = y_set[:]
+            i = 0
+            for y in y_set:
+                temp[i] = func.diff(y) 
+                i += 1
+            grad_y_YO += [temp]
+                
+        self.output = (XO,YO,Matrix(grad_x_XO).transpose(),Matrix(grad_y_YO).transpose()) 
         return True
     
     #adds a new editable function #TODO: no name duplications
@@ -330,7 +346,7 @@ class VarWrapperWidget(StackLayout):
         var_set = self.getVariables()
         y_set = []
         for var in var_set:
-            if var_set[var] == "y":
+            if var_set[var] == "y" or var_set[var] == "y, X":
                 y_set.append(var)
         return y_set
     
@@ -338,7 +354,7 @@ class VarWrapperWidget(StackLayout):
         var_set = self.getVariables()
         X_set = []
         for var in var_set:
-            if var_set[var] == "X":
+            if var_set[var] == "X" or var_set[var] == "y, X":
                 X_set.append(var)
         return X_set
 
@@ -373,15 +389,15 @@ if __name__ == '__main__':
                  "mcB" : ["Mat cost B" , "(V_r - V_a) * cost_B", True],
                  "imp" : ["Impurity Concentration" , "conc_A + conc_B + conc_C + conc_S", False]}
     #variables: key: id, value[0]: description, value[1]: isFixedParameter
-    var = {"V_a" : ("volume of A","y"),
-           "C_e" : ("impurity of A","y"),
-           "T" : ("temperature","y"),
-           "tau" : ("reaction time","y"),
-           "conc_A" : ("concentration of A","X"),
+    var = {"conc_A" : ("concentration of A","X"),
            "conc_B" : ("concentration of B","X"),
            "conc_P" : ("concentration of P","X"),
            "conc_S" : ("concentration of S","X"),
            "conc_C" : ("concentration of C","X"),
+           "V_a" : ("volume of A","y"),
+           "C_e" : ("impurity of A","y"),
+           "T" : ("temperature","y, X"),
+           "tau" : ("reaction time","y, X"),
            "W" : ("heating cost","fixed"),
            "C_sup" : ("description","fixed"),
            "cost_p" : ("description","fixed"),
