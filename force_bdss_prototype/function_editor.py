@@ -16,11 +16,11 @@ from kivy.uix.textinput import TextInput
 #sympy
 from sympy import sympify, symbols, Matrix
 #kvlib
-from kvlib import EditableLabel
+from .kvlib import EditableLabel
 
 #kv
 Builder.load_string('''
-<TopRow>:
+<FunctionTopRow>:
     size_hint_y: 0.5
     BoxLayout:
         orientation: 'horizontal'
@@ -41,7 +41,7 @@ Builder.load_string('''
         Label:
             text: 'Description'
 
-<BottomRow>:
+<FunctionBottomRow>:
     size_hint_y: 0.5
     Button:
         text: 'Add Function'
@@ -102,7 +102,7 @@ class FunctionApp(App):
         #input: [(Set of function names),(Set of parameter names)]
         root = BoxLayout(orientation = "vertical")
 
-        root.add_widget(TopRow())
+        root.add_widget(FunctionTopRow())
 
         editor = BoxLayout(orientation = "horizontal", size_hint_y = 4)
         self.functionWrapper = FunctionWrapperWidget(self.input[0], do_scroll_x=False)
@@ -111,7 +111,7 @@ class FunctionApp(App):
         editor.add_widget(self.varWrapper)
         root.add_widget(editor)
 
-        root.add_widget(BottomRow())
+        root.add_widget(FunctionBottomRow())
         return root
     
     #sympifies the given function and checks if all contained symbols are initialized variables or
@@ -227,7 +227,7 @@ class FunctionApp(App):
                 i += 1
             grad_y_YO += [temp]
                 
-        self.output = (XO,YO,Matrix(grad_x_XO).transpose(),Matrix(grad_y_YO).transpose()) 
+        self.output = (Matrix(XO),Matrix(YO),Matrix(grad_x_XO).transpose(),Matrix(grad_y_YO).transpose()) 
         return True
     
     #adds a new editable function #TODO: no name duplications
@@ -376,8 +376,8 @@ class VarWidget(BoxLayout):
     def getDesignDimension(self):
         return self.designDimension
 
-class TopRow(BoxLayout): pass
-class BottomRow(BoxLayout): pass
+class FunctionTopRow(BoxLayout): pass
+class FunctionBottomRow(BoxLayout): pass
 
 
 ######### Main  #########

@@ -12,7 +12,7 @@ from kivy.core.window import Window
 
 #kv
 Builder.load_string('''
-<TopRow>:
+<ConstraintsTopRow>:
     Label:
         text: 'Name'
         size_hint_x: 0.2
@@ -28,7 +28,7 @@ Builder.load_string('''
         text: 'Max'
         size_hint_x: 0.25
         pos_hint: {"x": 0.775, "y":0}
-<BottomRow>:
+<ConstraintsBottomRow>:
     Button:
         text: 'Add Constraint'
         on_release: app.addConstraint()
@@ -109,10 +109,10 @@ Builder.load_string('''
 class EditorApp(App):
     def build(self):
         root = BoxLayout(orientation = 'vertical')
-        root.add_widget(TopRow(size_hint_y = 0.25))
+        root.add_widget(ConstraintsTopRow(size_hint_y = 0.25))
         self.constraintWrapper = ConstraintWrapper(self.input,  size_hint_y=4, do_scroll_x=False)
         root.add_widget(self.constraintWrapper)
-        root.add_widget(BottomRow(size_hint_y = 0.2))
+        root.add_widget(ConstraintsBottomRow(size_hint_y = 0.2))
         self.keyboardListener = KeyboardListener()
         return root
 
@@ -303,10 +303,10 @@ class EditableConstraintWidget(ConstraintWidgetBase):
     def isEditable(self):
         return True
 
-class TopRow(RelativeLayout):
+class ConstraintsTopRow(RelativeLayout):
     pass
 
-class BottomRow(BoxLayout):
+class ConstraintsBottomRow(BoxLayout):
     pass
 
 ######### Main  #########
