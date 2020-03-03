@@ -13,12 +13,11 @@ class MCOwrapper:
         # mco setup: trasform to impl. data structures.
         self.R = R
         self.C = C
-        self.obj = Objectives(self.R, self.C)
-        self.constraints = Constraints(self.R)
+        self.obj = Objectives(self.R, self.C) #<-- calls function editor
+        self.constraints = Constraints(self.R) #<-- calls constraints editor
         self.ini = Initializer()
         obj_f = lambda y: self.obj.obj_calc(y)[0]
         obj_jac = lambda y: self.obj.obj_calc(y)[1]
-        #edit constraints and run initializer again
         constr = self.constraints.get_editor_constraints()
         X0 = self.ini.get_init_data_kin_model(self.R, self.C)
         p_db_access = Process_db_access(R)
