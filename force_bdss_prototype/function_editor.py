@@ -14,7 +14,7 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 #sympy
-from sympy import sympify, symbols
+from sympy import sympify, symbols, Matrix
 #kvlib
 from kvlib import EditableLabel
 
@@ -136,7 +136,6 @@ class FunctionApp(App):
 
     #validates all functions and checks for recursive functions calls + error handling 
     def validateAll(self):
-        output = []
         errors = []
         var_set = self.varWrapper.getVariables()
         func_set = self.functionWrapper.getFunctions()
@@ -172,13 +171,16 @@ class FunctionApp(App):
             for error in errors: content += error + "\n"
             self.output = "invalid"
             popup = Popup(title='Warning',
-            content=Label(text=content, text_size= (350, None)),
+            add=Label(text=content, text_size= (350, None)),
             size_hint=(None, None), size=(400, 300))
             popup.open()
             return False
 
         #remove sub-functions from func_set + func derivatives
         self.output = {}
+        x_set = self.varWrapper.getXDimension()
+        y_set = self.varWrapper.getYDimension()
+
         for func in func_set:
             if self.functionWrapper.getFunctionWidgets()[func].isEditable(): continue
             function = func_set[func]
@@ -192,12 +194,24 @@ class FunctionApp(App):
                     function = function.subs(sub_func, func_set[sub_func])
             # func derivatives with KPIs
             # create output + add original function
-            func_out = {}
-            func_out.update({func: function})
+
+            func_out = []
+            #determine if function is part of X-dimension
+            inX = False
             for var in function.free_symbols:
-                if(not var_set[var]):
-                    func_out.update({var: function.diff(var)})
-            self.output.update({func: func_out})
+                if var in x_set:
+                    inX = True
+                
+            if(inX):
+                for x in x_set:
+                    func_out.append(function.diff(x))
+                #TODO: find better solution for T & tau which are both in X & y    
+                func_out.append(function.diff(symbols("T")))
+                func_out.append(function.diff(symbols("tau")))            
+            else:
+                for y in y_set:
+                    func_out.append(function.diff(y))
+            self.output.update({func: (function ,Matrix(func_out))})            
         return True
     
     #adds a new editable function #TODO: no name duplications
@@ -309,22 +323,42 @@ class VarWrapperWidget(StackLayout):
     def getVariables(self):
         output = {}
         for var in self.variableWidgets:
-            output.update({symbols(var.getVariable()): var.isFixedValue})
+            output.update({symbols(var.getVariable()): var.getDesignDimension()})
         return output
+    
+    def getYDimension(self):
+        var_set = self.getVariables()
+        y_set = []
+        for var in var_set:
+            if var_set[var] == "y":
+                y_set.append(var)
+        return y_set
+    
+    def getXDimension(self):
+        var_set = self.getVariables()
+        X_set = []
+        for var in var_set:
+            if var_set[var] == "X":
+                X_set.append(var)
+        return X_set
+
             
 
 class VarWidget(BoxLayout):
     name = StringProperty()
     description = StringProperty()
 
-    def __init__(self, name, description, isFixedValue, **kwargs):
+    def __init__(self, name, description, designDimension , **kwargs):
         super().__init__(**kwargs)
         self.name = name
         self.description = description
-        self.isFixedValue = isFixedValue
+        self.designDimension = designDimension
 
     def getVariable(self):
         return self.name
+    
+    def getDesignDimension(self):
+        return self.designDimension
 
 class TopRow(BoxLayout): pass
 class BottomRow(BoxLayout): pass
@@ -337,18 +371,22 @@ if __name__ == '__main__':
                  "mc" : ["Material Cost" , "mcA + mcB", False],
                  "mcA" : ["Mat cost A" , "(cost_p * (C_e / C_sup -1)^2 + const_A) * V_a", True],
                  "mcB" : ["Mat cost B" , "(V_r - V_a) * cost_B", True],
-                 "imp" : ["Impurity Concentration" , "default", False]}
+                 "imp" : ["Impurity Concentration" , "conc_A + conc_B + conc_C + conc_S", False]}
     #variables: key: id, value[0]: description, value[1]: isFixedParameter
-    var = {"V0" : ("volume",False),
-           "C_e" : ("impurity of A",False),
-           "tau" : ("reaction time",False),
-           "T" : ("temperature",False),
-           "W" : ("heating cost",True),
-           "C_sup" : ("description",True),
-           "cost_p" : ("description",True),
-           "const_A" : ("description",True),
-           "cost_B" : ("description",True),
-           "V_r" : ("reactor volume",True),
-           "V_a" : ("volume of A",True)}
+    var = {"V_a" : ("volume of A","y"),
+           "C_e" : ("impurity of A","y"),
+           "T" : ("temperature","y"),
+           "tau" : ("reaction time","y"),
+           "conc_A" : ("concentration of A","X"),
+           "conc_B" : ("concentration of B","X"),
+           "conc_P" : ("concentration of P","X"),
+           "conc_S" : ("concentration of S","X"),
+           "conc_C" : ("concentration of C","X"),
+           "W" : ("heating cost","fixed"),
+           "C_sup" : ("description","fixed"),
+           "cost_p" : ("description","fixed"),
+           "const_A" : ("description","fixed"),
+           "cost_B" : ("description","fixed"),
+           "V_r" : ("reactor volume","fixed"),}
     editorInput = [functions, var]
     print(FunctionApp().run_with_output(editorInput, "Default"))
