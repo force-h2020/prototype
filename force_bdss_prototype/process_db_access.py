@@ -44,6 +44,9 @@ class Process_db_access:
         def get_C_supplier(self):
             return self.C_supplier
 
+        def get_process_params(self):
+            return self.V_r, self.W, self.const_A, self.cost_B, self.quad_coeff, self.C_supplier, self.cost_purification
+
         def get_mat_cost(self, V_a, C_e, V_b, p_C):
             # Transferred
             # V_a + V_b <= V_r
