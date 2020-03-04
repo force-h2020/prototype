@@ -14,7 +14,7 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 #sympy
-from sympy import sympify, symbols, Matrix
+from sympy import sympify, symbols, Matrix, SympifyError
 #kvlib
 from .kvlib import EditableLabel
 
@@ -117,18 +117,21 @@ class FunctionApp(App):
     #sympifies the given function and checks if all contained symbols are initialized variables or
     #sub functions. checks for direct recursive calls
     def validate(self, func, var_set, func_set):
-        out = ["default", ""]
+        out = [sympify("0"), ""]
+        func_desc = self.functionWrapper.getFunctionWidgets()[func].getDescription()
         #if func_set[func] == "default": return out # @default this enables "default" as valid input
-        function = sympify(func_set[func])
+        try:
+            function = sympify(func_set[func])
+        except SympifyError:
+            out[1] = func_desc + " contains a syntax error" 
+            return out
         for var in function.free_symbols:
             if var in var_set: continue
-            elif var == func: 
-                func_desc = self.functionWrapper.getFunctionWidgets()[func].getDescription() 
+            elif var == func:
                 out[1] = func_desc + " contains a direct recursive call" 
                 return out
             elif var in func_set: continue
             else: 
-                func_desc = self.functionWrapper.getFunctionWidgets()[func].getDescription() 
                 out[1] = func_desc + " contains unknown identifier: " + str(var) 
                 return out
         out[0] = function
@@ -146,12 +149,11 @@ class FunctionApp(App):
             if(out[1] != ""):
                 errors.append(out[1])
         func_set = temp # func_set now contains sympified functions which can be test evaluated
-        
         for func in func_set:
             function = func_set[func]
             #try to substitute all subfunctions
             try:
-                if(function == "default"): continue
+                #if(function == "default"): continue @default
                 recursion_counter = 0
                 max_recursion_depth = 10000
                 while len(function.free_symbols.intersection(func_set)) != 0:
@@ -163,7 +165,6 @@ class FunctionApp(App):
                 func_desc = self.functionWrapper.getFunctionWidgets()[func].getDescription()
                 message = func_desc + " exceeded the max-recursion depth, there might be a recursive call." 
                 errors.append(message)       
-        
         #Error handling
         if(len(errors)!=0): 
             if(len(errors) == 1): content = "There is 1 problem: \n"
@@ -171,7 +172,7 @@ class FunctionApp(App):
             for error in errors: content += error + "\n"
             self.output = "invalid"
             popup = Popup(title='Warning',
-            add=Label(text=content, text_size= (350, None)),
+            content=Label(text=content, text_size= (350, None)),
             size_hint=(None, None), size=(400, 300))
             popup.open()
             return False
