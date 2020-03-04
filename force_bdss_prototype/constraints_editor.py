@@ -1,14 +1,14 @@
 from kivy.app import App
 from kivy.lang import Builder
+from kivy.uix.popup import Popup
+
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.relativelayout import RelativeLayout
 from kivy.uix.label import Label
 from kivy.properties import StringProperty, NumericProperty
-from .kvlib import MinMaxSlider, EditableLabel, KeyboardListener, QuickPopup
-
-from kivy.core.window import Window
+from kvlib import MinMaxSlider, EditableLabel, KeyboardListener
 
 #kv
 Builder.load_string('''
@@ -147,7 +147,6 @@ class EditorApp(App):
 #Widgets
 class ConstraintWrapper(ScrollView):
     constrainWidgets = []
-    quickPopup = QuickPopup()
 
     def __init__(self, constraints, **kwargs):
         super().__init__(**kwargs)
@@ -166,7 +165,10 @@ class ConstraintWrapper(ScrollView):
             self.constrainWidgets.append(EditableConstraintWidget(name, unit, min, max, size_hint=(1,None), size = (50,135)))
             self.view.add_widget(self.constrainWidgets[len(self.constrainWidgets)-1])
         else:
-            self.quickPopup.popup("Warning","Can not add new constraint, because of name duplication: "+str(name))
+            i = 2
+            while (self.getIndex(name + str(i)) != -1):
+                i += 1
+            return self.addEditableConstraint(name+str(i), unit, min, max)
 
     def getIndex(self, name):
         for i in range(0, len(self.constrainWidgets)):
@@ -193,7 +195,6 @@ class ConstraintWidgetBase(RelativeLayout):
     value1 = NumericProperty()
     min = NumericProperty()
     max = NumericProperty()
-    quickpopup = QuickPopup()
 
     def __init__(self, name, unit, min, max, **kwargs):
         super().__init__(**kwargs)
@@ -217,7 +218,7 @@ class ConstraintWidgetBase(RelativeLayout):
             self.ids["minLabel"].text = self.valueString(value)
 
     def valueString(self, value):
-        range = min(abs(self.max-self.min),value)
+        range = min(abs(self.max-self.min),abs(value))
         i = 0 
         rangeCheck = 0.1
         while(range < rangeCheck):
@@ -253,13 +254,21 @@ class ConstraintWidgetBase(RelativeLayout):
             self.checkValue(newValue,index)
             self.checkInBounds(newValue)
         except ValueError:
-            self.quickpopup.popup("Warning","Min-values must be smaller than Max-values!")
+            content = "Min-values must be smaller than Max-values!"
+            popup = Popup(title='Warning',
+            content=Label(text=content, text_size= (350, None)),
+            size_hint=(None, None), size=(400, 300))
+            popup.open()
             return self.resetValueLabel(index)
         except IndexError:
             if(self.shiftPressed()):
                 return self.updateBounds(newValue,index)
             else:
-                self.quickpopup.popup("Warning","Value out of Bounds, please stay in bounds or redefine the bounds by pressing \"shift\" while updating a min/max value.")
+                content = "Value out of Bounds, please stay in bounds or redefine the bounds by pressing \"shift\" while updating a min/max value."
+                popup = Popup(title='Warning',
+                content=Label(text=content, text_size= (350, None)),
+                size_hint=(None, None), size=(400, 300))
+                popup.open()
                 return self.resetValueLabel(index)
         #value is ok
         if(self.shiftPressed()):
@@ -292,7 +301,11 @@ class EditableConstraintWidget(ConstraintWidgetBase):
         if App.get_running_app().getWidgetIndex(self) == App.get_running_app().getIndex(newName) or App.get_running_app().getIndex(newName) == -1:
             self.name = newName
         else:
-            self.quickpopup.popup("Warning","Can not change name, because of name duplication: "+str(newName))
+            content = "Can not change name, because of name duplication: "+str(newName)
+            popup = Popup(title='Warning',
+            content=Label(text=content, text_size= (350, None)),
+            size_hint=(None, None), size=(400, 300))
+            popup.open()
             self.name = self.ids["nameLabel"].textCache
             self.ids["nameLabel"].text = self.ids["nameLabel"].textCache
 
@@ -311,9 +324,9 @@ class ConstraintsBottomRow(BoxLayout):
 
 ######### Main  #########
 if __name__ == '__main__':
-    constraints = [{"name": "Volume A","unit": "m³", "min": -5, "max": 5},
-                   {"name": "Concentration e","unit": "ppm", "min": 0, "max": 3},
-                   {"name": "Temperature", "unit": "K", "min": -10, "max": -5},
-                   {"name": "Reaction time", "unit": "s", "min": 0, "max": 0.09}]
-    print(EditorApp().runWithOutput(constraints,["Default Output"]))
+    constraints = [{"name": "Volume A","unit": "m³", "min": -5.0, "max": 5.0},
+                   {"name": "Concentration e","unit": "ppm", "min": 0.01, "max": 3.0},
+                   {"name": "Temperature", "unit": "K", "min": -10.0, "max": -5.0},
+                   {"name": "Reaction time", "unit": "s", "min": 0.01, "max": 0.09}]
+    print(EditorApp().runWithOutput(constraints,constraints))
 

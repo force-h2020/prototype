@@ -223,14 +223,6 @@ class KeyboardListenerDemo(KeyboardListener, Label):
         self.text = str(self.pressedKeys)
         return True
 
-class QuickPopup(Widget):
-    def popup(self, title, content):
-        popup = Popup(title=title,
-        content=Label(text=content, text_size= (350, None)),
-        size_hint=(None, None), size=(400, 300))
-        popup.open()
-        return
-
 if __name__ == '__main__':
     DemoApp().run()
 
