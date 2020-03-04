@@ -1,6 +1,7 @@
 # Transferred
 import numpy as np
 
+
 class Pareto_process_db:
 
     def __init__(self, data):
@@ -9,9 +10,9 @@ class Pareto_process_db:
     def write_csv(self, fil=None):
         self.pareto_filter()
         if fil:
-            np.savetxt(fil, self.data, delimiter=",", fmt="%.10f")
+            np.savez(fil, self.data)
         else:
-            np.savetxt("pareto_data.csv", self.data, delimiter=",", fmt="%.12f")
+            np.savez("pareto_data.npz", volume_A_tilde=self.data[:, 0], conc_e=self.data[:, 1], temperature=self.data[:, 2], reaction_time=self.data[:, 3], impurity_conc=self.data[:, 4], prod_cost=self.data[:, 5], mat_cost=self.data[:, 6])
 
     def pareto_filter(self):
         idx = []

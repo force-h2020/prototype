@@ -18,7 +18,8 @@ class MCOwrapper:
         self.C = C
         self.obj = Objectives(self.R, self.C) #<-- calls function editor
         reset()
-        self.constraints = Constraints(self.R) 
+        self.constraints = Constraints(self.R)
+        reset()
         self.ini = Initializer()
         obj_f = lambda y: self.obj.obj_calc(y)[0]
         obj_jac = lambda y: self.obj.obj_calc(y)[1]
@@ -38,7 +39,7 @@ class MCOwrapper:
         self.mcosolver = MCOsolver(y0, constr, obj_f, obj_jac)
 
     def solve(self):
-        results = self.mcosolver.solve(N=50)
+        results = self.mcosolver.solve(N=30)
         res = np.empty((results.shape[0], results.shape[1] + 3))
         for i in range(results.shape[0]):
             y = results[i, :]

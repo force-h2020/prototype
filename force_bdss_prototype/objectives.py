@@ -44,7 +44,7 @@ class Objectives:
 
         conc_A, conc_B, conc_P, conc_S, conc_C, T, t = symbols("conc_A, conc_B, conc_P, conc_S, conc_C, T, t")
         V_a, C_e, T, t = symbols("V_a, C_e, T, t")
-        
+
 
         self.X = (conc_A, conc_B, conc_P, conc_S, conc_C, T, t)
         self.y = (V_a, C_e, T, t)
@@ -147,14 +147,14 @@ class Objectives:
         O = np.zeros(len(self.yO) + len(self.XO), dtype=np.float)
         grad_y_O = np.zeros((len(self.yO) + len(self.XO), 4), dtype=np.float)
         for i in range(len(self.yO)):
-            #print(self.yO[i].subs(V_a, y[0]).subs(C_e, y[1]).subs(T, y[2]).subs(t, y[3]))
+            # print(self.yO[i].subs(V_a, y[0]).subs(C_e, y[1]).subs(T, y[2]).subs(t, y[3]))
             O[i + len(self.XO)] = self.yO[i].subs(V_a, y[0]).subs(C_e, y[1]).subs(T, y[2]).subs(t, y[3]).evalf()
         for i in range(len(self.XO)):
             O[i] = self.XO[i].subs(conc_A, x_mat[0]).subs(conc_B, x_mat[1]).subs(conc_P, x_mat[2]).subs(conc_S, x_mat[3]).subs(conc_C, x_mat[4]).evalf()
         for i in range(len(self.yO)):
             grad_y_O[i + len(self.XO)] = self.grad_y_yO[i].subs(V_a, y[0]).subs(C_e, y[1]).subs(T, y[2]).subs(t, y[3]).evalf()
         for i in range(len(self.XO)):
-            grad_y_O[i] = hgrad_y_XO[i].subs(V_a, y[0]).subs(C_e, y[1]).subs(T, y[2]).subs(t, y[3]).subs(conc_A, x_mat[0]).subs(conc_B, x_mat[1]).subs(conc_P, x_mat[2]).subs(conc_S, x_mat[3]).subs(conc_C, x_mat[4]).evalf()
+            grad_y_O[i] = hgrad_y_XO[i].subs(V_a, y[0]).subs(C_e, y[1]).subs(T, y[2]).subs(t, y[3]).subs(conc_A, x_mat[0]).subs(conc_B, x_mat[1]).subs(conc_P, x_mat[2]).subs(conc_S, x_mat[3]).subs(conc_C, x_mat[4]).evalf().subs(conc_A, x_mat[0]).subs(conc_B, x_mat[1]).subs(conc_P, x_mat[2]).subs(conc_S, x_mat[3]).subs(conc_C, x_mat[4]).evalf()
         return (O, grad_y_O)
 
     def obj_calc_old(self, y):

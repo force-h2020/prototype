@@ -13,17 +13,153 @@ from kivy.uix.spinner import Spinner
 from kivy.clock import Clock
 from kivy.core.window import Window
 Window.maximize()
-from kivy.graphics import Color, Rectangle
-import matplotlib
-#matplotlib.rcParams['toolbar'] = 'None'
-matplotlib.use('module://kivy.garden.matplotlib.backend_kivy')
-from matplotlib.figure import Figure
+from kivy.utils import platform
+if platform == "android":
+    Window.release_all_keyboards()
+from kivy.graphics import Color, Rectangle, Point, Ellipse
+from kivy.garden.graph import Graph, Plot
 import numpy as np
-from kivy.garden.matplotlib.backend_kivyagg import FigureCanvas
-from matplotlib.transforms import Bbox
-import matplotlib.pyplot as plt
-import csv
-import c_fun_wo_papp as c_fun
+
+def search_all(valuearray, paramarray, unrestr):
+    res = []
+    for i in unrestr:
+        bl = True
+        for j in range(len(valuearray)):
+            if valuearray[j] != paramarray[j, i]:
+                bl = False
+        if bl:
+            res.append(i)
+    return res
+
+def fuse_arrays(ar1, ar2):
+    mx = ar1.size
+    a = np.zeros([mx, 2], dtype=np.float)
+    for i in range(mx):
+        a[i][0] = ar1[i]
+        a[i][1] = ar2[i]
+    return a
+
+
+class MyGraph(Graph):
+
+    picker_tol = 20
+
+    def afuncx(self):
+        return lambda x: 10**x if self.xlog else lambda x: x
+
+    def afuncy(self):
+        return lambda y: 10**y if self.ylog else lambda y: y
+
+    def funcx(self):
+        return np.log10 if self.xlog else lambda x: x
+
+    def funcy(self):
+        return np.log10 if self.ylog else lambda y: y
+
+    def px_to_x(self, px):
+        afuncx = self.afuncx()
+        size = self.plots[0].params["size"]
+        xmin = self.xmin
+        xmax = self.xmax
+        ratiox = (size[2] - size[0]) / float(xmax - xmin)
+        x = (float((px - size[0]) / ratiox + xmin))
+        return x
+
+    def px_to_y(self, px):
+        afuncy = self.afuncy()
+        size = self.plots[0].params["size"]
+        ymin = self.ymin
+        ymax = self.ymax
+        ratioy = (size[3] - size[1]) / float(ymax - ymin)
+        y = (float((px - size[1]) / ratioy + ymin))
+        return y
+
+    def touched(self, x1, y1):
+        size = self.plots[0].params["size"]
+        xmin = self.xmin
+        xmax = self.xmax
+        ymin = self.ymin
+        ymax = self.ymax
+        ratiox = (size[2] - size[0]) / float(xmax - xmin)
+        ratioy = (size[3] - size[1]) / float(ymax - ymin)
+        x = self.px_to_x(x1 - self.pos[0])
+        y = self.px_to_y(y1 - self.pos[1])
+        points = self.plots[1].points
+        if len(points) < 2:
+            points = self.plots[0].points
+        p = np.zeros((len(points), 2))
+        for i in range(len(points)):
+            p[i, 0] = points[i][0]
+            p[i, 1] = points[i][1]
+        lx_min, lx_max = self.xmin, self.xmax
+        lx = lx_max - lx_min
+        ly_min, ly_max = self.ymin, self.ymax
+        ly = ly_max - ly_min
+        distances = np.hypot((x - p[:, 0]) * ratiox,
+                             (y - p[:, 1]) * ratioy)
+        indmin = distances.argmin()
+        if distances[indmin] < self.picker_tol:
+            return indmin
+        else:
+            return None
+
+    def _redraw_size(self, *args):
+        # size a 4-tuple describing the bounding box in which we can draw
+        # graphs, it's (x0, y0, x1, y1), which correspond with the bottom left
+        # and top right corner locations, respectively
+        self._clear_buffer()
+        size = self._update_labels()
+        self.view_pos = self._plot_area.pos = (size[0], size[1])
+        self.view_size = self._plot_area.size = (size[2] - size[0], size[3] - size[1])
+
+        if self.size[0] and self.size[1]:
+            self._fbo.size = self.size
+        else:
+            self._fbo.size = 1, 1  # gl errors otherwise
+        self._fbo_rect.texture = self._fbo.texture
+        self._fbo_rect.size = self.size
+        self._fbo_rect.pos = self.pos
+        self._background_rect.size = self.size
+        self._update_ticks(size)
+        self._update_plots(size)
+        for plot in self.plots:
+            plot.draw()
+
+
+class DotPlot(Plot):
+
+    def create_drawings(self):
+        self._color = Color(*self.color)
+        self._mesh = Point(points=(0, 0), pointsize=5)
+        self.bind(color=lambda instr, value: setattr(self._color.rgba, value))
+        return [self._color, self._mesh]
+
+    def draw(self, *args):
+        points = self.points
+        mesh = self._mesh
+        params = self._params
+        funcx = log10 if params['xlog'] else lambda x: x
+        funcy = log10 if params['ylog'] else lambda x: x
+        xmin = funcx(params['xmin'])
+        ymin = funcy(params['ymin'])
+        size = params['size']
+        ratiox = (size[2] - size[0]) / float(funcx(params['xmax']) - xmin)
+        ratioy = (size[3] - size[1]) / float(funcy(params['ymax']) - ymin)
+        mesh.points = ()
+        for k in range(len(points)):
+            x = (funcx(points[k][0]) - xmin) * ratiox + size[0]
+            y = (funcy(points[k][1]) - ymin) * ratioy + size[1]
+            mesh.add_point(x, y)
+
+    def _set_pointsize(self, value):
+        if hasattr(self, '_mesh'):
+            self._mesh.pointsize = value
+    pointsize = AliasProperty(lambda self: self._mesh.pointsize, _set_pointsize)
+
+    def _set_source(self, value):
+        if hasattr(self, '_mesh'):
+            self._mesh.source = value
+    source = AliasProperty(lambda self: self._mesh.source, _set_source)
 
 
 # Slider widget
@@ -55,6 +191,11 @@ class MySlider(Slider):
             Color(1., 1., 1., 1.)
             self.top_restr_canvas = Rectangle(pos=self.top_restr.pos,
                                               size=self.top_restr.size)
+        restr_size = (int(max(self.size[0] / 100, 8)), int(self.size[1] / 1.5))
+        self.bot_restr_canvas.size = restr_size
+        self.top_restr_canvas.size = restr_size
+        self.bot_restr.size = restr_size
+        self.top_restr.size = restr_size
         self.bind(pos=self.pos_callback)
         self.bot_restr.bind(on_touch_move=self.restr_move_callback_b)
         self.top_restr.bind(on_touch_move=self.restr_move_callback_t)
@@ -70,18 +211,18 @@ class MySlider(Slider):
         self.top_restr_canvas.pos = self.top_restr.pos
 
     def bot_val_callback(self, obj, val):
-        bot_pos = self.val_into_pos_grey(self.bot_val) - 5
-        self.bot_restr.pos = (bot_pos, self.center_y - 16)
+        bot_pos = self.val_into_pos_grey(self.bot_val) - self.bot_restr_canvas.size[0] - 1
+        self.bot_restr.pos = (bot_pos, self.center_y - self.bot_restr_canvas.size[1] // 2)
 
     def top_val_callback(self, obj, val):
         top_pos = self.val_into_pos_grey(self.top_val) + 1
-        self.top_restr.pos = (top_pos, self.center_y - 16)
+        self.top_restr.pos = (top_pos, self.center_y - self.top_restr_canvas.size[1] // 2)
 
     def pos_callback(self, obj, pos):
-        bot_pos = self.val_into_pos_grey(self.bot_val) - 5
+        bot_pos = self.val_into_pos_grey(self.bot_val) - self.bot_restr_canvas.size[0] - 1
         top_pos = self.val_into_pos_grey(self.top_val) + 1
-        self.bot_restr.pos = (bot_pos, self.center_y - 16)
-        self.top_restr.pos = (top_pos, self.center_y - 16)
+        self.bot_restr.pos = (bot_pos, self.center_y - self.bot_restr_canvas.size[1] // 2)
+        self.top_restr.pos = (top_pos, self.center_y - self.bot_restr_canvas.size[1] // 2)
 
     def restr_move_callback_b(touch, obj, value):
         self.bot_val = self.pos_into_val_grey(touch.pos)
@@ -223,10 +364,12 @@ class MySlider(Slider):
                     d = 1
                     border1 = self.min
                     border2 = self.top_val
+                    #border2 = self.data[np.argmin(self.data - self.top_val) - 1]
                 else:
                     d = -1
                     border1 = self.max
                     border2 = self.bot_val
+                    #border2 = self.data[np.argmin(self.data - self.bot_val) + 1]
                 if d * (self.pos_into_val_grey(touch.x)-border1) < 0:
                     setattr(self, self.grabbed, border1)
                 elif d * (self.pos_into_val_grey(touch.x)-self.value) > 0:
@@ -249,6 +392,14 @@ class MySlider(Slider):
                 self.label_val = self.value
             touch.ungrab(self)
             return True
+
+    def on_size(self, slider, size):
+        new_size = (int(max(self.size[0] / 100, 8)), int(self.size[1] / 1.5))
+        self.bot_restr_canvas.size = new_size
+        self.top_restr_canvas.size = new_size
+        self.bot_restr.size = new_size
+        self.top_restr.size = new_size
+
 
     # Increase the value and schedules one increase every .1 s.
     # Used by: called by pressed button "up"
@@ -368,63 +519,31 @@ class PLayout(BoxLayout):
     # Plot f against third param and connect mpl events to kivy.
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        """
-        wp4 = np.array(range(0, 11, 1))
-        wp4 = 0.2 * wp4
-        wp3 = np.array(range(0, 11, 1))
-        wp3 = 0.1 * wp3
-        wp2 = np.array(range(5, 16, 1))
-        wp5 = np.array(range(10, 111, 10))
-        wp1 = np.array(range(10, 31, 2))
-        print(wp3)
-        def f(a,b,c,d,e):
-            return a*b*b*np.exp(c)*np.exp(-d)-e
-        with open("data4.csv", "w") as wf:
-            writer = csv.writer(wf, delimiter=",")
-            r = 0
-            for i in range(11):
-                for j in range(11):
-                    for l in range(11):
-                        for k in range(11):
-                            for h in range(11):
-                                if r%3 != 0:
-                                    writer.writerow((wp1[i], wp2[j], wp3[l], wp4[k], wp5[h], f(wp1[i], wp2[j], wp3[l], wp4[k], wp5[h])))
-                                else:
-                                    r = 0
-                                r = r + 1
-        """
-        pareto_file = "pareto_data.csv"
-        with open(pareto_file) as d:
-            reader = csv.reader(d, delimiter=",", skipinitialspace=True)
-            #self.names = next(reader)
-            for count_entries, line in enumerate(d):
-                pass
-            count_entries = count_entries + 1
-            count_sliders = len(list(line.split(",")))
-        # im moment gehen nur parameter da sonst der blue mechanismus nicht
-        # geht. frage ist wie man mit mehrfach besetzten zukünfigen werten
-        # umgeht. wie soll man so wenig wie möglich verändern?
-        self.N = count_sliders
-        self.Ne = count_entries
-        print(self.Ne)
+
+        self.names = ["volume_A_tilde", "conc_e", "temperature", "reaction_time",  "impurity_conc [min]", "prod_cost [min]", "mat_cost [min]"]
+        data_dump = np.load('../main/pareto_data.npz')
+        # data_dump = np.load('pareto_data.npz')
+        self.N = len(self.names)
+        self.Ne = data_dump[self.names[0]].shape[0]
         i = self.N
-        self.names = ["volume_A_tilde", "conc_e", "temperature", "reaction time",  "impurity_conc [min]", "prod_cost [min]", "mat_cost [min]"]
         for j in range(self.N):
             if "[min]" in self.names[j]:
                 i = i - 1
                 self.names[j], self.names[i] = self.names[i], self.names[j]
         self.Np = i
-        # damit es mit dem datensatz zwei funktionsdaten gibt:
-        #self.N = self.N + 1
-        self.data = np.zeros((self.N, self.Ne), dtype=float)
-        self.data = c_fun.read_data(pareto_file, count_sliders, count_entries)
-        for i in range(self.N):
-            print(self.data[i].max())
-            print(self.data[i].min())
-        #idxarray = np.array(range(self.Ne - 1, -1, -1))
-        #self.data[self.N - 1, :] = self.data[self.N - 2, idxarray]
-        #self.names.append("f2 [min]")
-        #self.names = [str("param" + str(i + 1)) for i in range(self.N)]
+        self.data = np.zeros((self.N, self.Ne), dtype=np.float)
+        self.data[0, :] = data_dump['volume_A_tilde']
+        self.data[1, :] = data_dump['conc_e']
+        self.data[2, :] = data_dump['temperature']
+        self.data[3, :] = data_dump['reaction_time']
+        self.data[4, :] = data_dump['impurity_conc']
+        self.data[5, :] = data_dump['prod_cost']
+        self.data[6, :] = data_dump['mat_cost']
+
+        # idxarray = np.array(range(self.Ne - 1, -1, -1))
+        # self.data[self.N - 1, :] = self.data[self.N - 2, idxarray]
+        # self.names.append("f2 [min]")
+        # self.names = [str("param" + str(i + 1)) for i in range(self.N)]
         self.history = History(7)
         self.unbind(grey=self.on_grey)
         self.init_kv()
@@ -437,7 +556,8 @@ class PLayout(BoxLayout):
         valuearray = np.empty(self.N, dtype=float)
         for i in range(self.N):
             valuearray[i] = self.sliders[i].value
-        idx = c_fun.search_one(valuearray, self.data, self.unrestr)
+        # idx = c_fun.search_one(valuearray, self.data, self.unrestr)
+        idx = 0
         if idx == -1:
             idx = self.grey[0]
             self.history.save(idx)
@@ -448,6 +568,40 @@ class PLayout(BoxLayout):
         xh = self.data[self.x_idx, self.grey]
         yh = self.data[self.y_idx, self.grey]
 
+        for plot in self.graph.plots:
+            self.graph.remove_plot(plot)
+        dx = self.data[self.x_idx, self.grey].max() - self.data[self.x_idx, self.grey].min()
+        if dx == 0:
+            dx = 20
+        mn = self.data[self.x_idx, self.grey].min() - .1*dx
+        mx = self.data[self.x_idx, self.grey].max() + .1*dx
+        dy = self.data[self.y_idx, self.grey].max() - self.data[self.y_idx, self.grey].min()
+        if dy == 0:
+            dy = 40
+        fmn = self.data[self.y_idx, self.grey].min() - .2*dy
+        fmx = self.data[self.y_idx, self.grey].max() + .2*dy
+        self.graph.xmin = float(mn)
+        self.graph.xmax = float(mx)
+        self.graph.ymin = float(fmn)
+        self.graph.ymax = float(fmx)
+        self.graph.x_ticks_major = (mx - mn) / 10
+        self.graph.y_ticks_major = (fmx - fmn) / 5
+        self.plot_grey = DotPlot(color=[1, 1, 1, 1])
+        self.plot_grey.points = [(self.data[self.x_idx, i], self.data[self.y_idx, i]) for i in self.grey]
+        self.selected = DotPlot(color=[.9, 1, 0, .8])
+        self.selected.points = [(round(self.data[self.x_idx, idx], 6), round(self.data[self.y_idx, idx], 6))]
+        for plot in self.graph.plots:
+            self.graph.remove_plot(plot)
+        self.graph.add_plot(self.plot_grey)
+        self.graph.add_plot(self.selected)
+
+        '''
+        np.savez('pareto_data.npz', volume_A_tilde=self.data[0], conc_e=self.data[1], temperature=self.data[2],
+                 reaction_time=self.data[3], impurity_conc=self.data[4], prod_cost=self.data[5], mat_cost=self.data[6])
+        '''
+
+
+        '''
         self.fig, self.ax = plt.subplots()
         self.ax.set_title("plot", size="x-large")
         self.text = self.ax.text(0.01, 0.99, "selected: none",
@@ -466,29 +620,54 @@ class PLayout(BoxLayout):
         self.set_ax_lims()
         self.canv = self.fig.canvas
         self.graph.add_widget(self.canv)
+        '''
 
         self._keyboard = Window.request_keyboard(self.close_keyboard, self)
         #self._keyboard.bind(on_key_down=self.on_press)
-        self.canv.mpl_connect("pick_event", self.on_pick)
+        #self.canv.mpl_connect("pick_event", self.on_pick)
         self.spinnerx.bind(text=self.update_x)
         self.spinnery.bind(text=self.update_y)
         self.bind(grey=self.on_grey)
+        self.graph.bind(on_touch_down=self.on_pick)
 
 
     def on_grey(self, obj, value):
+        self.graph.remove_plot(self.plot_grey)
+        self.plot_grey = DotPlot(color=[1, 1, 1, 1])
+        self.plot_grey.points = [(self.data[self.x_idx, i], self.data[self.y_idx, i]) for i in self.grey]
+        self.graph.add_plot(self.plot_grey)
+        dx = self.data[self.x_idx, self.grey].max() - self.data[self.x_idx, self.grey].min()
+        if dx == 0:
+            dx = 20
+        mn = self.data[self.x_idx, self.grey].min() - .1*dx
+        mx = self.data[self.x_idx, self.grey].max() + .1*dx
+        dy = self.data[self.y_idx, self.grey].max() - self.data[self.y_idx, self.grey].min()
+        if dy == 0:
+            dy = 40
+        fmn = self.data[self.y_idx, self.grey].min() - .2*dy
+        fmx = self.data[self.y_idx, self.grey].max() + .2*dy
+        self.graph.xmin = float(mn)
+        self.graph.xmax = float(mx)
+        self.graph.ymin = float(fmn)
+        self.graph.ymax = float(fmx)
+        self.graph.x_ticks_major = (mx - mn) / 10
+        self.graph.y_ticks_major = (fmx - fmn) / 5
+        '''
         self.line.set_data(self.data[self.x_idx, self.grey],
                              self.data[self.y_idx, self.grey])
         self.set_ax_lims()
         self.canv.draw()
+        '''
 
     def on_unrestr(self, obj, value):
-        a = c_fun.fuse_arrays(self.data[self.x_idx, self.unrestr],
+        a = fuse_arrays(self.data[self.x_idx, self.unrestr],
                               self.data[self.y_idx, self.unrestr])
         ac = np.ascontiguousarray(a).view(
             np.dtype((np.void, a.dtype.itemsize * a.shape[1])))
         _, idx = np.unique(ac, return_index=True)
         idx = np.unique(idx)
         self.grey = np.array(self.unrestr[idx])
+        self.highlight_datapoint()
 
     def change_unrestr(self):
         #a = [[1, self.data[x, :], 1] for x in range(self.N)]
@@ -519,7 +698,7 @@ class PLayout(BoxLayout):
                     l += 1
             valuearray = valuearray[:l]
             idxarray = idxarray[:l]
-            ind = c_fun.search_all(valuearray, self.data[idxarray], self.unrestr)
+            ind = search_all(valuearray, self.data[idxarray], self.unrestr)
             self.sliders[i].data = self.data[i, ind]
         for i in range(self.Np, self.N, 1):
             self.sliders[i].data = self.data[i, self.unrestr]
@@ -558,9 +737,17 @@ class PLayout(BoxLayout):
                              padding=10,
                              size_hint=(1, .55)
                             )
-        self.graph = BoxLayout(orientation="vertical",
-                               size_hint=(1, .8)
-                              )
+        self.graph_layout = BoxLayout(orientation="vertical",
+                                      size_hint=(1, .8)
+                                     )
+        self.graph = MyGraph()
+        self.graph.background_color = [0, 0, 0, 0]
+        self.graph.tick_color = [1, 1, 1, 1]
+        self.graph.xlabel = self.names[self.x_idx]
+        self.graph.ylabel = self.names[self.y_idx]
+        self.graph.x_grid_label = True
+        self.graph.y_grid_label = True
+        self.graph_layout.add_widget(self.graph)
         lbl1 = Label(text="plot",
                      size_hint=(.1, .1)
                     )
@@ -591,7 +778,7 @@ class PLayout(BoxLayout):
         stklayout.add_widget(lbl3)
         stklayout.add_widget(btn_undo)
         stklayout.add_widget(btn_redo)
-        stklayout.add_widget(self.graph)
+        stklayout.add_widget(self.graph_layout)
         self.add_widget(stklayout)
 
         pmin = np.empty(self.N, dtype=float)
@@ -695,12 +882,12 @@ class PLayout(BoxLayout):
             self.boxlayouts[i].add_widget(layout)
             self.rightbox.add_widget(self.boxlayouts[i])
             self.lbl2[i] = lbl2
-        lbds = Label(text="Design\nspace",
+        lbds = Label(text="Objective\nspace",
                      size_hint=(1, float((self.Np - 1) / self.N)),
                      valign="middle",
                      halign="center"
                     )
-        lbos = Label(text="Objective\nspace",
+        lbos = Label(text="Design\nspace",
                      size_hint=(1, float(1 - (self.Np - 1) / self.N)),
                      valign="middle",
                      halign="center"
@@ -745,7 +932,7 @@ class PLayout(BoxLayout):
     def on_val(self, obj, val):
         obj_idx, = np.where(obj == self.sliders)
         obj_idx = int(obj_idx)
-        idx = c_fun.search_all(np.array([float(val)]), self.data[obj_idx:, :], self.unrestr)
+        idx = search_all(np.array([float(val)]), self.data[obj_idx:, :], self.unrestr)
         if len(idx) == 1:
             idx = idx[0]
             if idx == -1:
@@ -770,29 +957,18 @@ class PLayout(BoxLayout):
     # Get a near datapoint.
     # Set value of sliders to the value of this datapoint.
     # Used by: called by a click on mpl content
-    def on_pick(self, event):
-        if event.artist != self.line:
-            return True
-        N = len(event.ind)
-        if not N:
-            return True
-        x = event.mouseevent.xdata
-        y = event.mouseevent.ydata
-        lx_min, lx_max = self.ax.get_xlim()
-        lx = lx_max - lx_min
-        ly_min, ly_max = self.ax.get_ylim()
-        ly = ly_max - ly_min
-        distances = np.hypot((x - self.data[self.x_idx, self.grey]) / lx,
-                             (y - self.data[self.y_idx, self.grey]) / ly)
-        indmin = distances.argmin()
-        valx = float(self.data[self.x_idx, self.grey[indmin]])
-        valy = float(self.data[self.y_idx, self.grey[indmin]])
-        if valy == self.sliders[self.y_idx].value:
-            sliderx_pos = self.sliders[self.x_idx].val_into_pos(valx)
-            self.sliders[self.x_idx].value_pos = sliderx_pos, 0
-        else:
-            par = (self.sliders[self.x_idx], valx, self.sliders[self.y_idx], valy)
-            self.change_two_sliders(*par)
+    def on_pick(self, graph, event):
+        indmin = self.graph.touched(event.pos[0], event.pos[1])
+        if indmin:
+            valx = float(self.data[self.x_idx, self.grey[indmin]])
+            valy = float(self.data[self.y_idx, self.grey[indmin]])
+            if valy == self.sliders[self.y_idx].value:
+                sliderx_pos = self.sliders[self.x_idx].val_into_pos(valx)
+                self.sliders[self.x_idx].value_pos = sliderx_pos, 0
+            else:
+                par = (self.sliders[self.x_idx], valx, self.sliders[self.y_idx], valy)
+                self.change_two_sliders(*par)
+
 
     # Unbind a slider to change his value without a callback.
     # Change value to a given value or to the next higher/lower value.
@@ -804,7 +980,7 @@ class PLayout(BoxLayout):
         obj2_idx = int(obj2_idx)
         valuearray = np.array([val1, val2])
         idxarray = np.array([obj1_idx, obj2_idx])
-        idx = c_fun.search_all(valuearray, self.data[idxarray, :], self.unrestr)
+        idx = search_all(valuearray, self.data[idxarray, :], self.unrestr)
         if len(idx) == 1:
             idx = idx[0]
             if idx == -1:
@@ -826,7 +1002,6 @@ class PLayout(BoxLayout):
         self.history.save(idx)
         valuearray = self.data[:, idx]
         self.change_sliders_vals(valuearray, np.array(range(self.N)))
-
 
     # Browse through plot or undo/redo by using the keyboard.
     # Used by: called if a key is pressed
@@ -864,7 +1039,7 @@ class PLayout(BoxLayout):
                     obj2_idx = int(obj2_idx)
                     valuearray = np.array([val2])
                     idxarray = np.array([obj2_idx])
-                    idx = c_fun.search_all(valuearray, self.data[idxarray, :], self.unrestr)
+                    idx = search_all(valuearray, self.data[idxarray, :], self.unrestr)
                     if len(idx) == 1:
                         idx = idx[0]
                         if idx == -1:
@@ -907,7 +1082,7 @@ class PLayout(BoxLayout):
                     obj2_idx = int(obj2_idx)
                     valuearray = np.array([val2])
                     idxarray = np.array([obj2_idx])
-                    idx = c_fun.search_all(valuearray, self.data[idxarray, :], self.unrestr)
+                    idx = search_all(valuearray, self.data[idxarray, :], self.unrestr)
                     if len(idx) == 1:
                         idx = idx[0]
                         if idx == -1:
@@ -951,7 +1126,7 @@ class PLayout(BoxLayout):
                 idxarray = np.array([l for l in range(self.Np) if l != i])
                 p1 = p
         valuearray = valuearray[:idxarray.shape[0]]
-        ind = c_fun.search_all(valuearray, self.data[idxarray], self.unrestr)
+        ind = search_all(valuearray, self.data[idxarray], self.unrestr)
         obj1.data = p1[ind]
 
     # Call plot_params to plot with new value of restrictor.
@@ -964,7 +1139,8 @@ class PLayout(BoxLayout):
     def update_x(self, spinner, text):
         self.x_idx, = np.where(text == np.array(self.names))
         self.x_idx = int(self.x_idx)
-        self.ax.set_xlabel(self.names[self.x_idx])
+        self.graph.xlabel = self.names[self.x_idx]
+        #self.ax.set_xlabel(self.names[self.x_idx])
         self.unbind(grey=self.on_grey)
         self.grey = np.array([1])
         self.bind(grey=self.on_grey)
@@ -997,7 +1173,8 @@ class PLayout(BoxLayout):
     def update_y(self, spinner, text):
         self.y_idx, = np.where(text == np.array(self.names))
         self.y_idx = int(self.y_idx)
-        self.ax.set_ylabel(self.names[self.y_idx])
+        #self.ax.set_ylabel(self.names[self.y_idx])
+        self.graph.ylabel = self.names[self.y_idx]
         # self.set_slider_param_y(text)
         # where funktioniert evt nicht, ansonsten set slider param reanimieren
         self.unbind(grey=self.on_grey)
@@ -1044,7 +1221,7 @@ class PLayout(BoxLayout):
     # Return one x array and one y array with the unique values.
     # Used by: plot
     def filter(self, ar1, ar2):
-        a = c_fun.fuse_arrays(ar1, ar2)
+        a = fuse_arrays(ar1, ar2)
         bot_restr = np.ascontiguousarray(a).view(
             np.dtype((np.void, a.dtype.itemsize * a.shape[1])))
         _, idx = np.unique(bot_restr, return_index=True)
@@ -1057,33 +1234,26 @@ class PLayout(BoxLayout):
             yh[i] = unique[i][1]
         return xh, yh
 
-    # Used by: __init__, plot_params
-    def set_ax_lims(self):
-        dx = self.data[self.x_idx, self.grey].max() - self.data[self.x_idx, self.grey].min()
-        if dx == 0:
-            dx = 20
-        mn = self.data[self.x_idx, self.grey].min() - .1*dx
-        mx = self.data[self.x_idx, self.grey].max() + .1*dx
-        dy = self.data[self.y_idx, self.grey].max() - self.data[self.y_idx, self.grey].min()
-        if dy == 0:
-            dy = 40
-        fmn = self.data[self.y_idx, self.grey].min() - .2*dy
-        fmx = self.data[self.y_idx, self.grey].max() + .2*dy
-        self.ax.set_xlim(mn, mx)
-        self.ax.set_ylim(fmn, fmx)
-
     # Draw a yellow circle around the datapoint set by the sliders
     # and plot its value.
     # Used by: on_val, plot_params
     def highlight_datapoint(self):
+        pass
         if self.history.show() == -1:
             return
         y = self.data[self.y_idx, self.history.show()]
         x = self.data[self.x_idx, self.history.show()]
+        self.graph.remove_plot(self.selected)
+        self.selected = DotPlot(color=[.9, 1, 0, .8])
+        self.selected.points = [(x, y)]
+        self.graph.add_plot(self.selected)
+
+        '''
         self.selected.set_data(x, y)
         self.text.set_text("selected: (%s, %s)" %(str(x), str(y)))
         self.selected.set_visible(True)
         self.canv.draw()
+        '''
 
     def change_sliders_data_no_calls(self, value_array, idx_array):
         for i in idx_array:
@@ -1105,7 +1275,7 @@ class PLayout(BoxLayout):
                             valuearray[l] = self.sliders[j].value
                         idxarray[l] = j
                         l += 1
-                ind = c_fun.search_all(valuearray, self.data[idxarray], self.unrestr)
+                ind = search_all(valuearray, self.data[idxarray], self.unrestr)
                 self.sliders[i].data = self.data[i, ind]
         """
         for i in range(self.N):
@@ -1153,12 +1323,13 @@ class PLayout(BoxLayout):
             s = self.sliders[i]
             p = self.data[i]
             if s.bot_val > p[idx]:
-                s.bot_val = p[idx]
+                s.bot_val = float(p[idx])
             if s.top_val < p[idx]:
-                s.top_val = p[idx]
+                s.top_val = float(p[idx])
         valuearray = np.array([self.data[i, idx] for i in range(self.N)])
         self.change_sliders_vals(valuearray, np.array(range(self.N)))
         self.change_unrestr()
+        self.highlight_datapoint()
 
     # Get next state from history object and restore it.
     # Change restrictors so the sliders are in an unrestricted area.
@@ -1177,6 +1348,8 @@ class PLayout(BoxLayout):
         valuearray = np.array([self.data[i, idx] for i in range(self.N)])
         self.change_sliders_vals(valuearray, np.array(range(self.N)))
         self.change_unrestr()
+        self.highlight_datapoint()
+
 
 # App
 class ProjectApp(App):
