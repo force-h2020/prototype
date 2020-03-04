@@ -6,6 +6,9 @@ from .MCOsolver import MCOsolver
 from .pareto_process_db import Pareto_process_db
 from .process_db_access import Process_db_access
 
+import kivy.core.window as window
+from kivy.base import EventLoop
+from kivy.cache import Cache
 
 class MCOwrapper:
     # default constructor
@@ -14,6 +17,7 @@ class MCOwrapper:
         self.R = R
         self.C = C
         self.obj = Objectives(self.R, self.C) #<-- calls function editor
+        reset()
         self.constraints = Constraints(self.R) 
         self.ini = Initializer()
         obj_f = lambda y: self.obj.obj_calc(y)[0]
@@ -45,3 +49,10 @@ class MCOwrapper:
         self.pp_db = Pareto_process_db(res)
         self.pp_db.write_csv()
         return res
+
+def reset():
+    if not EventLoop.event_listeners:
+        window.Window = window.core_select_lib('window', window.window_impl, True)
+        Cache.print_usage()
+        for cat in Cache._categories:
+            Cache._objects[cat] = {}
