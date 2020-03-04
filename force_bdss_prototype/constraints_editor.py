@@ -8,7 +8,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.relativelayout import RelativeLayout
 from kivy.uix.label import Label
 from kivy.properties import StringProperty, NumericProperty
-from kvlib import MinMaxSlider, EditableLabel, KeyboardListener
+from .kvlib import MinMaxSlider, EditableLabel, KeyboardListener
 
 #kv
 Builder.load_string('''
