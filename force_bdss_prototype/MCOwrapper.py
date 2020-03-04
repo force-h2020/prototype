@@ -39,7 +39,7 @@ class MCOwrapper:
         self.mcosolver = MCOsolver(y0, constr, obj_f, obj_jac)
 
     def solve(self):
-        results = self.mcosolver.solve(N=30)
+        results = self.mcosolver.solve(N=10)
         res = np.empty((results.shape[0], results.shape[1] + 3))
         for i in range(results.shape[0]):
             y = results[i, :]
