@@ -1,10 +1,13 @@
 CHANGELOG
 ---------
 
+Version 0.4.0
+-------------
+
 Version 0.3.0
 -------------
 
-Released:
+Released: 24 Feb 2020
 
 Release notes
 ~~~~~~~~~~~~~
