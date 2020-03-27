@@ -1,53 +1,28 @@
+from jax.config import config
+import jax.numpy as jnp
+from jax import grad, jit
 import numpy as np
-from scipy.special import factorial
 
 from force_bdss.api import DataValue, Slot, BaseDataSource
+
+config.update("jax_enable_x64", True)
 
 
 class ImpurityConcentrationDataSource(BaseDataSource):
     def run(self, model, parameters):
-        V_a_tilde = parameters[0].value
-        C_conc_e = parameters[1].value
-        temperature = parameters[2].value
-        reaction_time = parameters[3].value
-        arrhenius_nu_main_reaction = parameters[4].value
-        arrhenius_delta_H_main_reaction = parameters[5].value
-        arrhenius_nu_secondary_reaction = parameters[6].value
-        arrhenius_delta_H_secondary_reaction = parameters[7].value
-        reactor_volume = parameters[8].value
-        A_density = parameters[9].value
-        B_density = parameters[10].value
-        C_density = parameters[11].value
 
-        X = np.zeros(7, float)
-        X[0] = A_density * (1 -
-                            C_conc_e / C_density) * V_a_tilde / reactor_volume
-        X[1] = B_density * (reactor_volume - V_a_tilde) / reactor_volume
-        X[2] = 0
-        X[3] = 0
-        X[4] = C_conc_e * V_a_tilde / reactor_volume
-        X[5] = temperature
-        X[6] = reaction_time
+        input_data = [p.value for p in parameters]
 
-        M = (
-            np.array([arrhenius_nu_main_reaction,
-                      arrhenius_nu_secondary_reaction]),
-            np.array([arrhenius_delta_H_main_reaction,
-                      arrhenius_delta_H_secondary_reaction])
+        objective_value = np.asarray(
+            self.objective(input_data), dtype=np.float64
         )
-        X_mat, grad_x_X_mat = _run(X, M)
-        impurity_conc = float(X_mat[3] + X_mat[4] + X_mat[0] + X_mat[1])
-        dIda = np.sum(grad_x_X_mat[0:2, 0] + grad_x_X_mat[3:5, 0])
-        dIdb = np.sum(grad_x_X_mat[0:2, 1] + grad_x_X_mat[3:5, 1])
-        dIdp = np.sum(grad_x_X_mat[0:2, 2] + grad_x_X_mat[3:5, 2])
-        dIds = np.sum(grad_x_X_mat[0:2, 3] + grad_x_X_mat[3:5, 3])
-        dIdc = np.sum(grad_x_X_mat[0:2, 4] + grad_x_X_mat[3:5, 4])
-        dIdT = np.sum(grad_x_X_mat[0:2, 5] + grad_x_X_mat[3:5, 5])
-        dIdt = np.sum(grad_x_X_mat[0:2, 6] + grad_x_X_mat[3:5, 6])
-        grad_x_I = np.array([dIda, dIdb, dIdp, dIds, dIdc, dIdT, dIdt])
+        gradient_value = np.asarray(
+            self.gradient(input_data), dtype=np.float64
+        )
+
         return [
-            DataValue(value=impurity_conc, type="CONCENTRATION"),
-            DataValue(value=grad_x_I, type="CONCENTRATION_GRADIENT")
+            DataValue(value=objective_value, type="CONCENTRATION"),
+            DataValue(value=gradient_value, type="CONCENTRATION_GRADIENT"),
         ]
 
     def slots(self, model):
@@ -57,217 +32,163 @@ class ImpurityConcentrationDataSource(BaseDataSource):
                 Slot(description="C_e concentration", type="CONCENTRATION"),
                 Slot(description="Temperature", type="TEMPERATURE"),
                 Slot(description="Reaction time", type="TIME"),
-                Slot(description="Arrhenius nu main reaction",
-                     type="ARRHENIUS_NU"),
-                Slot(description="Arrhenius delta H main reaction",
-                     type="ARRHENIUS_DELTA_H"),
-                Slot(description="Arrhenius nu secondary reaction",
-                     type="ARRHENIUS_NU"),
-                Slot(description="Arrhenius delta H secondary reaction",
-                     type="ARRHENIUS_DELTA_H"),
+                Slot(
+                    description="Arrhenius nu main reaction",
+                    type="ARRHENIUS_NU",
+                ),
+                Slot(
+                    description="Arrhenius delta H main reaction",
+                    type="ARRHENIUS_DELTA_H",
+                ),
+                Slot(
+                    description="Arrhenius nu secondary reaction",
+                    type="ARRHENIUS_NU",
+                ),
+                Slot(
+                    description="Arrhenius delta H secondary reaction",
+                    type="ARRHENIUS_DELTA_H",
+                ),
                 Slot(description="Reactor volume", type="VOLUME"),
                 Slot(description="A pure density", type="DENSITY"),
                 Slot(description="B pure density", type="DENSITY"),
                 Slot(description="C pure density", type="DENSITY"),
             ),
             (
-                Slot(description="Impurity concentration",
-                     type="CONCENTRATION"),
-                Slot(description="Impurity concentration gradient",
-                     type="CONCENTRATION_GRADIENT")
-            )
+                Slot(
+                    description="Impurity concentration", type="CONCENTRATION"
+                ),
+                Slot(
+                    description="Impurity concentration gradient",
+                    type="CONCENTRATION_GRADIENT",
+                ),
+            ),
         )
 
+    def objective(self, inputs):
+        """ This method formulates the impurity concentration objective as
+        a series of input transformations. All the transformations as
+        `jax.numpy` operations, that can be differentiated automatically
+        using `jax`.
+        """
+        transformed_inputs = preliminary_transformation(inputs)
 
-def _analytical_solution(A0, B0, P0, S0, C0, k_ps, t):
-    a = _alpha(A0, B0, np.sum(k_ps), t)
-    A = A0 - a
-    B = B0 - a
-    P = P0 + k_ps[0] / np.sum(k_ps) * a
-    S = S0 + k_ps[1] / np.sum(k_ps) * a
-    C = C0
-    return np.array([A, B, P, S, C])
+        result_vector = analytical_solution(transformed_inputs)
 
+        return jnp.dot(jnp.array([1.0, 1.0, 0.0, 1.0, 1.0]), result_vector)
 
-def _sum1(A0, B0, k, t, n=5):
-    exponent = np.arange(1, n + 1, 1)
-    denominator = factorial(exponent)
-    result = ((B0 - A0) ** (exponent - 1)) * (k * t) ** exponent
-    return np.sum(result / denominator)
-
-
-def _sum2(A0, B0, k, t, n=5):
-    exponent = np.arange(2, n + 1, 1)
-    denominator = factorial(exponent) / (exponent - 1)
-    result = ((B0 - A0) ** (exponent - 2)) * (k * t) ** exponent
-    return np.sum(result / denominator)
+    def gradient(self, inputs):
+        """ This method calculates the gradient of the `self.objective`
+        function using the `jax` built-in `grad` method. We evaluate the
+        gradient vector at the `inputs`.
+        """
+        return grad(self.objective)(inputs)
 
 
-def _sum3(A0, B0, k, t, n=5):
-    exponent = np.arange(1, n + 1, 1)
-    denominator = factorial(exponent) / exponent
-    result = ((B0 - A0) ** (exponent - 1)) * (k * t) ** (exponent - 1)
-    return np.sum(result / denominator)
+@jit
+def preliminary_transformation(inputs):
+    """ The preliminary transformation of the input chemical parameters.
+    The transformations are described in section 3.1. 'The reaction
+    model', equations (3.1, 3.7).
+    """
+    v_a_tilde = inputs[0]
+    c_conc_e = inputs[1]
+    temperature = inputs[2]
+    reaction_time = inputs[3]
+    arrhenius_nu_main_reaction = inputs[4]
+    arrhenius_delta_h_main_reaction = inputs[5]
+    arrhenius_nu_secondary_reaction = inputs[6]
+    arrhenius_delta_h_secondary_reaction = inputs[7]
+    reactor_volume = inputs[8]
+    density_a = inputs[9]
+    density_b = inputs[10]
+    density_c = inputs[11]
+
+    # Volume concentrations in the reactor (see equations 3.1)
+    initial_conc_a = (
+        density_a * (1 - c_conc_e / density_c) * v_a_tilde / reactor_volume
+    )
+    initial_conc_b = density_b * (reactor_volume - v_a_tilde) / reactor_volume
+    initial_conc_c = c_conc_e * v_a_tilde / reactor_volume
+    initial_conc_p = 0.0
+    initial_conc_s = 0.0
+
+    # Materials related (see equations 3.7)
+    constant_r = 8.3144598e-3
+    k_ps_1 = arrhenius_nu_main_reaction * jnp.exp(
+        -arrhenius_delta_h_main_reaction / constant_r / temperature
+    )
+    k_ps_2 = arrhenius_nu_secondary_reaction * jnp.exp(
+        -arrhenius_delta_h_secondary_reaction / constant_r / temperature
+    )
+
+    return jnp.array(
+        [
+            initial_conc_a,
+            initial_conc_b,
+            initial_conc_p,
+            initial_conc_s,
+            initial_conc_c,
+            k_ps_1,
+            k_ps_2,
+            reaction_time,
+        ]
+    )
 
 
-def _alpha(A0, B0, k, t):
-    epsilon = np.abs((A0 - B0) * k * t)
-    if epsilon > 8e-2:
-        multiplier = np.exp((B0 - A0) * k * t)
-        result = A0 * B0 * (multiplier - 1) / (B0 * multiplier - A0)
+def analytical_solution(input):
+    """ Analytical solution of the kinetic reaction model (see section 3.1,
+    equation (3.6)). The solution is provided by equation (3.9).
+    The analytical solution updates the initial concentrations of the
+    chemicals at t = 0 by the values, defined by alpha(t).
+    """
+    a = concentration_alpha(input[0], input[1], input[5] + input[6], input[7])
+    update = jnp.array(
+        [
+            -a,
+            -a,
+            input[5] / (input[5] + input[6]) * a,
+            input[6] / (input[5] + input[6]) * a,
+            0,
+        ]
+    )
+    return input[:5] + update
+
+
+def concentration_alpha(concentration_a, concentration_b, k, t):
+    """ Calculates the concentrations change (denoted by alpha(t).
+    The analytical solution is provided by the equation (3.9) and
+    (3.10). The later one is a continuous approximation of the actual
+    analytical solution.
+    """
+    epsilon = jnp.abs((concentration_a - concentration_b) * k * t)
+    if epsilon > 8.0e-2:
+        multiplier = jnp.exp((concentration_b - concentration_a) * k * t)
+        result = (
+            concentration_a
+            * concentration_b
+            * (multiplier - 1.0)
+            / (concentration_b * multiplier - concentration_a)
+        )
     else:
-        sum1ab = _sum1(A0, B0, k, t)
-        sum1ba = _sum1(B0, A0, k, t)
-        result = (A0 * B0 * sum1ab) / (1. + (B0 * sum1ab))
-        result += (A0 * B0 * sum1ba) / (1. + (A0 * sum1ba))
-        result /= 2
+        sum1ab = alpha_internal_sum(concentration_a, concentration_b, k, t)
+        sum1ba = alpha_internal_sum(concentration_b, concentration_a, k, t)
+        result = (concentration_a * concentration_b * sum1ab) / (
+            1.0 + (concentration_b * sum1ab)
+        )
+        result += (concentration_a * concentration_b * sum1ba) / (
+            1.0 + (concentration_a * sum1ba)
+        )
+        result /= 2.0
     return result
 
 
-def _dalda(A0, B0, k, t):
-    epsilon = np.abs((A0 - B0) * k * t)
-    if epsilon > 8e-2:
-        B0expo = B0 * np.exp((B0 - A0) * k * t)
-        result = B0expo * (B0expo + k * t * A0**2 - k * t * A0 * B0 - B0)
-        result /= (B0expo - A0)**2
-    else:
-        sum1ab = _sum1(A0, B0, k, t)
-        sum1ba = _sum1(B0, A0, k, t)
-        sum2ab = _sum2(A0, B0, k, t)
-        sum2ba = _sum2(B0, A0, k, t)
-        p1 = (B0 * sum1ab - A0 * B0 * sum2ab) * (1 + B0 * sum1ab)
-        p2 = (-B0 * sum2ab) * (A0 * B0 * sum1ab)
-        p3 = (B0 * sum1ba + A0 * B0 * sum2ba) * (1 + A0 * sum1ba)
-        p4 = (sum1ba + A0 * sum2ba) * (A0 * B0 * sum1ba)
-        result = (p1 - p2) / (1 + B0 * sum1ab)**2
-        result += (p3 - p4) / (1 + A0 * sum1ba)**2
-        result /= 2
-    return result
-
-
-def _daldb(A0, B0, k, t):
-    epsilon = np.abs((A0 - B0) * k * t)
-    if epsilon > 8e-2:
-        expo = np.exp((B0 - A0) * k * t)
-        B0expo = B0 * expo
-        result = A0 * ((k * t * B0**2 - k * t * A0 * B0 - A0) * expo + A0)
-        result /= (B0expo - A0)**2
-    else:
-        sum1ab = _sum1(A0, B0, k, t)
-        sum1ba = _sum1(B0, A0, k, t)
-        sum2ab = _sum2(A0, B0, k, t)
-        sum2ba = _sum2(B0, A0, k, t)
-        p1 = (A0 * sum1ab + A0 * B0 * sum2ab) * (1 + B0 * sum1ab)
-        p2 = (sum1ab + B0 * sum2ab) * A0 * B0 * sum1ab
-        p3 = (A0 * sum1ba - A0 * B0 * sum2ba) * (1 + A0 * sum1ba)
-        p4 = A0 * (-sum2ba) * A0 * B0 * sum1ba
-        result = (p1 - p2) / (1 + B0 * sum1ab)**2
-        result += (p3 - p4) / (1 + A0 * sum1ba)**2
-        result /= 2
-    return result
-
-
-def _daldk(A0, B0, k, t):
-    epsilon = np.abs((A0 - B0) * k * t)
-    if epsilon > 8e-2:
-        B0expo = B0 * np.exp((B0 - A0) * k * t)
-        result = t * A0 * B0expo * (B0 - A0)**2 / (B0expo - A0)**2
-    else:
-        sum1ab = _sum1(A0, B0, k, t)
-        sum1ba = _sum1(B0, A0, k, t)
-        sum3ab = _sum3(A0, B0, k, t)
-        sum3ba = _sum3(B0, A0, k, t)
-        p1 = A0 * B0 * t * sum3ab * (1 + B0 * sum1ab)
-        p2 = B0 * t * sum3ab * A0 * B0 * sum1ab
-        p3 = A0 * B0 * t * sum3ba * (1 + A0 * sum1ba)
-        p4 = A0 * t * sum3ba * A0 * B0 * sum1ba
-        result = (p1 - p2) / (1 + B0 * sum1ab)**2
-        result += (p3 - p4) / (1 + A0 * sum1ba)**2
-        result /= 2
-    return result
-
-
-def _daldt(A0, B0, k, t):
-    epsilon = np.abs((A0 - B0) * k * t)
-    if epsilon > 8e-2:
-        B0expo = B0 * np.exp((B0 - A0) * k * t)
-        result = k * A0 * B0expo * (B0 - A0)**2 / (B0expo - A0)**2
-    else:
-        sum1ab = _sum1(A0, B0, k, t)
-        sum1ba = _sum1(B0, A0, k, t)
-        sum3ab = _sum3(A0, B0, k, t)
-        sum3ba = _sum3(B0, A0, k, t)
-        p1 = A0 * B0 * k * sum3ab * (1 + B0 * sum1ab)
-        p2 = B0 * k * sum3ab * A0 * B0 * sum1ab
-        p3 = A0 * B0 * k * sum3ba * (1 + A0 * sum1ba)
-        p4 = A0 * k * sum3ba * A0 * B0 * sum1ba
-        result = (p1 - p2) / (1 + B0 * sum1ab)**2
-        result += (p3 - p4) / (1 + A0 * sum1ba)**2
-        result /= 2
-    return result
-
-
-def _grad_x(A0, B0, P0, S0, C0, k_ps, t):
-    grad_x_X_mat = np.empty((5, 7))
-    kp, ks = k_ps
-    k = np.sum(k_ps)
-    kpk = kp / k
-    ksk = ks / k
-    da = _dalda(A0, B0, k, t)
-    db = _daldb(A0, B0, k, t)
-    dk = _daldk(A0, B0, k, t)
-    dt = _daldt(A0, B0, k, t)
-    al = _alpha(A0, B0, k, t)
-    dada = 1 - da
-    dadb = - db
-    dadk = - dk
-    dadt = - dt
-    grad_x_X_mat[0, :] = np.array([dada, dadb, 0, 0, 0, dadk, dadt])
-    dbda = - da
-    dbdb = 1 - db
-    dbdk = - dk
-    dbdt = - dt
-    grad_x_X_mat[1, :] = np.array([dbda, dbdb, 0, 0, 0, dbdk, dbdt])
-    dpda = kpk * da
-    dpdb = kpk * db
-    dpdp = 1
-    dpdk = ksk / k * al + kpk * dk
-    dpdt = kpk * dt
-    grad_x_X_mat[2, :] = np.array([dpda, dpdb, dpdp, 0, 0, dpdk, dpdt])
-    dsda = ksk * da
-    dsdb = ksk * db
-    dsds = 1
-    dsdk = kpk / k * al + ksk * dk
-    dsdt = ksk * dt
-    grad_x_X_mat[3, :] = np.array([dsda, dsdb, 0, dsds, 0, dsdk, dsdt])
-    grad_x_X_mat[4, :] = np.array([0, 0, 0, 0, 1, 0, 0])
-    return grad_x_X_mat
-
-
-def _calc_k(T, M):
-    M_v, M_delta_H = M
-    R = 8.3144598e-3
-    k_ps = M_v * np.exp(-M_delta_H / (R * T))
-    return k_ps
-
-
-def _run(X0, M):
-    R = 8.3144598e-3
-    k_ps = _calc_k(X0[5], M)
-    X_mat = _analytical_solution(X0[0],
-                                 X0[1],
-                                 X0[2],
-                                 X0[3],
-                                 X0[4],
-                                 k_ps,
-                                 X0[6])
-    grad_x_X_mat = _grad_x(X0[0],
-                           X0[1],
-                           X0[2],
-                           X0[3],
-                           X0[4],
-                           k_ps,
-                           X0[6])
-    dkdT = 1 / (R * X0[5])**2 * np.sum(k_ps * M[0])
-    grad_x_X_mat[:, 5] = dkdT * grad_x_X_mat[:, 5]
-    return X_mat, grad_x_X_mat
+@jit
+def alpha_internal_sum(concentration_a, concentration_b, k, t):
+    """ Auxiliary method to calculate the sum introduced in equation (3.10).
+    """
+    exponent = jnp.array([1.0, 2.0, 3.0, 4.0, 5.0])
+    denominator = jnp.array([1.0, 2.0, 6.0, 24.0, 120.0])
+    result = ((concentration_b - concentration_a) ** (exponent - 1)) * (
+        k * t
+    ) ** exponent
+    return jnp.sum(result / denominator)

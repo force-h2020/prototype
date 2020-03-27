@@ -7,7 +7,10 @@ PYTHON_VERSIONS = ["3.6"]
 
 ADDITIONAL_CORE_DEPS = ["scipy>=1.2.1"]
 
-PIP_DEPS = []
+PIP_DEPS = [
+    "jax",
+    "jaxlib==0.1.39"
+]
 
 
 @click.group()
@@ -37,6 +40,12 @@ def install(python_version):
     )
 
     if len(PIP_DEPS):
+        check_call(
+            [
+                "edm", "run", "-e", env_name, "--",
+                "pip", "install", "--upgrade", "pip"
+             ]
+        )
         check_call(
             ["edm", "run", "-e", env_name, "--", "pip", "install"] + PIP_DEPS
         )

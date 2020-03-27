@@ -14,11 +14,3 @@ class TestImpurityConcentrationDataSource(TemplateTestGradientDataSource):
         self.assertEqual(2, len(self.output_slots))
 
         self.assertEqual("CONCENTRATION", self.output_slots[0].type)
-
-    def test_param_to_gradient(self):
-        """ This test requires refactoring this DataSource"""
-        pass
-
-    def test_gradient_convergence(self):
-        """ This test requires refactoring this DataSource"""
-        pass
