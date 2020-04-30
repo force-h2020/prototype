@@ -8,14 +8,14 @@ from force_bdss.api import (
     WeightedMCOProgressEvent
 )
 
-from .weighted_scipy_engine import WeightedScipyEngine
+from force_bdss.mco.optimizers.scipy_optimizer import ScipyOptimizer
 
 
 class WeightedMCOModel(BaseMCOModel):
 
     #: Algorithms available to work with
     algorithms = Enum(
-        *WeightedScipyEngine.class_traits()["algorithms"].handler.values
+        *ScipyOptimizer.class_traits()["algorithms"].handler.values
     )
 
     #: Search grid resolution per KPI
