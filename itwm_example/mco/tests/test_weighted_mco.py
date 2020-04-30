@@ -98,9 +98,9 @@ class TestWeightedMCO(TestCase, UnittestTools):
         kpis = [DataValue(value=1), DataValue(value=2)]
         with self.assertTraitChanges(evaluator.mco_model,
                                      "event",
-                                     count=model.num_points - 2):
+                                     count=model.num_points):
             with mock.patch(
                 "force_bdss.api.Workflow.execute", return_value=kpis
             ) as mock_exec:
                 mco.run(evaluator)
-                self.assertEqual(49, mock_exec.call_count)
+                self.assertEqual(63, mock_exec.call_count)

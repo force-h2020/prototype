@@ -187,4 +187,4 @@ uml:
 .PHONY: apidoc
 apidoc:
 	-rm -rf source/api/
-	sphinx-apidoc -H 'Enthought plugins' -M -o source/api ../ ../setup.py ../ci ../*tests*
+	sphinx-apidoc -o source/api ../itwm_example
