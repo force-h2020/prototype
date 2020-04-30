@@ -1,7 +1,11 @@
 import logging
 
 from force_bdss.api import BaseMCO, DataValue
-from .weighted_scipy_engine import WeightedScipyEngine
+
+from force_bdss.mco.optimizer_engines.weighted_optimizer_engine import (
+    WeightedOptimizerEngine
+)
+from force_bdss.mco.optimizers.scipy_optimizer import ScipyOptimizer
 
 
 log = logging.getLogger(__name__)
@@ -12,14 +16,16 @@ class WeightedMCO(BaseMCO):
 
         model = evaluator.mco_model
 
-        optimizer = WeightedScipyEngine(
+        optim = ScipyOptimizer(algorithms=model.algorithms)
+
+        optimizer = WeightedOptimizerEngine(
             kpis=model.kpis,
             parameters=model.parameters,
             num_points=model.num_points,
-            algorithms=model.algorithms,
             space_search_mode=model.space_search_mode,
             single_point_evaluator=evaluator,
             verbose_run=model.verbose_run,
+            optimizer=optim,
         )
 
         for (
