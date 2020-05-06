@@ -81,3 +81,24 @@ class TestWeightedMCO(TestCase, UnittestTools):
             self.model._start_event_type(), WeightedMCOStartEvent)
         self.assertIsInstance(
             self.model._progress_event_type(), WeightedMCOProgressEvent)
+
+    def test_simple_run(self):
+        mco = self.factory.create_optimizer()
+        model = self.factory.create_model()
+        model.parameters = self.parameters
+        model.kpis = [
+            KPISpecification(auto_scale=False),
+            KPISpecification(auto_scale=False),
+        ]
+
+        evaluator = Workflow()
+        evaluator.mco_model = model
+        kpis = [DataValue(value=1), DataValue(value=2)]
+        with self.assertTraitChanges(evaluator.mco_model,
+                                     "event",
+                                     count=model.num_points):
+            with mock.patch(
+                "force_bdss.api.Workflow.execute", return_value=kpis
+            ) as mock_exec:
+                mco.run(evaluator)
+                self.assertEqual(63, mock_exec.call_count)
