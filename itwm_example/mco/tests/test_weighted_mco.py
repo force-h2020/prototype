@@ -1,4 +1,4 @@
-from unittest import TestCase
+from unittest import TestCase, mock
 
 from traits.testing.unittest_tools import UnittestTools
 
@@ -6,7 +6,9 @@ from force_bdss.api import (
     KPISpecification,
     FixedMCOParameterFactory,
     WeightedMCOStartEvent,
-    WeightedMCOProgressEvent
+    WeightedMCOProgressEvent,
+    Workflow,
+    DataValue,
 )
 
 from itwm_example.mco.weighted_mco_factory import WeightedMCOFactory
