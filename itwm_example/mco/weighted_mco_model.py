@@ -4,17 +4,18 @@ from traitsui.api import View, Item
 from force_bdss.api import (
     BaseMCOModel,
     PositiveInt,
-    WeightedOptimizerEngine,
     WeightedMCOStartEvent,
     WeightedMCOProgressEvent
 )
+
+from force_bdss.mco.optimizers.scipy_optimizer import ScipyOptimizer
 
 
 class WeightedMCOModel(BaseMCOModel):
 
     #: Algorithms available to work with
     algorithms = Enum(
-        *WeightedOptimizerEngine.class_traits()["algorithms"].handler.values
+        *ScipyOptimizer.class_traits()["algorithms"].handler.values
     )
 
     #: Search grid resolution per KPI
