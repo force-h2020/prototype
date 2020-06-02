@@ -1,3 +1,6 @@
+#  (C) Copyright 2010-2020 Enthought, Inc., Austin, TX
+#  All rights reserved.
+
 from itwm_example.pure_densities.pure_densities import PureDensities
 from itwm_example.pure_densities.pure_densities_model import PureDensitiesModel
 

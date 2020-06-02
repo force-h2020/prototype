@@ -1,3 +1,6 @@
+#  (C) Copyright 2010-2020 Enthought, Inc., Austin, TX
+#  All rights reserved.
+
 from itwm_example.mco.weighted_mco_factory import WeightedMCOFactory
 from itwm_example.pure_densities.pure_densities_factory import \
     PureDensitiesFactory

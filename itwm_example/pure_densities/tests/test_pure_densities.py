@@ -1,3 +1,6 @@
+#  (C) Copyright 2010-2020 Enthought, Inc., Austin, TX
+#  All rights reserved.
+
 from itwm_example.tests.template_test_classes.template_test_data_source \
     import TemplateTestDataSource
 
