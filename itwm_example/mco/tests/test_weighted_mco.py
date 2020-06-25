@@ -106,4 +106,4 @@ class TestWeightedMCO(TestCase, UnittestTools):
                 "force_bdss.api.Workflow.execute", return_value=kpis
             ) as mock_exec:
                 mco.run(evaluator)
-                self.assertEqual(63, mock_exec.call_count)
+                self.assertEqual(54, mock_exec.call_count)
