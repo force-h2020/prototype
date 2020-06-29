@@ -57,11 +57,11 @@ class Process_db_access:
             tot_cost_A = cost_purification * (C_e / self.C_supplier - 1)**2
             tot_cost_A += const_A
             tot_cost_A *= V_a
-            tot_cost_A += V_r * self.quad_coeff * (V_a - 600)**2
+            tot_cost_A += V_r * self.quad_coeff * (V_a - 0.6 * V_r)**2
             tot_cost_B = V_b * cost_B
             cost = float(tot_cost_A + tot_cost_B)
             dva = const_A - cost_B + cost_purification * (C_e / self.C_supplier - 1)**2
-            dva += V_r * self.quad_coeff * 2 * (V_a - 600)
+            dva += V_r * self.quad_coeff * 2 * (V_a - 0.6 * V_r)
             dce = V_a * cost_purification * (2 * C_e / self.C_supplier**2 - 2 / self.C_supplier)
             grad_y_cost = np.array([dva, dce, 0, 0])
             return (cost / 100, grad_y_cost / 100)
