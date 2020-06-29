@@ -137,13 +137,13 @@ class Objectives:
         grad_X_x[:5, :] = grad_X_x_mat
         grad_X_x[5, 5] = 1
         grad_X_x[6, 6] = 1
-        hgrad_y_XO = self.grad_y_XO.subs(dAdA0, grad_X_x[0,0]).subs(dBdA0, grad_X_x[0,1]).subs(dPdA0, grad_X_x[0,2]).subs(dSdA0, grad_X_x[0,3]).subs(dCdA0, grad_X_x[0,4]).subs(dTdA0, grad_X_x[0,5]).subs(dtdA0, grad_X_x[0,6])
-        hgrad_y_XO = hgrad_y_XO.subs(dAdB0, grad_X_x[1,0]).subs(dBdB0, grad_X_x[1,1]).subs(dPdB0, grad_X_x[1,2]).subs(dSdB0, grad_X_x[1,3]).subs(dCdB0, grad_X_x[1,4]).subs(dTdB0, grad_X_x[1,5]).subs(dtdB0, grad_X_x[1,6])
-        hgrad_y_XO = hgrad_y_XO.subs(dAdP0, grad_X_x[2,0]).subs(dBdP0, grad_X_x[2,1]).subs(dPdP0, grad_X_x[2,2]).subs(dSdP0, grad_X_x[2,3]).subs(dCdP0, grad_X_x[2,4]).subs(dTdP0, grad_X_x[2,5]).subs(dtdP0, grad_X_x[2,6])
-        hgrad_y_XO = hgrad_y_XO.subs(dAdS0, grad_X_x[3,0]).subs(dBdS0, grad_X_x[3,1]).subs(dPdS0, grad_X_x[3,2]).subs(dSdS0, grad_X_x[3,3]).subs(dCdS0, grad_X_x[3,4]).subs(dTdS0, grad_X_x[3,5]).subs(dtdS0, grad_X_x[3,6])
-        hgrad_y_XO = hgrad_y_XO.subs(dAdC0, grad_X_x[4,0]).subs(dBdC0, grad_X_x[4,1]).subs(dPdC0, grad_X_x[4,2]).subs(dSdC0, grad_X_x[4,3]).subs(dCdC0, grad_X_x[4,4]).subs(dTdC0, grad_X_x[4,5]).subs(dtdC0, grad_X_x[4,6])
-        hgrad_y_XO = hgrad_y_XO.subs(dAdT0, grad_X_x[5,0]).subs(dBdT0, grad_X_x[5,1]).subs(dPdT0, grad_X_x[5,2]).subs(dSdT0, grad_X_x[5,3]).subs(dCdT0, grad_X_x[5,4]).subs(dTdT0, grad_X_x[5,5]).subs(dtdT0, grad_X_x[5,6])
-        hgrad_y_XO = hgrad_y_XO.subs(dAdt0, grad_X_x[6,0]).subs(dBdt0, grad_X_x[6,1]).subs(dPdt0, grad_X_x[6,2]).subs(dSdt0, grad_X_x[6,3]).subs(dCdt0, grad_X_x[6,4]).subs(dTdt0, grad_X_x[6,5]).subs(dtdt0, grad_X_x[6,6])
+        hgrad_y_XO = self.grad_y_XO.subs(dAdA0, grad_X_x[0,0]).subs(dBdA0, grad_X_x[1,0]).subs(dPdA0, grad_X_x[2,0]).subs(dSdA0, grad_X_x[3,0]).subs(dCdA0, grad_X_x[4,0]).subs(dTdA0, grad_X_x[5,0]).subs(dtdA0, grad_X_x[6,0])
+        hgrad_y_XO = hgrad_y_XO.subs(dAdB0, grad_X_x[0,1]).subs(dBdB0, grad_X_x[1,1]).subs(dPdB0, grad_X_x[2,1]).subs(dSdB0, grad_X_x[3,1]).subs(dCdB0, grad_X_x[4,1]).subs(dTdB0, grad_X_x[5,1]).subs(dtdB0, grad_X_x[6,1])
+        hgrad_y_XO = hgrad_y_XO.subs(dAdP0, grad_X_x[0,2]).subs(dBdP0, grad_X_x[1,2]).subs(dPdP0, grad_X_x[2,2]).subs(dSdP0, grad_X_x[3,2]).subs(dCdP0, grad_X_x[4,2]).subs(dTdP0, grad_X_x[5,2]).subs(dtdP0, grad_X_x[6,2])
+        hgrad_y_XO = hgrad_y_XO.subs(dAdS0, grad_X_x[0,3]).subs(dBdS0, grad_X_x[1,3]).subs(dPdS0, grad_X_x[2,3]).subs(dSdS0, grad_X_x[3,3]).subs(dCdS0, grad_X_x[4,3]).subs(dTdS0, grad_X_x[5,3]).subs(dtdS0, grad_X_x[6,3])
+        hgrad_y_XO = hgrad_y_XO.subs(dAdC0, grad_X_x[0,4]).subs(dBdC0, grad_X_x[1,4]).subs(dPdC0, grad_X_x[2,4]).subs(dSdC0, grad_X_x[3,4]).subs(dCdC0, grad_X_x[4,4]).subs(dTdC0, grad_X_x[5,4]).subs(dtdC0, grad_X_x[6,4])
+        hgrad_y_XO = hgrad_y_XO.subs(dAdT0, grad_X_x[0,5]).subs(dBdT0, grad_X_x[1,5]).subs(dPdT0, grad_X_x[2,5]).subs(dSdT0, grad_X_x[3,5]).subs(dCdT0, grad_X_x[4,5]).subs(dTdT0, grad_X_x[5,5]).subs(dtdT0, grad_X_x[6,5])
+        hgrad_y_XO = hgrad_y_XO.subs(dAdt0, grad_X_x[0,6]).subs(dBdt0, grad_X_x[1,6]).subs(dPdt0, grad_X_x[2,6]).subs(dSdt0, grad_X_x[3,6]).subs(dCdt0, grad_X_x[4,6]).subs(dTdt0, grad_X_x[5,6]).subs(dtdt0, grad_X_x[6,6])
         O = np.zeros(len(self.yO) + len(self.XO), dtype=np.float)
         grad_y_O = np.zeros((len(self.yO) + len(self.XO), 4), dtype=np.float)
         for i in range(len(self.yO)):
@@ -152,9 +152,11 @@ class Objectives:
         for i in range(len(self.XO)):
             O[i] = self.XO[i].subs(conc_A, x_mat[0]).subs(conc_B, x_mat[1]).subs(conc_P, x_mat[2]).subs(conc_S, x_mat[3]).subs(conc_C, x_mat[4]).evalf()
         for i in range(len(self.yO)):
-            grad_y_O[i + len(self.XO)] = self.grad_y_yO[i].subs(V_a, y[0]).subs(C_e, y[1]).subs(T, y[2]).subs(t, y[3]).evalf()
+            for j in range(4):
+                grad_y_O[i + len(self.XO), j] = self.grad_y_yO[j, i].subs(V_a, y[0]).subs(C_e, y[1]).subs(T, y[2]).subs(t, y[3]).evalf()
         for i in range(len(self.XO)):
-            grad_y_O[i] = hgrad_y_XO[i].subs(V_a, y[0]).subs(C_e, y[1]).subs(T, y[2]).subs(t, y[3]).subs(conc_A, x_mat[0]).subs(conc_B, x_mat[1]).subs(conc_P, x_mat[2]).subs(conc_S, x_mat[3]).subs(conc_C, x_mat[4]).evalf().subs(conc_A, x_mat[0]).subs(conc_B, x_mat[1]).subs(conc_P, x_mat[2]).subs(conc_S, x_mat[3]).subs(conc_C, x_mat[4]).evalf()
+            for j in range(4):
+                grad_y_O[i, j] = hgrad_y_XO[j, i].subs(V_a, y[0]).subs(C_e, y[1]).subs(T, y[2]).subs(t, y[3]).subs(conc_A, x_mat[0]).subs(conc_B, x_mat[1]).subs(conc_P, x_mat[2]).subs(conc_S, x_mat[3]).subs(conc_C, x_mat[4]).evalf().subs(conc_A, x_mat[0]).subs(conc_B, x_mat[1]).subs(conc_P, x_mat[2]).subs(conc_S, x_mat[3]).subs(conc_C, x_mat[4]).evalf()
         return (O, grad_y_O)
 
     def obj_calc_old(self, y):
