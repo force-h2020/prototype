@@ -5,6 +5,7 @@ from .initializer import Initializer
 from .MCOsolver import MCOsolver
 from .pareto_process_db import Pareto_process_db
 from .process_db_access import Process_db_access
+from .attributes import Attributes
 
 import kivy.core.window as window
 from kivy.base import EventLoop
@@ -16,7 +17,8 @@ class MCOwrapper:
         # mco setup: trasform to impl. data structures.
         self.R = R
         self.C = C
-        self.obj = Objectives(self.R, self.C) #<-- calls function editor
+        self.attributes = Attributes(self.R, self.C) #<-- calls function editor
+        self.obj = Objectives(self.R, self.C, self.attributes) 
         reset()
         self.constraints = Constraints(self.R)
         reset()
