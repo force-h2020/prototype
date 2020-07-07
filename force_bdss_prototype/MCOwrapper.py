@@ -17,8 +17,7 @@ class MCOwrapper:
         # mco setup: trasform to impl. data structures.
         self.R = R
         self.C = C
-        self.attributes = Attributes(self.R, self.C) #<-- calls function editor
-        self.obj = Objectives(self.R, self.C, self.attributes) 
+        self.obj = Objectives(self.R, self.C) 
         reset()
         self.constraints = Constraints(self.R)
         reset()
