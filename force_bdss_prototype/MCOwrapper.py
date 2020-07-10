@@ -46,7 +46,7 @@ class MCOwrapper:
             y = results[i, :]
             O, _ = self.obj.obj_calc(y)
             res[i, :results.shape[1]] = results[i, :]
-            res[i, results.shape[1]:] = O
+            res[i, results.shape[1]:] = O.flatten()
         res[:, results.shape[1]] = self.C_supplier * np.exp(res[:, results.shape[1]])
         self.pp_db = Pareto_process_db(res)
         self.pp_db.write_csv()

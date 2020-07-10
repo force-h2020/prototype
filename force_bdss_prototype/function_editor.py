@@ -18,28 +18,37 @@ from sympy import sympify, symbols, Matrix, SympifyError
 #kvlib
 from .kvlib import EditableLabel
 
+
 #kv
 Builder.load_string('''
-<FunctionTopRow>:
-    size_hint_y: 0.5
-    BoxLayout:
-        orientation: 'horizontal'
-        size_hint_x: 2
-        Label:
-            text: 'id'
-        Label:
-            text: 'Description'
-            text_size: self.width, None
-            size_hint_x: 1.25
-        Label:
-            text: 'Function'
-            size_hint_x: 4
-    BoxLayout:
-        orientation: 'horizontal'
-        Label:
-            text: 'Variable'
-        Label:
-            text: 'Description'
+<FunctionsHeader>:
+    size_hint_y: 0.1
+    orientation: 'horizontal'
+    Label:
+        text: 'id'
+    Label:
+        text: 'Description'
+        text_size: self.width, None
+        size_hint_x: 1.25
+    Label:
+        text: 'Function'
+        size_hint_x: 4
+
+<AttributesHeader>:
+    size_hint_y: 0.2
+    orientation: 'horizontal'
+    Label:
+        text: 'Attribute'
+    Label:
+        text: 'Description'
+
+<ParameterHeader>:
+    size_hint_y: 0.2
+    orientation: 'horizontal'
+    Label:
+        text: 'Parameter'
+    Label:
+        text: 'Description'
 
 <FunctionBottomRow>:
     size_hint_y: 0.5
@@ -101,14 +110,18 @@ class FunctionApp(App):
     def build(self):
         #input: [(Set of function names),(Set of parameter names)]
         root = BoxLayout(orientation = "vertical")
-
-        root.add_widget(FunctionTopRow())
-
         editor = BoxLayout(orientation = "horizontal", size_hint_y = 4)
         self.functionWrapper = FunctionWrapperWidget(self.input[0], do_scroll_x=False)
-        self.varWrapper = VarWrapperWidget(self.input[1], size_hint_x = 0.5)
-        editor.add_widget(self.functionWrapper)
-        editor.add_widget(self.varWrapper)
+        editor.add_widget(WrapperWithHeader(FunctionsHeader(), self.functionWrapper))
+        
+        varWrapper = BoxLayout(orientation = "vertical", size_hint_x = 0.5)
+        self.attributes = VarWrapperWidget(self.input[1], do_scroll_x=False)
+        self.parameters = VarWrapperWidget(self.input[2], do_scroll_x=False)
+        varWrapper.add_widget(WrapperWithHeader(AttributesHeader(), self.attributes))
+        varWrapper.add_widget(WrapperWithHeader(ParameterHeader(), self.parameters))
+        
+        #editor.add_widget(self.functionWrapper)
+        editor.add_widget(varWrapper)
         root.add_widget(editor)
 
         root.add_widget(FunctionBottomRow())
@@ -140,7 +153,7 @@ class FunctionApp(App):
     #validates all functions and checks for recursive functions calls + error handling 
     def validateAll(self):
         errors = []
-        var_set = self.varWrapper.getVariables()
+        var_set = self.attributes.getVariables() + self.parameters.getVariables()
         func_set = self.functionWrapper.getFunctions()
         temp = {}
         for func in func_set:
@@ -178,57 +191,32 @@ class FunctionApp(App):
             return False
 
         #remove sub-functions from func_set + func derivatives
-        x_set = self.varWrapper.getXDimension()
-        y_set = self.varWrapper.getYDimension()
-
-        XO = []
-        YO = []
+        attributes = self.attributes.getVariables()
+        print(attributes)
+        AO = []
 
         for func in func_set:
             if self.functionWrapper.getFunctionWidgets()[func].isEditable(): continue
             function = func_set[func]
-            # if function == "default": #@default
-            #     #TODO: default handle when derivatives are implemented
-            #     self.output.update({func: "default"})
-            #     continue
-            #remove sub-functions, already checked for recursion errors 
             while len(function.free_symbols.intersection(func_set)) != 0:
                     sub_func = function.free_symbols.intersection(func_set).pop()
                     function = function.subs(sub_func, func_set[sub_func])
             # func derivatives with KPIs
             # create output + add original function
 
-            #determine if function is part of X-dimension
-            inX = False
-            for var in function.free_symbols:
-                if var in x_set and not var in y_set:
-                    inX = True
+            AO.append(function)
 
-            if inX:
-                XO.append(function)
-            else:
-                YO.append(function)
+        grad_A_AO = []
 
-        grad_x_XO = []
-        grad_y_YO = []
-
-        for func in XO:
-            temp = x_set[:]
+        for func in AO:
+            temp = attributes[:]
             i = 0
-            for x in x_set:
-                temp[i] = func.diff(x) 
+            for a in attributes:
+                temp[i] = func.diff(a) 
                 i += 1
-            grad_x_XO += [temp]
-
-        for func in YO:
-            temp = y_set[:]
-            i = 0
-            for y in y_set:
-                temp[i] = func.diff(y) 
-                i += 1
-            grad_y_YO += [temp]
+            grad_A_AO += [temp]
                 
-        self.output = (Matrix(XO),Matrix(YO),Matrix(grad_x_XO).transpose(),Matrix(grad_y_YO).transpose()) 
+        self.output = (Matrix(AO),Matrix(grad_A_AO).transpose()) 
         return True
     
     #adds a new editable function #TODO: no name duplications
@@ -328,82 +316,85 @@ class StaticFunctionWidget(FunctionWidgetBase):
     def isEditable(self):
         return False
 
-class VarWrapperWidget(StackLayout):
-    variableWidgets = []
-
+class VarWrapperWidget(ScrollView):
     def __init__(self, variables, **kwargs):
         super().__init__(**kwargs)
+        self.view = GridLayout(cols=1, size_hint=(1, None))
+        self.view.bind(minimum_height=self.view.setter('height'))
+        self.variableWidgets = []
         for key, value in variables.items():
-            self.variableWidgets.append(VarWidget(key, value[0], value[1], size_hint_y=1/len(variables)))
-            self.add_widget(self.variableWidgets[len(self.variableWidgets)-1])
+            self.variableWidgets.append(VarWidget(key, value,size_hint=(1,None), size = (1,25)))
+            self.view.add_widget(self.variableWidgets[len(self.variableWidgets)-1])
+        self.add_widget(self.view)
     
     def getVariables(self):
-        output = {}
+        output = []
         for var in self.variableWidgets:
-            output.update({symbols(var.getVariable()): var.getDesignDimension()})
+            output.append(symbols(var.getVariable()))
         return output
-    
-    def getYDimension(self):
-        var_set = self.getVariables()
-        y_set = []
-        for var in var_set:
-            if var_set[var] == "y" or var_set[var] == "y, X":
-                y_set.append(var)
-        return y_set
-    
-    def getXDimension(self):
-        var_set = self.getVariables()
-        X_set = []
-        for var in var_set:
-            if var_set[var] == "X" or var_set[var] == "y, X":
-                X_set.append(var)
-        return X_set
-
             
 
 class VarWidget(BoxLayout):
     name = StringProperty()
     description = StringProperty()
 
-    def __init__(self, name, description, designDimension , **kwargs):
+    def __init__(self, name, description, **kwargs):
         super().__init__(**kwargs)
         self.name = name
         self.description = description
-        self.designDimension = designDimension
 
     def getVariable(self):
         return self.name
-    
-    def getDesignDimension(self):
-        return self.designDimension
 
-class FunctionTopRow(BoxLayout): pass
+class WrapperWithHeader(BoxLayout):
+    orientation = "vertical"
+
+    def __init__(self, header, content, **kwargs):
+        super().__init__(**kwargs)
+        self.add_widget(header)
+        self.add_widget(content)
+
+class FunctionsHeader(BoxLayout): pass
+class AttributesHeader(BoxLayout): pass
+class ParameterHeader(BoxLayout): pass
 class FunctionBottomRow(BoxLayout): pass
 
 
 ######### Main  #########
 if __name__ == '__main__':
     #functions: key: id, value[0]: description, value[1]: function, value[2]: isEditable
-    functions = {"pc" : ["Production Cost","tau * (T - 290)^2 * W", False],
-                 "mc" : ["Material Cost" , "mcA + mcB", False],
-                 "mcA" : ["Mat cost A" , "(cost_p * (C_e / C_sup -1)^2 + const_A) * V_a", True],
-                 "mcB" : ["Mat cost B" , "(V_r - V_a) * cost_B", True],
-                 "imp" : ["Impurity Concentration" , "conc_A + conc_B + conc_C + conc_S", False]}
-    #variables: key: id, value[0]: description, value[1]: isFixedParameter
-    var = {"conc_A" : ("concentration of A","X"),
-           "conc_B" : ("concentration of B","X"),
-           "conc_P" : ("concentration of P","X"),
-           "conc_S" : ("concentration of S","X"),
-           "conc_C" : ("concentration of C","X"),
-           "V_a" : ("volume of A","y"),
-           "C_e" : ("impurity of A","y"),
-           "T" : ("temperature","y, X"),
-           "tau" : ("reaction time","y, X"),
-           "W" : ("heating cost","fixed"),
-           "C_sup" : ("description","fixed"),
-           "cost_p" : ("description","fixed"),
-           "const_A" : ("description","fixed"),
-           "cost_B" : ("description","fixed"),
-           "V_r" : ("reactor volume","fixed"),}
-    editorInput = [functions, var]
+    functions = {
+        "pc" : ["Production Cost","t * (T - 290)^2 * W", False],
+        "mc" : ["Material Cost" , "mcA + mcB", False],
+        "mcA" : ["Mat cost A" , "(cost_purification * (C_e / C_supplier -1)^2 + const_A) * V_a + V_r * quad_coeff * (V_a - 0.6 * V_r)**2", True],
+        "mcB" : ["Mat cost B" , "(V_r - V_a) * cost_B", True],
+        "imp" : ["Impurity Concentration" , "ln((conc_A + conc_B + conc_C + conc_S )/ C_supplier)", False]
+    }
+    
+    attributes = {
+        "V_a" : "volume of A",
+        "C_e" : "impurity of A",
+        "T" : "temperature",
+        "t" : "reaction time",
+        "conc_A" : "concentration of A",
+        "conc_B" : "concentration of B",
+        "conc_P" : "concentration of P",
+        "conc_S" : "concentration of S",
+        "conc_C" : "concentration of C"
+    }
+    
+    fixed_parameters = {
+        "p_A" : "pure density of A",
+        "p_B" : "pure density of A",
+        "p_C" : "pure density of A",
+        "V_r" : "reactor volume",
+        "W" : "heating cost",
+        "const_A" : "description",
+        "cost_B" : "description",
+        "quad_coeff" : "description",
+        "C_supplier" : "description",
+        "cost_purification" : "description"
+    }
+    
+    editorInput = [functions, attributes, fixed_parameters]
     print(FunctionApp().run_with_output(editorInput, "Default"))
