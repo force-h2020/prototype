@@ -5,8 +5,6 @@ from .initializer import Initializer
 from .MCOsolver import MCOsolver
 from .pareto_process_db import Pareto_process_db
 from .process_db_access import Process_db_access
-from .attributes import Attributes
-
 import kivy.core.window as window
 from kivy.base import EventLoop
 from kivy.cache import Cache
@@ -21,7 +19,7 @@ class MCOwrapper:
         reset()
         self.constraints = Constraints(self.R)
         reset()
-        self.ini = Initializer()
+        self.ini = Initializer(self.R)
         obj_f = lambda y: self.obj.obj_calc(y)[0]
         obj_jac = lambda y: self.obj.obj_calc(y)[1]
         constr = self.constraints.get_editor_constraints() #<-- calls constraints editor
@@ -36,7 +34,7 @@ class MCOwrapper:
         # 4: 0.505. C concentration
         # 5: 335. Temperature
         # 6: 360. Reaction time
-        y0 = self.obj.x_to_y(X0)
+        y0 = self.ini.x_to_y(X0)
         self.mcosolver = MCOsolver(y0, constr, obj_f, obj_jac)
 
     def solve(self):

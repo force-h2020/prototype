@@ -8,8 +8,10 @@ class Initializer:
 
     class __Init:
 
-        def __init__(self):
+        def __init__(self, R):
+            self.R = R
             self.m_db_access = Material_db_access()
+            self.p_db_access = Process_db_access(self.R)
             self.react_knowledge = Reaction_knowledge_access()
 
         def get_init_data_kin_model(self, R, C):
@@ -46,12 +48,22 @@ class Initializer:
             M_delta_H = np.array([delta_Hp, delta_Hs])
             return (M_v, M_delta_H)
 
+        def x_to_y(self, X):
+            V_r = self.p_db_access.get_reactor_vol()
+            p_B = self.m_db_access.get_pure_component_density(self.R["reactants"][1])
+            y = np.zeros(4)
+            y[0] = V_r - X[1] * V_r / p_B
+            y[1] = V_r / y[0] * X[4]
+            y[2] = X[5]
+            y[3] = X[6]
+            return y
+
     instance = None
 
-    def __init__(self):
+    def __init__(self, R):
         # init of Process_db to be done
         if not Initializer.instance:
-            Initializer.instance = Initializer.__Init()
+            Initializer.instance = Initializer.__Init(R)
         else:
             pass
 

@@ -1,6 +1,7 @@
 import numpy as np
 from .process_db_access import Process_db_access
 from .material_db_access import Material_db_access
+from .initializer import Initializer
 from .reaction_kinetics import Reaction_kinetics
 from sympy import symbols, Matrix, sympify, diff, evalf, lambdify
 
@@ -11,6 +12,8 @@ class Reaction_kineticswrapper():
         self.reaction_kinetics = Reaction_kinetics()
         self.p_db_access = Process_db_access(self.R)
         self.m_db_access = Material_db_access()
+        self.ini = Initializer(self.R)
+        self.M = self.ini.get_material_relation_data(R)
         self.calc_init()
 
     def calc_init(self):
@@ -85,7 +88,7 @@ class Reaction_kineticswrapper():
 
 
     def calc_x(self, y):
-        x_mat, grad_X_x_mat = self.reaction_kinetics.run_default(self.R, self.C)
+        x_mat, grad_X_x_mat = self.reaction_kinetics.run(self.X(y), self.M)
         x = np.zeros(7, dtype=np.float)
         x[:5] = x_mat
         x[5] = y[2]

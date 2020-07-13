@@ -179,7 +179,7 @@ def _calc_k(T, M):
 class Reaction_kinetics:
 
     def run_default(self, R, C):
-        self.ini = Initializer()
+        self.ini = Initializer(R)
         X = self.ini.get_init_data_kin_model(R, C)
         M = self.ini.get_material_relation_data(R)
         return self.run(X, M)
