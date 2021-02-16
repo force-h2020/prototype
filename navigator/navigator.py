@@ -243,7 +243,10 @@ class MySlider(Slider):
         padding = self.padding
         width = self.width
         tmp = (width - 2*padding) * (val-self.min)
-        return x + padding + tmp/(self.max-self.min)
+        if(self.max != self.min):
+            return x + padding + tmp/(self.max-self.min)
+        return x + padding + (width - 2*padding)
+
 
     # Convert a position into a value.
     # Used by: set_value_pos, on_touch_move
@@ -270,7 +273,9 @@ class MySlider(Slider):
         padding = self.padding
         width = self.width
         tmp = (width - 2*padding) * (val-self.min)
-        return x + padding + tmp/(self.max-self.min)
+        if(self.max != self.min):
+            return x + padding + tmp/(self.max-self.min)
+        return x + padding + (width - 2*padding)
 
     def pos_into_val_grey(self, pos):
         x = self.x
@@ -521,8 +526,8 @@ class PLayout(BoxLayout):
         super().__init__(**kwargs)
 
         self.names = ["volume_A_tilde", "conc_e", "temperature", "reaction_time",  "impurity_conc [min]", "prod_cost [min]", "mat_cost [min]"]
-        data_dump = np.load('../main/pareto_data.npz')
-        # data_dump = np.load('pareto_data.npz')
+        #data_dump = np.load('../main/pareto_data.npz')
+        data_dump = np.load('pareto_data.npz')
         self.N = len(self.names)
         self.Ne = data_dump[self.names[0]].shape[0]
         i = self.N
